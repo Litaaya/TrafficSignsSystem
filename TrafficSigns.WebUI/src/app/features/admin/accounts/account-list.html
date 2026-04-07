@@ -1,0 +1,360 @@
+<div class="h-full flex flex-col pt-0 px-8 pb-8">
+  <div class="sticky top-0 z-20 bg-[#f8fafc] pt-4 pb-6 flex flex-col flex-shrink-0">
+    <h1 class="text-3xl font-black text-slate-800 uppercase tracking-tighter mb-4">Workspace Management</h1>
+
+    <div class="flex items-center gap-3">
+      <div class="relative w-80">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 text-sm">🔍</span>
+        <input type="text"
+               [(ngModel)]="accountSearchTerm"
+               (input)="onAccountSearch($any($event.target).value)"
+               (keyup.enter)="fetchData()"
+               placeholder="Find workspace name..."
+               class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:border-blue-500 shadow-sm transition-all placeholder:text-slate-300">
+      </div>
+
+      <div class="relative min-w-[140px]">
+        <button (click)="isStatusDropdownOpen = !isStatusDropdownOpen"
+                class="w-full bg-white border border-slate-200 text-slate-500 text-[10px] font-black rounded-2xl px-4 py-2.5 outline-none focus:border-blue-500 shadow-sm uppercase tracking-widest transition-all flex items-center justify-between gap-3 h-[42px]">
+          <span>
+            {{ accountStatusFilter === 'all' ? 'All Status' : (accountStatusFilter === 'active' ? '🟢 Active' : '🔴 Inactive') }}
+          </span>
+          <span [class.rotate-180]="isStatusDropdownOpen" class="text-[8px] transition-transform duration-300">▼</span>
+        </button>
+
+        <div [class.opacity-100]="isStatusDropdownOpen"
+             [class.translate-y-0]="isStatusDropdownOpen"
+             [class.pointer-events-auto]="isStatusDropdownOpen"
+             class="absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-xl z-50 opacity-0 -translate-y-2 pointer-events-none transition-all duration-300 ease-out overflow-hidden p-1.5 flex flex-col gap-1">
+
+          <button (click)="selectAccountStatus('all')" class="text-left px-3 py-2.5 hover:bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest rounded-xl transition-colors">All Status</button>
+          <button (click)="selectAccountStatus('active')" class="text-left px-3 py-2.5 hover:bg-slate-50 text-[10px] font-black text-green-600 uppercase tracking-widest rounded-xl transition-colors">🟢 Active</button>
+          <button (click)="selectAccountStatus('inactive')" class="text-left px-3 py-2.5 hover:bg-slate-50 text-[10px] font-black text-red-500 uppercase tracking-widest rounded-xl transition-colors">🔴 Inactive</button>
+        </div>
+      </div>
+
+      <button (click)="openModal()"
+              class="bg-white border border-slate-200 text-slate-500 px-5 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all shadow-sm flex items-center gap-2 h-[42px]">
+        <span class="text-blue-500 text-sm">+</span>
+        Create Workspace
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-3xl shadow-xl border border-slate-100 flex flex-col overflow-hidden">
+    <div #tableContainer class="overflow-y-auto custom-scrollbar" style="max-height: 70vh;">
+      <table class="w-full text-left border-collapse" style="table-layout: fixed;">
+        <thead class="bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
+          <tr>
+            <th class="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50" style="width: 30%;">Workspace Name</th>
+            <th class="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50" style="width: 20%;">Type</th>
+            <th class="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50" style="width: 30%;">Contact Info</th>
+            <th class="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest text-start bg-slate-50" style="width: 20%;">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+          <tr *ngFor="let acc of accounts" class="hover:bg-slate-50/50 transition-colors">
+            <td class="p-5 text-sm font-bold text-slate-700">
+              <div class="flex items-center gap-2">
+                <div [class]="acc.inactive ? 'bg-slate-200' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'" class="w-2 h-2 rounded-full transition-all"></div>
+                <span class="tracking-tight" [innerHTML]="highlight(acc.name, accountSearchTerm)"></span>
+              </div>
+            </td>
+            <td class="p-5 text-[10px] font-black text-slate-500 uppercase">
+              <span *ngIf="acc.system" class="bg-purple-50 text-purple-600 border border-purple-100 px-2 py-1 rounded-md">System</span>
+              <span *ngIf="!acc.system" class="bg-slate-50 text-slate-500 border border-slate-100 px-2 py-1 rounded-md">Regular</span>
+            </td>
+            <td class="p-5 text-sm text-slate-500">
+              <div class="truncate font-medium" title="{{ acc.email }}">{{ acc.email || 'No email' }}</div>
+              <div class="text-[10px] text-slate-400 font-bold mt-0.5">{{ acc.phone || 'No phone' }}</div>
+            </td>
+            <td class="p-5 flex justify-start items-center gap-4">
+              <button (click)="openDetailsModal(acc)"
+                      class="w-10 text-left text-slate-400 hover:text-blue-600 font-black text-xs uppercase tracking-tighter transition-colors">
+                View
+              </button>
+              <button (click)="openEditModal(acc)"
+                      class="w-10 text-left text-blue-600 hover:underline font-bold text-xs uppercase">
+                Edit
+              </button>
+              <ng-container>
+                <button *ngIf="!acc.inactive"
+                        (click)="openConfirmModal('DELETE', acc)"
+                        class="text-red-600 hover:underline font-bold text-xs uppercase whitespace-nowrap">
+                  Delete
+                </button>
+                <button *ngIf="acc.inactive"
+                        (click)="openConfirmModal('REACTIVATE', acc)"
+                        class="text-green-600 hover:underline font-bold text-xs uppercase whitespace-nowrap">
+                  Reactivate
+                </button>
+              </ng-container>
+            </td>
+          </tr>
+          <tr *ngIf="accounts.length === 0">
+            <td colspan="4" class="p-10 text-center text-slate-400 text-xs font-bold italic">No workspaces found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="p-5 bg-slate-50 border-t border-slate-100 flex justify-between items-center flex-shrink-0">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] font-black text-slate-400 uppercase">Display</span>
+          <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" class="bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-lg p-1 outline-none">
+            <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
+          </select>
+        </div>
+        <span class="text-xs text-slate-500 font-medium">Total: <b class="text-slate-800">{{ totalCount }}</b></span>
+      </div>
+
+      <div class="flex gap-1 items-center">
+        <button [disabled]="pageNumber === 1" (click)="onPageChange(1)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-30 transition-all font-bold">«</button>
+        <button [disabled]="pageNumber === 1" (click)="onPageChange(pageNumber - 1)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-30 transition-all font-bold">‹</button>
+        <ng-container *ngFor="let p of visiblePages">
+          <button *ngIf="p !== '...'" (click)="onPageChange(p)" [class]="p === pageNumber ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'" class="w-8 h-8 rounded-xl text-xs font-bold border transition-all">{{ p }}</button>
+          <span *ngIf="p === '...'" #jumpTrigger="matMenuTrigger" [matMenuTriggerFor]="jumpMenu" class="w-8 h-8 flex items-center justify-center text-slate-400 font-bold cursor-pointer hover:text-blue-600">...</span>
+        </ng-container>
+        <button [disabled]="pageNumber === totalPages" (click)="onPageChange(pageNumber + 1)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-30 transition-all font-bold">›</button>
+        <button [disabled]="pageNumber === totalPages" (click)="onPageChange(totalPages)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-30 transition-all font-bold">»</button>
+      </div>
+    </div>
+  </div>
+
+  <mat-menu #jumpMenu="matMenu">
+    <div class="p-4 w-60 flex flex-col gap-3" (click)="$event.stopPropagation()">
+      <label class="block text-[10px] font-black uppercase text-slate-400">Page (1 - {{ totalPages }})</label>
+      <div class="flex gap-2">
+        <input type="number" [(ngModel)]="jumpPageInput" (keyup.enter)="jumpToPage()" class="flex-1 p-2 bg-slate-50 border rounded-lg outline-none text-xs">
+        <button (click)="jumpToPage()" class="bg-blue-600 text-white px-3 py-2 rounded-lg font-bold text-xs">Go</button>
+      </div>
+    </div>
+  </mat-menu>
+
+  <div *ngIf="showDetailsModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white w-full max-w-4xl h-[650px] rounded-[32px] shadow-2xl overflow-hidden animate-fadeIn flex flex-col">
+      <div class="flex justify-between items-center px-8 border-b border-slate-100 bg-white flex-shrink-0">
+        <div class="flex gap-2">
+          <button (click)="setTab('info')"
+                  [class]="activeTab === 'info' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'"
+                  class="px-6 py-5 border-b-2 font-black text-[10px] uppercase tracking-widest transition-all duration-300">
+            🏢 Workspace Information
+          </button>
+          <button (click)="setTab('users')"
+                  [class]="activeTab === 'users' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'"
+                  class="px-6 py-5 border-b-2 font-black text-[10px] uppercase tracking-widest transition-all duration-300">
+            👥 Member List
+          </button>
+        </div>
+        <button (click)="showDetailsModal = false" class="text-slate-300 hover:text-slate-600 text-2xl transition-colors">×</button>
+      </div>
+
+      <div class="flex-1 relative overflow-hidden bg-slate-50/30">
+        <div [class.opacity-100]="activeTab === 'info'"
+             [class.translate-x-0]="activeTab === 'info'"
+             [class.opacity-0]="activeTab !== 'info'"
+             [class.-translate-x-4]="activeTab !== 'info'"
+             [class.pointer-events-none]="activeTab !== 'info'"
+             class="absolute inset-0 p-10 transition-all duration-500 ease-out overflow-y-auto">
+          <h2 class="text-2xl font-black text-slate-800 mb-6 tracking-tight">{{ selectedAccount?.name }}</h2>
+          <div class="grid grid-cols-2 gap-6 bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+            <div class="space-y-1"><label class="block text-[10px] font-black uppercase text-slate-300 tracking-widest">Workspace ID</label><p class="text-[10px] font-bold text-slate-400 font-mono">{{ selectedAccount?.id }}</p></div>
+            <div class="space-y-1"><label class="block text-[10px] font-black uppercase text-slate-300 tracking-widest">Type</label><p class="text-sm font-bold text-slate-700">{{ selectedAccount?.system ? 'System Workspace' : 'Regular Workspace' }}</p></div>
+            <div class="space-y-1"><label class="block text-[10px] font-black uppercase text-slate-300 tracking-widest">Email</label><p class="text-sm font-bold text-slate-700">{{ selectedAccount?.email || 'N/A' }}</p></div>
+            <div class="space-y-1"><label class="block text-[10px] font-black uppercase text-slate-300 tracking-widest">Phone</label><p class="text-sm font-bold text-slate-700">{{ selectedAccount?.phone || 'N/A' }}</p></div>
+            <div class="space-y-1 col-span-2"><label class="block text-[10px] font-black uppercase text-slate-300 tracking-widest">Description</label><p class="text-sm font-bold text-slate-700">{{ selectedAccount?.desc || 'No description provided.' }}</p></div>
+            <div class="space-y-1 col-span-2"><label class="block text-[10px] font-black uppercase text-slate-300 tracking-widest">Created At</label><p class="text-sm font-bold text-slate-700">{{ selectedAccount?.createdDt | date:'dd/MM/yyyy HH:mm' }}</p></div>
+          </div>
+        </div>
+
+        <div [class.opacity-100]="activeTab === 'users'"
+             [class.translate-x-0]="activeTab === 'users'"
+             [class.opacity-0]="activeTab !== 'users'"
+             [class.translate-x-4]="activeTab !== 'users'"
+             [class.pointer-events-none]="activeTab !== 'users'"
+             class="absolute inset-0 p-8 transition-all duration-500 ease-out flex flex-col">
+          <div class="flex justify-between items-center mb-6 flex-shrink-0 gap-4">
+            <div class="flex items-center gap-3 flex-1 max-w-xl">
+              <div class="relative flex-1">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 text-[10px]">🔍</span>
+                <input type="text"
+                       [(ngModel)]="userListSearchTerm"
+                       placeholder="Search username/email..."
+                       class="w-full pl-8 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-bold outline-none focus:border-blue-500 shadow-sm transition-all">
+              </div>
+              <select [(ngModel)]="userListFilter"
+                      class="bg-white border border-slate-200 text-slate-500 text-[10px] font-black rounded-xl px-3 py-2 outline-none focus:border-blue-500 shadow-sm uppercase tracking-tighter">
+                <option value="all">All Roles</option>
+                <option value="owner">Only Owner</option>
+              </select>
+            </div>
+
+            <button #assignTrigger="matMenuTrigger"
+                    [matMenuTriggerFor]="assignMenu"
+                    (click)="openAssignSection()"
+                    class="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-lg hover:bg-blue-600 transition-all flex-shrink-0">
+              + Assign User
+            </button>
+          </div>
+
+          <div class="flex-1 border border-slate-100 rounded-2xl overflow-hidden bg-white flex flex-col shadow-sm">
+            <div class="overflow-y-auto custom-scrollbar flex-1">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
+                  <tr>
+                    <th class="p-4 font-black uppercase text-slate-400 text-[9px]">Username</th>
+                    <th class="p-4 font-black uppercase text-slate-400 text-[9px]">Email</th>
+                    <th class="p-4 font-black uppercase text-slate-400 text-[9px]">Role</th>
+                    <th class="p-4 font-black uppercase text-slate-400 text-[9px] text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                  <tr *ngFor="let u of filteredAccountUsers" class="hover:bg-slate-50/50 transition-colors">
+                    <td class="p-4 font-bold text-slate-700" [innerHTML]="highlight(u.username, userListSearchTerm)"></td>
+                    <td class="p-4 text-slate-500" [innerHTML]="highlight(u.email, userListSearchTerm)"></td>
+                    <td class="p-4">
+                      <span [class]="(u.role === 'Owner' || u.Role === 'Owner' || u.isOwner) ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-slate-50 text-slate-400 border-slate-100'"
+                            class="px-2 py-1 rounded-md font-black text-[8px] border uppercase">
+                        {{ u.role || u.Role || (u.isOwner ? 'OWNER' : 'VIEWER') }}
+                      </span>
+                    </td>
+                    <td class="p-4 flex justify-center gap-3">
+                      <button (click)="openConfirmModal('UPDATE_USER_ROLE', selectedAccount, u)" class="text-blue-600 font-bold hover:text-blue-800 transition-colors text-[9px] uppercase tracking-tighter">Role</button>
+                      <button (click)="openConfirmModal('REMOVE_USER', selectedAccount, u)" class="text-red-400 hover:text-red-600 font-bold transition-colors text-[9px] uppercase tracking-tighter">Remove</button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="accountUsers.length === 0">
+                    <td colspan="4" class="p-20 text-center text-slate-400 italic font-bold text-[10px]">No users in this Workspace.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <mat-menu #assignMenu="matMenu">
+    <div class="p-4 w-71 overflow-x-hidden flex flex-col" (click)="$event.stopPropagation()">
+      <label class="block text-[10px] font-black uppercase text-slate-400 mb-2">Assign new User:</label>
+      <div class="relative mb-3 flex-shrink-0">
+        <input type="text"
+               [(ngModel)]="searchAvailableTerm"
+               (ngModelChange)="onAvailableSearch($event)"
+               placeholder="Find username..."
+               class="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs outline-none focus:border-blue-500 font-medium">
+      </div>
+
+      <div class="max-h-56 overflow-y-auto overflow-x-hidden space-y-1 custom-scrollbar pr-1" (scroll)="onScrollAvailableUsers($event)">
+        <button *ngFor="let u of availableUsers"
+                (click)="openConfirmModal('ASSIGN_USER', selectedAccount, u)"
+                class="w-full text-left p-3 hover:bg-blue-50 rounded-xl text-xs font-bold text-slate-600 flex justify-between items-center group transition-all">
+          <div class="truncate flex-1">
+            <span class="block text-sm" [innerHTML]="highlight(u.username, searchAvailableTerm)"></span>
+            <span class="block text-[9px] text-slate-400 font-normal truncate mt-0.5">{{ u.email }}</span>
+          </div>
+          <span class="text-blue-600 font-black opacity-0 group-hover:opacity-100 flex-shrink-0 ml-2">+</span>
+        </button>
+
+        <div *ngIf="loadingAvailable" class="py-3 flex justify-center">
+          <div class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+        </div>
+
+        <div *ngIf="availableUsers.length === 0 && !loadingAvailable" class="text-[9px] text-slate-400 text-center py-4 italic bg-slate-50 rounded-xl">
+          Cannot find any User.
+        </div>
+      </div>
+    </div>
+  </mat-menu>
+
+  <div *ngIf="isConfirming" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 animate-fadeIn">
+      <div class="text-center mb-6">
+        <h3 class="text-lg font-black text-slate-800 uppercase italic tracking-tight">Security Confirmation</h3>
+        <p class="text-[10px] text-slate-500 mt-1">Action: <b class="text-blue-600 uppercase">{{ pendingAction?.replace('_', ' ') }}</b></p>
+        <p *ngIf="pendingUserTarget" class="text-[9px] text-slate-400 font-bold mt-1 tracking-tighter italic">Target: {{ pendingUserTarget.username }}</p>
+      </div>
+      <div *ngIf="confirmErrorMessage" class="mb-4 p-3 bg-red-50 text-red-600 text-[10px] font-bold rounded-xl border border-red-100 italic">⚠️ {{ confirmErrorMessage }}</div>
+
+      <div class="mb-4" *ngIf="pendingAction === 'ASSIGN_USER' || pendingAction === 'UPDATE_USER_ROLE'">
+        <label class="block text-[10px] font-black uppercase text-blue-500 mb-1 italic">Select Role for User:</label>
+
+        <div class="relative">
+          <button (click)="toggleRoleDropdown()"
+                  type="button"
+                  class="w-full flex items-center justify-between p-4 bg-blue-50 border border-blue-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-700 transition-all shadow-inner">
+            <span class="text-xs uppercase tracking-widest">{{ selectedRole }}</span>
+            <span [class.rotate-180]="isRoleDropdownOpen" class="text-[10px] transition-transform duration-300">▼</span>
+          </button>
+
+          <div [class.opacity-100]="isRoleDropdownOpen"
+               [class.translate-y-0]="isRoleDropdownOpen"
+               [class.pointer-events-auto]="isRoleDropdownOpen"
+               class="absolute left-0 right-0 mt-2 p-2 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[110]
+                      opacity-0 -translate-y-2 pointer-events-none transition-all duration-300 ease-out">
+
+            <div (click)="selectRole('Viewer')" class="p-3 hover:bg-blue-50 rounded-xl cursor-pointer transition-colors flex flex-col">
+              <span class="text-xs font-black text-slate-700">VIEWER</span>
+              <span class="text-[9px] text-slate-400 italic">Read-only access, cannot modify data.</span>
+            </div>
+
+            <div (click)="selectRole('Member')" class="p-3 hover:bg-blue-50 rounded-xl cursor-pointer transition-colors flex flex-col">
+              <span class="text-xs font-black text-slate-700">MEMBER</span>
+              <span class="text-[9px] text-slate-400 italic">Can add or modify workspace data.</span>
+            </div>
+
+            <div (click)="selectRole('Owner')" class="p-3 hover:bg-blue-50 rounded-xl cursor-pointer transition-colors flex flex-col border-t border-slate-50 mt-1">
+              <span class="text-xs font-black text-blue-600">OWNER</span>
+              <span class="text-[9px] text-slate-400 italic">Full administrative access.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-[10px] font-black uppercase text-slate-400 mb-1 italic">Admin Password:</label>
+        <input type="password" [(ngModel)]="confirmPassword" (focus)="confirmErrorMessage = ''" (keyup.enter)="handleActionConfirm()" placeholder="••••••••" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-medium text-center transition-all">
+      </div>
+      <div class="flex gap-3">
+        <button (click)="isConfirming = false" class="flex-1 py-3 text-xs font-bold text-slate-400 uppercase hover:text-slate-600 transition-colors">Cancel</button>
+        <button (click)="handleActionConfirm()" [disabled]="isSubmitting || !confirmPassword" class="flex-1 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase hover:bg-blue-600 shadow-lg disabled:opacity-50 transition-all">{{ isSubmitting ? 'PROCESSING...' : 'OK' }}</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden">
+      <div class="p-8 border-b border-slate-100 flex justify-between items-center">
+        <h2 class="text-xl font-black text-slate-800 uppercase">{{ selectedAccount ? 'Update Workspace' : 'Create Workspace' }}</h2>
+        <button (click)="closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+      </div>
+      <div class="p-8 grid grid-cols-2 gap-4">
+        <div class="col-span-2" *ngIf="errorMessage"><div class="p-3 text-xs font-bold rounded-xl border italic bg-amber-50 text-amber-700 border-amber-100">⚠️ {{ errorMessage }}</div></div>
+        <div class="col-span-2"><label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Workspace Name *</label><input type="text" [(ngModel)]="newAccount.name" class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium"></div>
+        <div class="col-span-1"><label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Email</label><input type="email" [(ngModel)]="newAccount.email" class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium"></div>
+        <div class="col-span-1"><label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Phone Number</label><input type="text" [(ngModel)]="newAccount.phone" class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium"></div>
+        <div class="col-span-2"><label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Description</label><textarea [(ngModel)]="newAccount.desc" rows="3" class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium resize-none"></textarea></div>
+        <div class="col-span-2 flex items-center gap-3 mt-2">
+          <input type="checkbox" id="sysCheck" [(ngModel)]="newAccount.system" class="w-4 h-4 cursor-pointer accent-blue-600">
+          <label for="sysCheck" class="text-xs font-bold text-slate-600 cursor-pointer">Mark as System Workspace</label>
+        </div>
+      </div>
+      <div class="p-8 bg-slate-50 flex justify-end gap-3">
+        <button (click)="closeModal()" class="px-6 py-3 text-xs font-bold uppercase text-slate-400">Cancel</button>
+        <button (click)="selectedAccount ? onConfirmUpdate() : openConfirmModal('CREATE')" [disabled]="!canSubmit()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-xs uppercase shadow-lg disabled:bg-slate-200 disabled:text-slate-400 transition-all">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="isRoleDropdownOpen"
+     (click)="isRoleDropdownOpen = false"
+     class="fixed inset-0 z-[105] bg-transparent">
+</div>
+
+<div *ngIf="isStatusDropdownOpen"
+     (click)="isStatusDropdownOpen = false"
+     class="fixed inset-0 z-40 bg-transparent">
+</div>

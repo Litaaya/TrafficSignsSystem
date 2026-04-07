@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+  </Folder>
+  <Project Path="TrafficSigns.AppHost/TrafficSigns.AppHost.csproj" />
+  <Project Path="TrafficSigns.Application/TrafficSigns.Application.csproj" />
+  <Project Path="TrafficSigns.Domain/TrafficSigns.Domain.csproj" />
+  <Project Path="TrafficSigns.Infrastructure/TrafficSigns.Infrastructure.csproj" />
+  <Project Path="TrafficSigns.UnitTests/TrafficSigns.UnitTests.csproj" />
+  <Project Path="TrafficSigns.Web/TrafficSigns.Web.csproj" />
+  <Project Path="TrafficSigns.WebUI/TrafficSigns.WebUI.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="TrafficSignsSystem.ServiceDefaults/TrafficSignsSystem.ServiceDefaults.csproj" />
+</Solution>

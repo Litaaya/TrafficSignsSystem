@@ -1,0 +1,20 @@
+## === .NET / Visual Studio ===
+[Bb]in/
+[Oo]bj/
+.vs/
+.vscode/
+*.user
+*.suo
+.aspire/
+
+## === Secrets ===
+appsettings.Development.json
+appsettings.Local.json
+
+## === Docker ===
+.env
+.dbdata/
+
+## === Các file hệ thống khác ===
+.DS_Store
+Thumbs.db

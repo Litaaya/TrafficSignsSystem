@@ -1,0 +1,94 @@
+﻿using Marten;
+using Marten.Linq.MatchesSql;
+using MediatR;
+using TrafficSigns.Application.Common.Interfaces;
+using TrafficSigns.Domain.Events;
+using TrafficSigns.Domain.Models;
+
+namespace TrafficSigns.Web.Features.TrafficSigns.Commands;
+
+public record ReactivateTrafficSignCommand(Guid Id) : IRequest<bool>;
+
+public class ReactivateTrafficSignHandler(
+    IDocumentSession session,
+    ICurrentUserService currentUser,
+    IPermissionService permissionService) : IRequestHandler<ReactivateTrafficSignCommand, bool>
+{
+    public async Task<bool> Handle(ReactivateTrafficSignCommand request, CancellationToken cancellationToken)
+    {
+        var sign = await session.LoadAsync<TrafficSign>(request.Id, cancellationToken);
+
+        if (sign == null)
+        {
+            throw new Exception($"Invalid Traffic Sign with Id {request.Id}");
+        }
+
+        if (!await permissionService.CanManageTrafficSignsAsync(sign.AccountId))
+        {
+            throw new UnauthorizedAccessException("Access denied.");
+        }
+
+        if (!sign.Inactive)
+        {
+            throw new Exception("Traffic Sign is already active.");
+        }
+
+        var duplicateSign = await session.Query<TrafficSign>()
+            .Where(s => s.Inactive == false
+                     && s.Id != sign.Id
+                     && s.AccountId == sign.AccountId
+                     && s.RoadSegmentId == sign.RoadSegmentId
+                     && s.Code == sign.Code
+                     && s.IsForwardDirection == sign.IsForwardDirection
+                     && s.MatchesSql(@"ST_DWithin(
+                                       ST_GeomFromGeoJSON((data -> 'location')::text), 
+                                       ST_GeomFromGeoJSON((? -> 'location')::text), 
+                                       0.00003
+                                )", sign)).FirstOrDefaultAsync(cancellationToken);
+
+        if (duplicateSign != null)
+        {
+            throw new Exception($"Cannot reactivate. An active sign with code '{duplicateSign.Code}' already exists at this location.");
+        }
+
+        string actor = currentUser.GetUsername() ?? "Unknown";
+        var actorId = currentUser.GetUserId();
+        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+
+        var @event = new TrafficSignReactivated(request.Id);
+
+        session.SetHeader("user-id", actorId?.ToString() ?? Guid.Empty.ToString());
+        session.SetHeader("user-name", actor);
+        session.SetHeader("update-history", $"Reactivated by {actor}({actorId}) at {timestamp}");
+
+        session.Events.Append(request.Id, @event);
+        await session.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
+}
+
+public static class ReactivateTrafficSignEndpoint
+{
+    public static void MapReactivateTrafficSign(this IEndpointRouteBuilder app)
+    {
+        app.MapPatch("/api/traffic-signs/{id:guid}/reactivate", async (Guid id, IMediator mediator) =>
+        {
+            try
+            {
+                await mediator.Send(new ReactivateTrafficSignCommand(id));
+                return Results.Ok(new { Message = "Traffic Sign reactivated successfully" });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Results.Forbid();
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(new { Message = ex.Message });
+            }
+        })
+        .WithTags("TrafficSigns")
+        .RequireAuthorization();
+    }
+}
