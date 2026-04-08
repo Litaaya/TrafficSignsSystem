@@ -142,4 +142,39 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config) 
             throw new Exception($"Failed to update Keycloak user: {error}");
         }
     }
+
+    public async Task<List<JsonElement>> GetAdminEventsAsync(DateTime? dateFrom)
+    {
+        var baseUrl = config["Keycloak:AuthServerUrl"];
+        var realm = config["Keycloak:Realm"];
+        var accessToken = await GetAdminTokenAsync();
+
+        httpClient.DefaultRequestHeaders.Clear();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var dateFromStr = dateFrom?.ToString("yyyy-MM-dd") ?? DateTime.UtcNow.AddDays(-1).ToString("yyyy-MM-dd");
+
+        var url = $"{baseUrl}/admin/realms/{realm}/admin-events?dateFrom={dateFromStr}&resourceType=USER";
+
+        var response = await httpClient.GetAsync(url);
+        if (!response.IsSuccessStatusCode) return new List<JsonElement>();
+
+        return await response.Content.ReadFromJsonAsync<List<JsonElement>>() ?? new List<JsonElement>();
+    }
+
+    public async Task<JsonElement?> GetUserByIdAsync(Guid userId)
+    {
+        var baseUrl = config["Keycloak:AuthServerUrl"];
+        var realm = config["Keycloak:Realm"];
+        var accessToken = await GetAdminTokenAsync();
+
+        httpClient.DefaultRequestHeaders.Clear();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await httpClient.GetAsync($"{baseUrl}/admin/realms/{realm}/users/{userId}");
+
+        if (!response.IsSuccessStatusCode) return null;
+
+        return await response.Content.ReadFromJsonAsync<JsonElement>();
+    }
 }

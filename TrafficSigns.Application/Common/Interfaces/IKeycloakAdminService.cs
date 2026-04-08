@@ -1,4 +1,6 @@
-﻿namespace TrafficSigns.Application.Common.Interfaces;
+﻿using System.Text.Json;
+
+namespace TrafficSigns.Application.Common.Interfaces;
 
 public interface IKeycloakAdminService
 {
@@ -7,4 +9,7 @@ public interface IKeycloakAdminService
     Task ResetPasswordAsync(Guid userId, string newPassword);
     Task UpdateUserAsync(Guid userId, string email, string firstName, string lastName);
     Task<bool> VerifyUserPasswordAsync(string username, string password);
+
+    Task<List<JsonElement>> GetAdminEventsAsync(DateTime? dateFrom);
+    Task<JsonElement?> GetUserByIdAsync(Guid userId);
 }

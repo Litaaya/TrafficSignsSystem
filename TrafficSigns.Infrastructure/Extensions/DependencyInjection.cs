@@ -9,6 +9,7 @@ using Npgsql;
 using System.Text.Json.Serialization;
 using TrafficSigns.Application.Common.Interfaces;
 using TrafficSigns.Domain.Models;
+using TrafficSigns.Infrastructure.BackgroundServices;
 using TrafficSigns.Infrastructure.Persistence;
 using TrafficSigns.Infrastructure.Persistence.Interceptors;
 using Weasel.Core;
@@ -56,6 +57,8 @@ public static class DependencyInjection
         })
         .UseLightweightSessions()
         .UseNpgsqlDataSource();
+
+        services.AddHostedService<KeycloakSyncWorker>();
 
         return services;
     }

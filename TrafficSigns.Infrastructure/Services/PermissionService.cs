@@ -45,6 +45,7 @@ public class PermissionService(AppDbContext db, ICurrentUserService currentUserS
         if (IsAdmin()) return true;
 
         if (updatingSystemField) return false;
+        if (updatingSystemField) return false;
 
         var role = await GetUserRoleAsync(accountId);
         return role == "Owner";
