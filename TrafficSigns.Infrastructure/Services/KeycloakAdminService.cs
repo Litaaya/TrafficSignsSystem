@@ -44,7 +44,8 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config) 
             enabled = true,
             firstName = firstName,
             lastName = lastName,
-            credentials = new[] { new { type = "password", value = password, temporary = false } }
+            emailVerified = true,
+            credentials = new[] { new { type = "password", value = password, temporary = true } }
         };
 
         var response = await httpClient.PostAsJsonAsync($"{baseUrl}/admin/realms/{realm}/users", payload);
@@ -173,7 +174,12 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config) 
 
         var response = await httpClient.GetAsync($"{baseUrl}/admin/realms/{realm}/users/{userId}");
 
-        if (!response.IsSuccessStatusCode) return null;
+        if (!response.IsSuccessStatusCode) 
+        {
+            var errorDetails = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Keycloak Error ({response.StatusCode}): {errorDetails}");
+        }
+        ;
 
         return await response.Content.ReadFromJsonAsync<JsonElement>();
     }

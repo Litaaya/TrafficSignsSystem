@@ -22,6 +22,6 @@ public static class UpdateUserEndpoint
             }
         })
         .WithTags("Users")
-        .RequireAuthorization(policy => policy.RequireRole("admin"));
+        .RequireAuthorization();
     }
 }

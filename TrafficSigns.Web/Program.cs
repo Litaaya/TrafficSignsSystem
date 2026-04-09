@@ -7,8 +7,10 @@ using Scalar.AspNetCore;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using TrafficSigns.Application;
 using TrafficSigns.Application.Common.Interfaces;
-using TrafficSigns.Infrastructure.Extensions;
+
+using TrafficSigns.Infrastructure;
 using TrafficSigns.Infrastructure.Persistence;
 using TrafficSigns.Infrastructure.Services;
 
@@ -29,12 +31,6 @@ var keycloakSection = builder.Configuration.GetSection("Keycloak");
 var authServerUrl = keycloakSection["AuthServerUrl"]?.TrimEnd('/');
 var realmName = keycloakSection["Realm"];
 var authority = $"{authServerUrl}/realms/{realmName}";
-
-builder.Services.AddMediatR(cfg =>
-{
-    cfg.RegisterServicesFromAssembly(typeof(IApplicationDbContext).Assembly);
-    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
-});
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -89,8 +85,6 @@ builder.Services.AddOpenApi(options =>
     });
 });
 
-builder.Services.AddHttpClient<IKeycloakAdminService, KeycloakAdminService>();
-
 builder.Services.AddAuthentication(options => {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -138,8 +132,11 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddHttpClient<IKeycloakAdminService, KeycloakAdminService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
+
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddCors(options =>
@@ -184,9 +181,10 @@ app.MapCreateUser();
 app.MapDeleteUser();
 app.MapReactivateUser();
 app.MapUpdateUser();
+app.MapUpdateProfile();
 
 app.MapGetUsers();
-app.MapCheckUserDuplicate();
+app.MapValidateUserField();
 
 // Account control
 app.MapCreateAccount();

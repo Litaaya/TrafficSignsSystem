@@ -6,17 +6,16 @@ using FluentValidation;
 
 namespace TrafficSigns.Application.Features.Users.Commands;
 
-public record UpdateUserCommand(
-    Guid Id,
+public record UpdateProfileCommand(
     string Email,
     string Phone,
     string? FirstName = null,
     string? LastName = null
 ) : IRequest<bool>;
 
-public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
+public class UpdateProfileCommandValidator : AbstractValidator<UpdateProfileCommand>
 {
-    public UpdateUserCommandValidator()
+    public UpdateProfileCommandValidator()
     {
         RuleFor(x => x.FirstName).Must(UserValidationRules.IsValidName)
             .WithMessage("Firstname can't be empty or too long");
@@ -32,31 +31,30 @@ public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
     }
 }
 
-public class UpdateUserHandler(
+public class UpdateProfileHandler(
     IApplicationDbContext db,
     IKeycloakAdminService keycloakService,
-    ICurrentUserService currentUser,
-    IPermissionService permissionService) : IRequestHandler<UpdateUserCommand, bool>
+    ICurrentUserService currentUser) : IRequestHandler<UpdateProfileCommand, bool>
 {
-    public async Task<bool> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
+    public async Task<bool> Handle(UpdateProfileCommand request, CancellationToken cancellationToken)
     {
-        if (!await permissionService.CanManageGlobalUsersAsync()) throw new UnauthorizedAccessException("Access denied");
+        var userId = currentUser.GetUserId();
+        if (userId == null) throw new UnauthorizedAccessException();
 
-        var user = await db.Users.FindAsync([request.Id], cancellationToken);
+        var user = await db.Users.FindAsync([userId], cancellationToken);
         if (user == null || user.Inactive) return false;
 
         var email = request.Email.Trim().ToLower();
         var phone = request.Phone.Trim();
 
         var duplicates = await db.Users
-            .Where(u => u.Id != request.Id && (u.Email == email || u.Phone == phone))
+            .Where(u => u.Id != userId && (u.Email == email || u.Phone == phone))
             .Select(u => new { u.Email, u.Phone })
             .ToListAsync(cancellationToken);
 
         if (duplicates.Any())
         {
             var conflicts = new List<string>();
-
             if (duplicates.Any(u => u.Email == email)) conflicts.Add("Email");
             if (duplicates.Any(u => u.Phone == phone)) conflicts.Add("Phone Number");
 
@@ -64,29 +62,26 @@ public class UpdateUserHandler(
                 ? $"{string.Join(", ", conflicts.Take(conflicts.Count - 1))} and {conflicts.Last()}"
                 : conflicts.First();
 
-            throw new Exception($"{conflictMessage} already exists in the system");
+            throw new Exception($"{conflictMessage} already exists in the system.");
         }
 
         await keycloakService.UpdateUserAsync(
             user.Id,
-            request.Email.Trim(),
+            email,
             request.FirstName?.Trim() ?? "",
             request.LastName?.Trim() ?? "");
 
         string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-        string actor = currentUser.GetUsername() ?? "Unknown system";
+        string actor = currentUser.GetUsername() ?? "Self";
         var actorId = currentUser.GetUserId();
 
-        user.Email = request.Email.Trim();
-        user.Phone = request.Phone.Trim();
+        user.Email = email;
+        user.Phone = phone;
         user.FirstName = request.FirstName?.Trim();
         user.LastName = request.LastName?.Trim();
         user.UpdatedDt = DateTime.UtcNow;
 
-        user.Metadata ??= new Dictionary<string, string>();
-        var updatedMetadata = new Dictionary<string, string>(user.Metadata);
-        updatedMetadata["update_history"] = $"Updated by {actor}({actorId}) at {timestamp}";
-        user.Metadata = updatedMetadata;
+        user.AddMetadataLog("update_history", $"Profile updated by user {actor}({actorId}) at {timestamp}");
 
         await db.SaveChangesAsync(cancellationToken);
         return true;

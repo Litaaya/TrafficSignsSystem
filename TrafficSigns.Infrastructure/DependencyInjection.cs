@@ -14,7 +14,7 @@ using TrafficSigns.Infrastructure.Persistence;
 using TrafficSigns.Infrastructure.Persistence.Interceptors;
 using Weasel.Core;
 
-namespace TrafficSigns.Infrastructure.Extensions;
+namespace TrafficSigns.Infrastructure;
 
 public static class DependencyInjection
 {

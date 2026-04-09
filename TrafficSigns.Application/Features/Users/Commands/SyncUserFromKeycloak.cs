@@ -44,6 +44,7 @@ public class SyncUserFromKeycloakHandler(
 
         user.Username = json.TryGetProperty("username", out var un) ? un.GetString() ?? "" : user.Username;
         user.Email = json.TryGetProperty("email", out var em) ? em.GetString() : user.Email;
+        user.Phone = json.TryGetProperty("phone", out var ph) ? ph.GetString() : user.Phone;
         user.FirstName = json.TryGetProperty("firstName", out var fn) ? fn.GetString() : user.FirstName;
         user.LastName = json.TryGetProperty("lastName", out var ln) ? ln.GetString() : user.LastName;
 

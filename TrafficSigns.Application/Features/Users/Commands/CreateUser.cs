@@ -1,7 +1,9 @@
 ﻿using MediatR;
 using TrafficSigns.Application.Common.Interfaces;
+using TrafficSigns.Application.Common.Validations;
 using TrafficSigns.Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation;
 
 namespace TrafficSigns.Application.Features.Users.Commands;
 
@@ -14,6 +16,30 @@ public record CreateUserCommand(
     string? LastName = null
 ) : IRequest<Guid>;
 
+public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
+{
+    public CreateUserCommandValidator()
+    {
+        RuleFor(x => x.Username).Must(UserValidationRules.IsValidUsername)
+            .WithMessage($"Username invalid (maximum {UserValidationRules.UsernameMax} symbol, no space");
+
+        RuleFor(x => x.Password).Must(UserValidationRules.IsStrongPassword)
+            .WithMessage("Password is too weak");
+
+        RuleFor(x => x.FirstName).Must(UserValidationRules.IsValidName)
+            .WithMessage("Firstname can't be empty or too long");
+
+        RuleFor(x => x.LastName).Must(UserValidationRules.IsValidName)
+            .WithMessage("Lastname can't be empty or too long");
+
+        RuleFor(x => x.Email).Must(UserValidationRules.IsValidEmail)
+            .WithMessage("Email format invalid");
+
+        RuleFor(x => x.Phone).Must(UserValidationRules.IsValidPhone)
+            .WithMessage("Phone format invalid");
+    }
+}
+
 public class CreateUserHandler(
     IKeycloakAdminService keycloakService,
     IApplicationDbContext db,
@@ -22,16 +48,17 @@ public class CreateUserHandler(
 {
     public async Task<Guid> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
-        if (!await permissionService.CanManageGlobalUsersAsync())
-        {
-            throw new UnauthorizedAccessException("Access denied.");
-        }
+        if (!await permissionService.CanManageGlobalUsersAsync()) throw new UnauthorizedAccessException("Access denied.");
+
+        var username = request.Username.Trim();
+        var email = request.Email.Trim().ToLower();
+        var phone = request.Phone.Trim();
 
         var existingUser = await db.Users
             .FirstOrDefaultAsync(u =>
-                u.Username == request.Username.Trim() ||
-                u.Email == request.Email.Trim() ||
-                u.Phone == request.Phone.Trim(), cancellationToken);
+                u.Username.ToLower() == username.ToLower() ||
+                (u.Email != null && u.Email.ToLower() == email) ||
+                (u.Phone != null && u.Phone == phone), cancellationToken);
 
         if (existingUser != null)
         {
@@ -40,9 +67,9 @@ public class CreateUserHandler(
 
             var conflicts = new List<string>();
 
-            if (existingUser.Username == request.Username.Trim()) conflicts.Add("Username");
-            if (existingUser.Email == request.Email.Trim()) conflicts.Add("Email");
-            if (existingUser.Phone == request.Phone.Trim()) conflicts.Add("Phone Number");
+            if (existingUser.Username.Equals(username, StringComparison.OrdinalIgnoreCase)) conflicts.Add("Username");
+            if ((existingUser.Email ?? "").Equals(email, StringComparison.OrdinalIgnoreCase)) conflicts.Add("Email");
+            if (existingUser.Phone == phone) conflicts.Add("Phone Number");
 
             string conflictMessage = conflicts.Count > 1
                 ? $"{string.Join(", ", conflicts.Take(conflicts.Count - 1))} and {conflicts.Last()}"
@@ -55,19 +82,21 @@ public class CreateUserHandler(
         var actorId = currentUser.GetUserId();
         string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
 
-        var keycloakId = await keycloakService.CreateUserAsync(
-            request.Username.Trim(),
-            request.Email.Trim(),
+        var keycloakId = await keycloakService.CreateUserAsync
+        (
+            username,
+            email,
             request.Password,
             request.FirstName?.Trim() ?? "",
-            request.LastName?.Trim() ?? "");
+            request.LastName?.Trim() ?? ""
+        );
 
         var user = new User
         {
             Id = keycloakId,
-            Username = request.Username.Trim(),
-            Email = request.Email.Trim(),
-            Phone = request.Phone.Trim(),
+            Username = username,
+            Email = email,
+            Phone = phone,
             FirstName = request.FirstName?.Trim(),
             LastName = request.LastName?.Trim(),
             Inactive = false,
