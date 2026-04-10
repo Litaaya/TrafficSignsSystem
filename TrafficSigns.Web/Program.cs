@@ -193,6 +193,7 @@ app.MapReactivateAccount();
 app.MapUpdateAccount();
 
 app.MapGetAccounts();
+app.MapValidateAccountField();
 
 // Account and User relationship control
 app.MapAssignUserToAccount();

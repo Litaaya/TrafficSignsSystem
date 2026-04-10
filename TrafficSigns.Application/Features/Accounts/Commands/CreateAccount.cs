@@ -21,7 +21,11 @@ public class CreateAccountCommandValidator : AbstractValidator<CreateAccountComm
     {
         RuleFor(x => x.Name)
             .Must(AccountValidationRules.IsValidName)
-            .WithMessage($"Account name is required and cannot exceed {AccountValidationRules.NameMax} characters.");
+            .WithMessage($"Account name is required and cannot exceed {AccountValidationRules.NameMax} characters");
+
+        RuleFor(x => x.Desc)
+            .Must(AccountValidationRules.isValidDescription)
+            .WithMessage($"Description maximum letters is {AccountValidationRules.DescMax}");
 
         RuleFor(x => x.Email)
             .Must(AccountValidationRules.IsValidEmail)

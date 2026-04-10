@@ -17,7 +17,7 @@ public class ValidateUserFieldHandler(
     {
         if (!await permissionService.CanManageGlobalUsersAsync())
         {
-            throw new UnauthorizedAccessException("Access denied.");
+            throw new UnauthorizedAccessException("Access denied");
         }
 
         var val = request.Value.Trim();
