@@ -2,6 +2,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 // Security
 var keycloakClientSecret = builder.AddParameter("keycloak-client-secret", secret: true);
+var keycloakSyncSecret = builder.AddParameter("keycloak-sync-secret", secret: true);
 var postgresPassword = builder.AddParameter("postgres-password", "postgres", secret: true);
 
 // Database
@@ -32,10 +33,10 @@ var apiservice = builder.AddProject<Projects.TrafficSigns_Web>("apiservice")
        .WithReference(db)
        .WithReference(keycloak.GetEndpoint("http"))
        .WithEnvironment("Keycloak__AuthServerUrl", keycloak.GetEndpoint("http"))
-       .WithEnvironment("Keycloak__ResourceClient__ClientId", "trafficsigns-ui")
-       .WithEnvironment("Keycloak__AdminClient__ClientId", "trafficsigns-api")
-       .WithEnvironment("Keycloak__AdminClient__ClientSecret", keycloakClientSecret)
        .WithEnvironment("Keycloak__Realm", "trafficsigns-realm")
+       .WithEnvironment("Keycloak__SyncClient__ClientId", "trafficsigns-worker")
+       .WithEnvironment("Keycloak__AdminClient__ClientSecret", keycloakClientSecret)
+       .WithEnvironment("Keycloak__SyncClient__ClientSecret", keycloakSyncSecret)
        .WaitFor(db)
        .WaitFor(keycloak);
 

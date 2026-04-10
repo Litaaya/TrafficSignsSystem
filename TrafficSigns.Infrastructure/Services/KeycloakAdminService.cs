@@ -6,14 +6,22 @@ using Microsoft.Extensions.Configuration;
 
 namespace TrafficSigns.Infrastructure.Services;
 
-public class KeycloakAdminService(HttpClient httpClient, IConfiguration config) : IKeycloakAdminService
+public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, ICurrentUserService currentUserService) : IKeycloakAdminService
 {
     private async Task<string> GetAdminTokenAsync()
     {
         var baseUrl = config["Keycloak:AuthServerUrl"];
         var realm = config["Keycloak:Realm"];
-        var clientId = config["Keycloak:AdminClient:ClientId"] ?? config["Keycloak:ClientId"];
-        var clientSecret = config["Keycloak:AdminClient:ClientSecret"] ?? config["Keycloak:ClientSecret"];
+
+        var isBot = currentUserService.GetUsername() == "KEYCLOAK_SYNC_BOT";
+
+        var clientId = isBot
+        ? (config["Keycloak:SyncClient:ClientId"] ?? "traffic-signs-worker")
+        : (config["Keycloak:AdminClient:ClientId"] ?? config["Keycloak:ClientId"]);
+
+        var clientSecret = isBot
+            ? config["Keycloak:SyncClient:ClientSecret"]
+            : (config["Keycloak:AdminClient:ClientSecret"] ?? config["Keycloak:ClientSecret"]);
 
         var response = await httpClient.PostAsync(
             $"{baseUrl}/realms/{realm}/protocol/openid-connect/token",
@@ -23,6 +31,12 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config) 
                 ["client_id"] = clientId!,
                 ["client_secret"] = clientSecret!
             }));
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to obtain Keycloak token: {error}");
+        }
 
         var data = await response.Content.ReadFromJsonAsync<JsonElement>();
         return data.GetProperty("access_token").GetString()!;

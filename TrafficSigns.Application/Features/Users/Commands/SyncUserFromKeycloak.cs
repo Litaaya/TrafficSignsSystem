@@ -14,23 +14,24 @@ public class SyncUserFromKeycloakHandler(
     public async Task Handle(SyncUserFromKeycloakCommand request, CancellationToken cancellationToken)
     {
         var kcUser = await keycloakService.GetUserByIdAsync(request.UserId);
-
         var user = await db.Users
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken);
 
         if (kcUser == null)
         {
-            if (user != null)
+            if (user != null && !user.Inactive)
             {
                 user.Inactive = true;
                 user.UpdatedDt = DateTime.UtcNow;
+                user.AddMetadataLog("sync_event", "User deactivated: Not found in Keycloak");
                 await db.SaveChangesAsync(cancellationToken);
             }
             return;
         }
 
         var json = kcUser.Value;
+        bool isNew = false;
 
         if (user == null)
         {
@@ -40,21 +41,54 @@ public class SyncUserFromKeycloakHandler(
                 CreatedDt = DateTime.UtcNow
             };
             db.Users.Add(user);
+            isNew = true;
         }
 
-        user.Username = json.TryGetProperty("username", out var un) ? un.GetString() ?? "" : user.Username;
-        user.Email = json.TryGetProperty("email", out var em) ? em.GetString() : user.Email;
-        user.Phone = json.TryGetProperty("phone", out var ph) ? ph.GetString() : user.Phone;
-        user.FirstName = json.TryGetProperty("firstName", out var fn) ? fn.GetString() : user.FirstName;
-        user.LastName = json.TryGetProperty("lastName", out var ln) ? ln.GetString() : user.LastName;
+        bool hasChanged = isNew;
+
+        string? kcUsername = json.TryGetProperty("username", out var un) ? un.GetString() : null;
+        if (user.Username != kcUsername && kcUsername != null)
+        {
+            user.Username = kcUsername;
+            hasChanged = true;
+        }
+
+        string? kcEmail = json.TryGetProperty("email", out var em) ? em.GetString() : null;
+        if (user.Email != kcEmail)
+        {
+            user.Email = kcEmail;
+            hasChanged = true;
+        }
+
+        string? kcFirstName = json.TryGetProperty("firstName", out var fn) ? fn.GetString() : null;
+        if (user.FirstName != kcFirstName)
+        {
+            user.FirstName = kcFirstName;
+            hasChanged = true;
+        }
+
+        string? kcLastName = json.TryGetProperty("lastName", out var ln) ? ln.GetString() : null;
+        if (user.LastName != kcLastName)
+        {
+            user.LastName = kcLastName;
+            hasChanged = true;
+        }
 
         if (json.TryGetProperty("enabled", out var enabledProp))
         {
-            user.Inactive = !enabledProp.GetBoolean();
+            bool shouldBeInactive = !enabledProp.GetBoolean();
+            if (user.Inactive != shouldBeInactive)
+            {
+                user.Inactive = shouldBeInactive;
+                hasChanged = true;
+            }
         }
 
-        user.UpdatedDt = DateTime.UtcNow;
-
-        await db.SaveChangesAsync(cancellationToken);
+        if (hasChanged)
+        {
+            user.UpdatedDt = DateTime.UtcNow;
+            user.AddMetadataLog("sync_source", "Keycloak_Background_Poll");
+            await db.SaveChangesAsync(cancellationToken);
+        }
     }
 }
