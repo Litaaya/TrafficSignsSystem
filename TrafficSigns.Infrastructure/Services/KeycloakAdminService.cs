@@ -178,8 +178,7 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config) 
         {
             var errorDetails = await response.Content.ReadAsStringAsync();
             throw new Exception($"Keycloak Error ({response.StatusCode}): {errorDetails}");
-        }
-        ;
+        };
 
         return await response.Content.ReadFromJsonAsync<JsonElement>();
     }

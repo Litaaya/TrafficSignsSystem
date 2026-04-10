@@ -18,7 +18,6 @@ using TrafficSigns.Web.Features.Accounts.Commands;
 using TrafficSigns.Web.Features.Accounts.Queries;
 using TrafficSigns.Web.Features.AccountUsers.Commands;
 using TrafficSigns.Web.Features.AccountUsers.Queries;
-using TrafficSigns.Web.Features.Auth;
 using TrafficSigns.Web.Features.Map.Queries;
 using TrafficSigns.Web.Features.TrafficSigns.Commands;
 using TrafficSigns.Web.Features.TrafficSigns.Queries;
@@ -185,6 +184,7 @@ app.MapUpdateProfile();
 
 app.MapGetUsers();
 app.MapValidateUserField();
+app.MapResetPassword();
 
 // Account control
 app.MapCreateAccount();
@@ -213,7 +213,6 @@ app.MapGetTrafficSigns();
 app.MapGetTrafficSignById();
 
 // Map
-app.MapVerifyPassword();
 app.MapRoadEndpoints();
 
 using (var scope = app.Services.CreateScope())

@@ -14,4 +14,5 @@ public interface IPermissionService
     Task<bool> CanManageTrafficSignsAsync(Guid accountId);
     Task<bool> CanViewMapAsync(Guid accountId);
     Task<bool> CanManageGlobalUsersAsync();
+    Task<bool> CanChangePasswordAsync(Guid targetUserId);
 }
