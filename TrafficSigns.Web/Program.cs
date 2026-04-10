@@ -185,6 +185,7 @@ app.MapUpdateProfile();
 app.MapGetUsers();
 app.MapValidateUserField();
 app.MapResetPassword();
+app.MapChangePassword();
 
 // Account control
 app.MapCreateAccount();
