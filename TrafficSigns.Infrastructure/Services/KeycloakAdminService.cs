@@ -186,14 +186,16 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         httpClient.DefaultRequestHeaders.Clear();
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await httpClient.GetAsync($"{baseUrl}/admin/realms/{realm}/users/{userId}");
+        var response = await httpClient.GetAsync($"/admin/realms/{realm}/users/{userId}");
 
-        if (!response.IsSuccessStatusCode) 
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
-            var errorDetails = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Keycloak Error ({response.StatusCode}): {errorDetails}");
-        };
+            return null;
+        }
 
-        return await response.Content.ReadFromJsonAsync<JsonElement>();
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<JsonElement>(content);
     }
 }
