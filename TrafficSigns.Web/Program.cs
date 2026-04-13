@@ -23,6 +23,7 @@ using TrafficSigns.Web.Features.TrafficSigns.Commands;
 using TrafficSigns.Web.Features.TrafficSigns.Queries;
 using TrafficSigns.Web.Features.Users.Commands;
 using TrafficSigns.Web.Features.Users.Queries;
+using TrafficSigns.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("TrafficSignsDB");
@@ -143,6 +144,8 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -177,6 +180,8 @@ app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<LogUserActivityMiddleware>();
 
 app.MapControllers();
 
