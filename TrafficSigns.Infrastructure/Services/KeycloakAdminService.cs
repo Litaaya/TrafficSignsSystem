@@ -186,7 +186,7 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         httpClient.DefaultRequestHeaders.Clear();
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await httpClient.GetAsync($"/admin/realms/{realm}/users/{userId}");
+        var response = await httpClient.GetAsync($"admin/realms/{realm}/users/{userId}");
 
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {

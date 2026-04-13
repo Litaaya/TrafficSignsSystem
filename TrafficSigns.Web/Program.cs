@@ -131,7 +131,10 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddHttpClient<IKeycloakAdminService, KeycloakAdminService>();
+builder.Services.AddHttpClient<IKeycloakAdminService, KeycloakAdminService>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:8181/");
+});
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 
