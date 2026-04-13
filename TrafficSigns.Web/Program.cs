@@ -45,6 +45,8 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new GeoJsonConverterFactory());
     });
 
+builder.Services.AddMemoryCache();
+
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>

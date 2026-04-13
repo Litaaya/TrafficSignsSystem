@@ -11,10 +11,12 @@ public class KeycloakSyncWorker(
     IServiceScopeFactory scopeFactory,
     ILogger<KeycloakSyncWorker> logger) : BackgroundService
 {
-    private DateTime _lastSyncTime = DateTime.UtcNow.AddMinutes(-1);
+    private long _lastSyncTimeMs = DateTimeOffset.UtcNow.AddMinutes(-1).ToUnixTimeMilliseconds();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await Task.Delay(10000, stoppingToken);
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -23,31 +25,48 @@ public class KeycloakSyncWorker(
                 var keycloak = scope.ServiceProvider.GetRequiredService<IKeycloakAdminService>();
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
-                var events = await keycloak.GetAdminEventsAsync(_lastSyncTime);
+                var events = await keycloak.GetAdminEventsAsync(DateTime.UtcNow);
 
                 if (events.Any())
                 {
+                    var syncRegistry = new Dictionary<Guid, string?>();
+                    long maxTimeInBatch = _lastSyncTimeMs;
+
                     foreach (var ev in events)
                     {
-                        if (ev.TryGetProperty("resourceType", out var rt) && rt.GetString() != "USER")
-                            continue;
-
-                        if (ev.TryGetProperty("resourcePath", out var path))
+                        long eventTime = ev.GetProperty("time").GetInt64();
+                        if (eventTime <= _lastSyncTimeMs)
                         {
-                            var userIdStr = path.GetString()?.Split('/').Last();
+                            continue; 
+                        }
+
+                        if (eventTime > maxTimeInBatch)
+                        {
+                            maxTimeInBatch = eventTime;
+                        }
+
+                        if (ev.TryGetProperty("resourceType", out var rt) && rt.GetString() == "USER")
+                        {
+                            var userIdStr = ev.GetProperty("resourcePath").GetString()?.Split('/').Last();
                             if (Guid.TryParse(userIdStr, out var userId))
                             {
-                                string? actorId = null;
-                                if (ev.TryGetProperty("authDetails", out var auth) && auth.TryGetProperty("userId", out var actorProp))
-                                {
-                                    actorId = actorProp.GetString();
-                                }
+                                string? actorId = ev.TryGetProperty("authDetails", out var auth)
+                                    ? auth.GetProperty("userId").GetString() : null;
 
-                                await mediator.Send(new SyncUserFromKeycloakCommand(userId, actorId), stoppingToken);
+                                syncRegistry[userId] = actorId;
                             }
                         }
                     }
-                    _lastSyncTime = DateTime.UtcNow;
+
+                    if (syncRegistry.Any())
+                    {
+                        foreach (var item in syncRegistry)
+                        {
+                            await mediator.Send(new SyncUserFromKeycloakCommand(item.Key, item.Value), stoppingToken);
+                        }
+                    }
+
+                    _lastSyncTimeMs = maxTimeInBatch;
                 }
             }
             catch (Exception ex)

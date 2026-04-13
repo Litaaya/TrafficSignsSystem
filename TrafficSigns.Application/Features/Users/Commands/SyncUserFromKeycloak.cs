@@ -82,12 +82,14 @@ public class SyncUserFromKeycloakHandler(
         TrackChange("Email", user.Email, json.TryGetProperty("email", out var em) ? em.GetString() : null, v => user.Email = v);
         TrackChange("FirstName", user.FirstName, json.TryGetProperty("firstName", out var fn) ? fn.GetString() : null, v => user.FirstName = v);
         TrackChange("LastName", user.LastName, json.TryGetProperty("lastName", out var ln) ? ln.GetString() : null, v => user.LastName = v);
-
-        if (json.TryGetProperty("attributes", out var attrs) && attrs.TryGetProperty("phoneNumber", out var ph))
+        string? kcPhone = null;
+        if (json.TryGetProperty("attributes", out var attrs) &&
+            attrs.TryGetProperty("phone", out var ph) &&
+            ph.GetArrayLength() > 0)
         {
-            var kcPhone = ph[0].GetString();
-            TrackChange("Phone", user.Phone, kcPhone, v => user.Phone = v);
+            kcPhone = ph[0].GetString();
         }
+        TrackChange("Phone", user.Phone, kcPhone, v => user.Phone = v);
 
         if (json.TryGetProperty("enabled", out var en))
         {

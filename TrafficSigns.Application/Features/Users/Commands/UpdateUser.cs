@@ -70,6 +70,7 @@ public class UpdateUserHandler(
         await keycloakService.UpdateUserAsync(
             user.Id,
             request.Email.Trim(),
+            request.Phone.Trim(),
             request.FirstName?.Trim() ?? "",
             request.LastName?.Trim() ?? "");
 

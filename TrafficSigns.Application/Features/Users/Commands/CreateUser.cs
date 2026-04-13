@@ -86,9 +86,10 @@ public class CreateUserHandler(
         (
             username,
             email,
+            phone,
             request.Password,
             request.FirstName?.Trim() ?? "",
-            request.LastName?.Trim() ?? ""
+            request.LastName?.Trim() ?? ""            
         );
 
         var user = new User

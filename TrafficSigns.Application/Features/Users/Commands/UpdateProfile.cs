@@ -68,6 +68,7 @@ public class UpdateProfileHandler(
         await keycloakService.UpdateUserAsync(
             user.Id,
             email,
+            phone,
             request.FirstName?.Trim() ?? "",
             request.LastName?.Trim() ?? "");
 
