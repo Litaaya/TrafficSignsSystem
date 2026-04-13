@@ -10,6 +10,9 @@
         public string? PendingPhone { get; set; }
         public string? Phone { get; set; }
 
+        //public DateTime? LastLoginAt { get; set; }
+        //public DateTime? LastActiveAt { get; set; }
+
         public virtual ICollection<AccountUser> AccountUsers { get; set; } = new List<AccountUser>();
     }
 }

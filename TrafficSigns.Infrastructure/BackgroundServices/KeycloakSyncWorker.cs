@@ -15,8 +15,6 @@ public class KeycloakSyncWorker(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Keycloak Sync Worker is starting at: {time}", DateTimeOffset.Now);
-
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -36,22 +34,25 @@ public class KeycloakSyncWorker(
 
                         if (ev.TryGetProperty("resourcePath", out var path))
                         {
-                            var resourcePath = path.GetString();
-                            var userIdStr = resourcePath?.Split('/').Last();
-
+                            var userIdStr = path.GetString()?.Split('/').Last();
                             if (Guid.TryParse(userIdStr, out var userId))
                             {
-                                await mediator.Send(new SyncUserFromKeycloakCommand(userId), stoppingToken);
+                                string? actorId = null;
+                                if (ev.TryGetProperty("authDetails", out var auth) && auth.TryGetProperty("userId", out var actorProp))
+                                {
+                                    actorId = actorProp.GetString();
+                                }
+
+                                await mediator.Send(new SyncUserFromKeycloakCommand(userId, actorId), stoppingToken);
                             }
                         }
                     }
-
                     _lastSyncTime = DateTime.UtcNow;
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "An error occurred during Keycloak synchronization poll.");
+                logger.LogError(ex, "Keycloak sync error");
             }
 
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);

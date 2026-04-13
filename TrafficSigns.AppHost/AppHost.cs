@@ -26,9 +26,13 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "la
     .WithEnvironment("KC_DB_USERNAME", "postgres")
     .WithEnvironment("KC_DB_PASSWORD", "postgres")
     .WithEnvironment("KC_HOSTNAME_STRICT", "false")
-    .WithArgs("start-dev");
-    //.WithBindMount("./_/_.json", "/opt/keyclok/data/import/realm.json", isReadOnly: true
-    ///WithArgs("start-dev", "--import-realm");
+    .WithBindMount("./TrafficSigns.Infrastructure/Keycloak/Realms/trafficsigns-realm.json", "/opt/keycloak/data/import/realm.json")
+    .WithArgs("start-dev", "--import-realm")
+    .WithUrlForEndpoint("http", _ => new()
+     {
+         Url = "/admin/trafficsigns-realm/console/",
+         DisplayText = "Traffic-Signs Console"
+     });    
 
 // API service
 var apiservice = builder.AddProject<Projects.TrafficSigns_Web>("apiservice")

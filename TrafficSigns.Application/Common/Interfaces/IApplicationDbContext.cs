@@ -11,6 +11,7 @@ public interface IApplicationDbContext
     DbSet<AccountUser> AccountUsers { get; }
     DbSet<OsmRoadSegment> OsmRoadSegments { get; }
     DatabaseFacade Database { get; }
+    DbSet<AuditLog> AuditLogs { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }
