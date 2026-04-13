@@ -49,7 +49,7 @@ public class CreateUserHandlerTests
     {
         // Arrange
         _permissionService.CanManageGlobalUsersAsync().Returns(true);
-        _db.Users.Add(new User { Username = "olduser", Email = "old@test.com", Phone = "123", Inactive = true });
+        _db.Users.Add(new User { Username = "olduser", Email = "old@test.com", Phone = "123", IsDeleted = true });
         await _db.SaveChangesAsync();
 
         var command = new CreateUserCommand("olduser", "pass", "new@email.com", "999");
@@ -66,7 +66,7 @@ public class CreateUserHandlerTests
     {
         // Arrange
         _permissionService.CanManageGlobalUsersAsync().Returns(true);
-        _db.Users.Add(new User { Username = "other", Email = "duplicate@test.com", Phone = "111", Inactive = false });
+        _db.Users.Add(new User { Username = "other", Email = "duplicate@test.com", Phone = "111", IsDeleted = false });
         await _db.SaveChangesAsync();
 
         var command = new CreateUserCommand("newuser", "pass", "duplicate@test.com", "222");
@@ -83,7 +83,7 @@ public class CreateUserHandlerTests
     {
         // Arrange
         _permissionService.CanManageGlobalUsersAsync().Returns(true);
-        _db.Users.Add(new User { Username = "other", Email = "email@test.com", Phone = "0123", Inactive = false });
+        _db.Users.Add(new User { Username = "other", Email = "email@test.com", Phone = "0123", IsDeleted = false });
         await _db.SaveChangesAsync();
 
         var command = new CreateUserCommand("newuser", "pass", "email@test.com", "0123");

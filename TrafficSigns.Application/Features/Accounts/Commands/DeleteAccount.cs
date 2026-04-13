@@ -20,7 +20,7 @@ public class DeleteAccountHandler(
 
         var account = await db.Accounts
             .Include(a => a.AccountUsers)
-            .FirstOrDefaultAsync(a => a.Id == request.AccountId && !a.Inactive, cancellationToken);
+            .FirstOrDefaultAsync(a => a.Id == request.AccountId && !a.IsDeleted, cancellationToken);
 
         if (account == null) throw new Exception("Invalid Account or Account already inactive");
 
@@ -32,14 +32,14 @@ public class DeleteAccountHandler(
         string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
         string logEntry = $"Deactivated by {actor}({actorId}) at {timestamp}";
 
-        account.Inactive = true;
+        account.IsDeleted = true;
         account.UpdatedDt = DateTime.UtcNow;
         account.AddMetadataLog("update_history", logEntry);
 
-        var activeLinks = account.AccountUsers.Where(au => !au.Inactive).ToList();
+        var activeLinks = account.AccountUsers.Where(au => !au.IsDeleted).ToList();
         foreach (var link in activeLinks)
         {
-            link.Inactive = true;
+            link.IsDeleted = true;
             link.UpdatedDt = DateTime.UtcNow;
             link.AddMetadataLog("update_history", $"Deactivated due to Account deactivation by {actor} at {timestamp}");
         }

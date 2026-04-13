@@ -34,7 +34,7 @@ public class UpdateUserInAccountHandler(
         var accountUser = await db.AccountUsers
             .FirstOrDefaultAsync(au => au.AccountId == request.AccountId
                                     && au.UserId == request.UserId
-                                    && !au.Inactive, cancellationToken);
+                                    && !au.IsDeleted, cancellationToken);
 
         if (accountUser == null)
         {
@@ -47,7 +47,7 @@ public class UpdateUserInAccountHandler(
                 .AnyAsync(au => au.AccountId == request.AccountId
                                 && au.UserId != request.UserId
                                 && au.Role == "Owner"
-                                && !au.Inactive, cancellationToken);
+                                && !au.IsDeleted, cancellationToken);
 
             if (!otherOwnersExist)
             {

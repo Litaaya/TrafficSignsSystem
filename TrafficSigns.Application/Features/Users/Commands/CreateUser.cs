@@ -62,7 +62,7 @@ public class CreateUserHandler(
 
         if (existingUser != null)
         {
-            if (existingUser.Inactive)
+            if (existingUser.IsDeleted)
                 throw new Exception("This user already exists but has been inactivated.");
 
             var conflicts = new List<string>();
@@ -99,7 +99,7 @@ public class CreateUserHandler(
             Phone = phone,
             FirstName = request.FirstName?.Trim(),
             LastName = request.LastName?.Trim(),
-            Inactive = false,
+            IsDeleted = false,
             CreatedDt = DateTime.UtcNow,
             UpdatedDt = DateTime.UtcNow
         };

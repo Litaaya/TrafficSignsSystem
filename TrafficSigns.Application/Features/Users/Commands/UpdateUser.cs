@@ -43,7 +43,7 @@ public class UpdateUserHandler(
         if (!await permissionService.CanManageGlobalUsersAsync()) throw new UnauthorizedAccessException("Access denied");
 
         var user = await db.Users.FindAsync([request.Id], cancellationToken);
-        if (user == null || user.Inactive) return false;
+        if (user == null || user.IsDeleted) return false;
 
         var email = request.Email.Trim().ToLower();
         var phone = request.Phone.Trim();

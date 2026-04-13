@@ -28,7 +28,7 @@ public class GetUsersInAccountHandler(
 
         return await db.AccountUsers
             .AsNoTracking()
-            .Where(au => au.AccountId == request.AccountId && !au.Inactive)
+            .Where(au => au.AccountId == request.AccountId && !au.IsDeleted)
             .Include(au => au.User)
             .Select(au => new UserInAccountDto(
                 au.UserId,

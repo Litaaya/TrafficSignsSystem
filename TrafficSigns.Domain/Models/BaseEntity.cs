@@ -3,7 +3,7 @@
 public abstract class BaseEntity
 {
     public Guid Id { get; set; }
-    public bool Inactive { get; set; }
+    public bool IsDeleted { get; set; }
     public DateTime CreatedDt { get; set; }
     public DateTime UpdatedDt { get; set; }
     public Dictionary<string, string>? Metadata { get; set; }

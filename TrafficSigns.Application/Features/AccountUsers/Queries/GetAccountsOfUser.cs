@@ -31,7 +31,7 @@ public class GetAccountsOfUserHandler(
         {
             return await db.Accounts
                 .AsNoTracking()
-                .Where(a => !a.Inactive)
+                .Where(a => !a.IsDeleted)
                 .Select(a => new AccountOfUserDto(
                     a.Id,
                     a.Name,
@@ -44,7 +44,7 @@ public class GetAccountsOfUserHandler(
 
         return await db.AccountUsers
             .AsNoTracking()
-            .Where(au => au.UserId == request.UserId && !au.Inactive)
+            .Where(au => au.UserId == request.UserId && !au.IsDeleted)
             .Include(au => au.Account)
             .Select(au => new AccountOfUserDto(
                 au.AccountId,

@@ -27,6 +27,8 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "la
     .WithEnvironment("KC_DB_PASSWORD", "postgres")
     .WithEnvironment("KC_HOSTNAME_STRICT", "false")
     .WithArgs("start-dev");
+    //.WithBindMount("./_/_.json", "/opt/keyclok/data/import/realm.json", isReadOnly: true
+    ///WithArgs("start-dev", "--import-realm");
 
 // API service
 var apiservice = builder.AddProject<Projects.TrafficSigns_Web>("apiservice")

@@ -63,7 +63,7 @@ public class CreateAccountHandler(
             Email = request.Email?.Trim(),
             Phone = request.Phone?.Trim(),
             System = request.System,
-            Inactive = false,
+            IsDeleted = false,
             CreatedDt = DateTime.UtcNow,
             UpdatedDt = DateTime.UtcNow
         };

@@ -63,7 +63,7 @@ public class ReactivateUserHandlerTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        _db.Users.Add(new User { Id = userId, Username = "active_user", Inactive = false });
+        _db.Users.Add(new User { Id = userId, Username = "active_user", IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageGlobalUsersAsync().Returns(true);
@@ -82,7 +82,7 @@ public class ReactivateUserHandlerTests
         // Arrange
         var userId = Guid.NewGuid();
         var newPass = "StrongPassword99!";
-        _db.Users.Add(new User { Id = userId, Username = "inactive_user", Inactive = true });
+        _db.Users.Add(new User { Id = userId, Username = "inactive_user", IsDeleted = true });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageGlobalUsersAsync().Returns(true);
@@ -99,7 +99,7 @@ public class ReactivateUserHandlerTests
         await _keycloakService.Received(1).ResetPasswordAsync(userId, newPass);
 
         var userInDb = await _db.Users.FirstAsync(u => u.Id == userId);
-        userInDb.Inactive.Should().BeFalse();
+        userInDb.IsDeleted.Should().BeFalse();
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public class ReactivateUserHandlerTests
         // Arrange
         var userId = Guid.NewGuid();
         var mockAdminId = Guid.NewGuid();
-        _db.Users.Add(new User { Id = userId, Username = "reactivate_me", Inactive = true });
+        _db.Users.Add(new User { Id = userId, Username = "reactivate_me", IsDeleted = true });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageGlobalUsersAsync().Returns(true);

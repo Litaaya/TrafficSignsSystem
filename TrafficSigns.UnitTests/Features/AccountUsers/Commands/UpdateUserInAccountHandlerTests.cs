@@ -65,7 +65,7 @@ public class UpdateUserInAccountHandlerTests
         var userId = Guid.NewGuid();
         _permissionService.CanManageAccountUsersAsync(accId).Returns(true);
 
-        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, Inactive = true });
+        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, IsDeleted = true });
         await _db.SaveChangesAsync();
 
         var command = new UpdateUserInAccountCommand(accId, userId, "Member");
@@ -84,7 +84,7 @@ public class UpdateUserInAccountHandlerTests
         var accId = Guid.NewGuid();
         var userId = Guid.NewGuid();
 
-        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, Role = "Owner", Inactive = false });
+        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, Role = "Owner", IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageAccountUsersAsync(accId).Returns(true);
@@ -106,8 +106,8 @@ public class UpdateUserInAccountHandlerTests
         var userId = Guid.NewGuid();
         var otherOwnerId = Guid.NewGuid();
 
-        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, Role = "Owner", Inactive = false });
-        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = otherOwnerId, Role = "Owner", Inactive = false });
+        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, Role = "Owner", IsDeleted = false });
+        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = otherOwnerId, Role = "Owner", IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageAccountUsersAsync(accId).Returns(true);
@@ -128,7 +128,7 @@ public class UpdateUserInAccountHandlerTests
         // Arrange
         var accId = Guid.NewGuid();
         var userId = Guid.NewGuid();
-        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, Role = "Viewer", Inactive = false });
+        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, Role = "Viewer", IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageAccountUsersAsync(accId).Returns(true);
@@ -150,7 +150,7 @@ public class UpdateUserInAccountHandlerTests
         var userId = Guid.NewGuid();
         var mockAdminId = Guid.NewGuid();
 
-        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, Role = "Viewer", Inactive = false });
+        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, Role = "Viewer", IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageAccountUsersAsync(accId).Returns(true);

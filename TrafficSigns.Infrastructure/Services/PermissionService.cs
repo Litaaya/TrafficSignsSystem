@@ -29,7 +29,7 @@ public class PermissionService(AppDbContext db, ICurrentUserService currentUserS
         if (userId == null) return null;
 
         _cachedRole = await db.AccountUsers
-            .Where(au => au.AccountId == accountId && au.UserId == userId && !au.Inactive)
+            .Where(au => au.AccountId == accountId && au.UserId == userId && !au.IsDeleted)
             .Select(au => au.Role)
             .FirstOrDefaultAsync();
 

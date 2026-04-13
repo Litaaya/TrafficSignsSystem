@@ -84,7 +84,7 @@ public class UpdateAccountHandlerTests
     {
         // Arrange
         var accId = Guid.NewGuid();
-        _db.Accounts.Add(new Account { Id = accId, Name = "Old Name", Inactive = false });
+        _db.Accounts.Add(new Account { Id = accId, Name = "Old Name", IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanUpdateAccountAsync(accId, Arg.Any<bool>()).Returns(true);

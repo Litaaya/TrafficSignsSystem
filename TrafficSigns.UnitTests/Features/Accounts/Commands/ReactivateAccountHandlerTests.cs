@@ -60,7 +60,7 @@ public class ReactivateAccountHandlerTests
     {
         // Arrange
         var accId = Guid.NewGuid();
-        _db.Accounts.Add(new Account { Id = accId, Inactive = false });
+        _db.Accounts.Add(new Account { Id = accId, IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.IsAdmin().Returns(true);
@@ -78,7 +78,7 @@ public class ReactivateAccountHandlerTests
     {
         // Arrange
         var accId = Guid.NewGuid();
-        _db.Accounts.Add(new Account { Id = accId, Inactive = true }); // Đang bị khóa
+        _db.Accounts.Add(new Account { Id = accId, IsDeleted = true }); // Đang bị khóa
         await _db.SaveChangesAsync();
 
         _permissionService.IsAdmin().Returns(true);
@@ -91,7 +91,7 @@ public class ReactivateAccountHandlerTests
         result.Should().Be(accId);
 
         var account = await _db.Accounts.FirstAsync(a => a.Id == accId);
-        account.Inactive.Should().BeFalse();
+        account.IsDeleted.Should().BeFalse();
         account.UpdatedDt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
 
@@ -101,7 +101,7 @@ public class ReactivateAccountHandlerTests
         // Arrange
         var accId = Guid.NewGuid();
         var mockAdminId = Guid.NewGuid();
-        _db.Accounts.Add(new Account { Id = accId, Inactive = true });
+        _db.Accounts.Add(new Account { Id = accId, IsDeleted = true });
         await _db.SaveChangesAsync();
 
         _permissionService.IsAdmin().Returns(true);

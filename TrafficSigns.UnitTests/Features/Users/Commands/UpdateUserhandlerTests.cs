@@ -47,7 +47,7 @@ public class UpdateUserHandlerTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        _db.Users.Add(new User { Id = userId, Username = "old", Inactive = true });
+        _db.Users.Add(new User { Id = userId, Username = "old", IsDeleted = true });
         await _db.SaveChangesAsync();
 
         var command = new UpdateUserCommand(userId, "new@test.com", "0999");

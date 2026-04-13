@@ -62,11 +62,11 @@ public class GetUsersHandler(
 
         if (request.StatusFilter == "active")
         {
-            query = query.Where(u => !u.Inactive);
+            query = query.Where(u => !u.IsDeleted);
         }
         else if (request.StatusFilter == "inactive")
         {
-            query = query.Where(u => u.Inactive);
+            query = query.Where(u => u.IsDeleted);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -82,7 +82,7 @@ public class GetUsersHandler(
                 u.Phone,
                 u.FirstName,
                 u.LastName,
-                u.Inactive,
+                u.IsDeleted,
                 u.CreatedDt,
                 u.Metadata))
             .ToListAsync(cancellationToken);
@@ -114,7 +114,7 @@ public class GetUserByIdHandler(
                 u.Phone,
                 u.FirstName,
                 u.LastName,
-                u.Inactive,
+                u.IsDeleted,
                 u.CreatedDt,
                 u.Metadata))
             .FirstOrDefaultAsync(cancellationToken);

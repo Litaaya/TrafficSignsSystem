@@ -20,9 +20,9 @@ public class SyncUserFromKeycloakHandler(
 
         if (kcUser == null)
         {
-            if (user != null && !user.Inactive)
+            if (user != null && !user.IsDeleted)
             {
-                user.Inactive = true;
+                user.IsDeleted = true;
                 user.UpdatedDt = DateTime.UtcNow;
                 user.AddMetadataLog("sync_event", "User deactivated: Not found in Keycloak");
                 await db.SaveChangesAsync(cancellationToken);
@@ -77,9 +77,9 @@ public class SyncUserFromKeycloakHandler(
         if (json.TryGetProperty("enabled", out var enabledProp))
         {
             bool shouldBeInactive = !enabledProp.GetBoolean();
-            if (user.Inactive != shouldBeInactive)
+            if (user.IsDeleted != shouldBeInactive)
             {
-                user.Inactive = shouldBeInactive;
+                user.IsDeleted = shouldBeInactive;
                 hasChanged = true;
             }
         }

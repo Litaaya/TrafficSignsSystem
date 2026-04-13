@@ -147,7 +147,7 @@ public class AssignUserToAccountHandlerTests
         var userId = Guid.NewGuid();
         _db.Accounts.Add(new Account { Id = accId });
         _db.Users.Add(new User { Id = userId });
-        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, Inactive = false });
+        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageAccountUsersAsync(accId).Returns(true);
@@ -170,7 +170,7 @@ public class AssignUserToAccountHandlerTests
         _db.Users.Add(new User { Id = userId });
 
         var oldId = Guid.NewGuid();
-        _db.AccountUsers.Add(new AccountUser { Id = oldId, AccountId = accId, UserId = userId, Inactive = true, Role = "Viewer" });
+        _db.AccountUsers.Add(new AccountUser { Id = oldId, AccountId = accId, UserId = userId, IsDeleted = true, Role = "Viewer" });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageAccountUsersAsync(accId).Returns(true);
@@ -181,7 +181,7 @@ public class AssignUserToAccountHandlerTests
 
         // Assert
         var result = await _db.AccountUsers.FindAsync(oldId);
-        result!.Inactive.Should().BeFalse();
+        result!.IsDeleted.Should().BeFalse();
         result.Role.Should().Be("Member");
     }
 

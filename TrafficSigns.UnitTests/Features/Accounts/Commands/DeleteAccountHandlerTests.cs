@@ -47,7 +47,7 @@ public class DeleteAccountHandlerTests
     {
         // Arrange
         var accId = Guid.NewGuid();
-        _db.Accounts.Add(new Account { Id = accId, Inactive = true }); // Đã inactive
+        _db.Accounts.Add(new Account { Id = accId, IsDeleted = true }); // Đã inactive
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageAccountAsync(accId).Returns(true);
@@ -65,7 +65,7 @@ public class DeleteAccountHandlerTests
     {
         // Arrange
         var accId = Guid.NewGuid();
-        _db.Accounts.Add(new Account { Id = accId, System = true, Inactive = false });
+        _db.Accounts.Add(new Account { Id = accId, System = true, IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageAccountAsync(accId).Returns(true);
@@ -85,7 +85,7 @@ public class DeleteAccountHandlerTests
     {
         // Arrange
         var accId = Guid.NewGuid();
-        _db.Accounts.Add(new Account { Id = accId, System = false, Inactive = false });
+        _db.Accounts.Add(new Account { Id = accId, System = false, IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageAccountAsync(accId).Returns(true);
@@ -97,7 +97,7 @@ public class DeleteAccountHandlerTests
         // Assert
         result.Should().BeTrue();
         var account = await _db.Accounts.FirstAsync(a => a.Id == accId);
-        account.Inactive.Should().BeTrue();
+        account.IsDeleted.Should().BeTrue();
         account.UpdatedDt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
 
@@ -109,11 +109,11 @@ public class DeleteAccountHandlerTests
         var user1 = Guid.NewGuid();
         var user2 = Guid.NewGuid();
 
-        var account = new Account { Id = accId, Inactive = false };
+        var account = new Account { Id = accId, IsDeleted = false };
         _db.Accounts.Add(account);
 
-        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = user1, Inactive = false });
-        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = user2, Inactive = false });
+        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = user1, IsDeleted = false });
+        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = user2, IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageAccountAsync(accId).Returns(true);
@@ -125,7 +125,7 @@ public class DeleteAccountHandlerTests
         // Assert
         var links = await _db.AccountUsers.Where(au => au.AccountId == accId).ToListAsync();
         links.Should().HaveCount(2);
-        links.All(l => l.Inactive).Should().BeTrue();
+        links.All(l => l.IsDeleted).Should().BeTrue();
         links.All(l => l.Metadata["update_history"].ToString().Contains("Account deactivation")).Should().BeTrue();
     }
 
@@ -135,7 +135,7 @@ public class DeleteAccountHandlerTests
         // Arrange
         var accId = Guid.NewGuid();
         var mockAdminId = Guid.NewGuid();
-        _db.Accounts.Add(new Account { Id = accId, Inactive = false });
+        _db.Accounts.Add(new Account { Id = accId, IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageAccountAsync(accId).Returns(true);
@@ -158,7 +158,7 @@ public class DeleteAccountHandlerTests
     {
         // Arrange
         var accId = Guid.NewGuid();
-        _db.Accounts.Add(new Account { Id = accId, System = true, Inactive = false });
+        _db.Accounts.Add(new Account { Id = accId, System = true, IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageAccountAsync(accId).Returns(true);
@@ -172,6 +172,6 @@ public class DeleteAccountHandlerTests
         // Assert
         result.Should().BeTrue();
         var account = await _db.Accounts.FirstAsync(a => a.Id == accId);
-        account.Inactive.Should().BeTrue();
+        account.IsDeleted.Should().BeTrue();
     }
 }

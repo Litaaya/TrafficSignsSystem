@@ -30,7 +30,7 @@ public class ReactivateUserHandler(
             throw new Exception("User not found.");
         }
 
-        if (!existingUser.Inactive)
+        if (!existingUser.IsDeleted)
         {
             throw new Exception("User is already active.");
         }
@@ -42,7 +42,7 @@ public class ReactivateUserHandler(
         await keycloakService.UpdateUserStatusAsync(existingUser.Id, true);
         await keycloakService.ResetPasswordAsync(existingUser.Id, request.NewPassword);
 
-        existingUser.Inactive = false;
+        existingUser.IsDeleted = false;
         existingUser.UpdatedDt = DateTime.UtcNow;
         existingUser.AddMetadataLog("update_history", $"Reactivated by {actor}({actorId}) at {timestamp}");
 

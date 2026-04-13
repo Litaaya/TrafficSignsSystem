@@ -42,7 +42,7 @@ public class UpdateProfileHandler(
         if (userId == null) throw new UnauthorizedAccessException();
 
         var user = await db.Users.FindAsync([userId], cancellationToken);
-        if (user == null || user.Inactive) return false;
+        if (user == null || user.IsDeleted) return false;
 
         var email = request.Email.Trim().ToLower();
         var phone = request.Phone.Trim();

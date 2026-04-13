@@ -49,7 +49,7 @@ public class DeleteUserHandlerTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        _db.Users.Add(new User { Id = userId, Username = "ghost", Inactive = true }); // Đã inactive
+        _db.Users.Add(new User { Id = userId, Username = "ghost", IsDeleted = true }); // Đã inactive
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageGlobalUsersAsync().Returns(true);
@@ -67,7 +67,7 @@ public class DeleteUserHandlerTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var user = new User { Id = userId, Username = "target_user", Inactive = false };
+        var user = new User { Id = userId, Username = "target_user", IsDeleted = false };
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
 
@@ -83,7 +83,7 @@ public class DeleteUserHandlerTests
         await _keycloakService.Received(1).UpdateUserStatusAsync(userId, false);
 
         var updatedUser = await _db.Users.FirstAsync(u => u.Id == userId);
-        updatedUser.Inactive.Should().BeTrue();
+        updatedUser.IsDeleted.Should().BeTrue();
     }
 
     [Fact]
@@ -91,11 +91,11 @@ public class DeleteUserHandlerTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var user = new User { Id = userId, Username = "multi_acc_user", Inactive = false };
+        var user = new User { Id = userId, Username = "multi_acc_user", IsDeleted = false };
         _db.Users.Add(user);
 
-        _db.AccountUsers.Add(new AccountUser { AccountId = Guid.NewGuid(), UserId = userId, Inactive = false });
-        _db.AccountUsers.Add(new AccountUser { AccountId = Guid.NewGuid(), UserId = userId, Inactive = false });
+        _db.AccountUsers.Add(new AccountUser { AccountId = Guid.NewGuid(), UserId = userId, IsDeleted = false });
+        _db.AccountUsers.Add(new AccountUser { AccountId = Guid.NewGuid(), UserId = userId, IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageGlobalUsersAsync().Returns(true);
@@ -107,7 +107,7 @@ public class DeleteUserHandlerTests
         // Assert
         var links = await _db.AccountUsers.Where(au => au.UserId == userId).ToListAsync();
         links.Should().HaveCount(2);
-        links.All(l => l.Inactive).Should().BeTrue();
+        links.All(l => l.IsDeleted).Should().BeTrue();
         links.All(l => l.Metadata["update_history"].ToString().Contains("User deactivation")).Should().BeTrue();
     }
 
@@ -117,7 +117,7 @@ public class DeleteUserHandlerTests
         // Arrange
         var userId = Guid.NewGuid();
         var mockAdminId = Guid.NewGuid();
-        _db.Users.Add(new User { Id = userId, Username = "delete_me", Inactive = false });
+        _db.Users.Add(new User { Id = userId, Username = "delete_me", IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanManageGlobalUsersAsync().Returns(true);

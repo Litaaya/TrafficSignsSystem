@@ -36,7 +36,7 @@ public class GetAccountsHandler(
         if (!permissionService.IsAdmin())
         {
             var userId = currentUserService.GetUserId();
-            query = query.Where(a => a.AccountUsers.Any(au => au.UserId == userId && !au.Inactive));
+            query = query.Where(a => a.AccountUsers.Any(au => au.UserId == userId && !au.IsDeleted));
         }
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -46,11 +46,11 @@ public class GetAccountsHandler(
 
         if (request.StatusFilter == "active")
         {
-            query = query.Where(a => !a.Inactive);
+            query = query.Where(a => !a.IsDeleted);
         }
         else if (request.StatusFilter == "inactive")
         {
-            query = query.Where(a => a.Inactive);
+            query = query.Where(a => a.IsDeleted);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -66,7 +66,7 @@ public class GetAccountsHandler(
                 a.Email,
                 a.Phone,
                 a.System,
-                a.Inactive,
+                a.IsDeleted,
                 a.CreatedDt,
                 a.Metadata))
             .ToListAsync(cancellationToken);
@@ -98,7 +98,7 @@ public class GetAccountByIdHandler(
                 a.Email,
                 a.Phone,
                 a.System,
-                a.Inactive,
+                a.IsDeleted,
                 a.CreatedDt,
                 a.Metadata))
             .FirstOrDefaultAsync(cancellationToken);

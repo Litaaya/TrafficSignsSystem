@@ -75,7 +75,7 @@ public class RemoveUserFromAccountHandlerTests
         {
             AccountId = accId,
             UserId = userId,
-            Inactive = true
+            IsDeleted = true
         });
         await _db.SaveChangesAsync();
 
@@ -96,7 +96,7 @@ public class RemoveUserFromAccountHandlerTests
         // Arrange
         var accId = Guid.NewGuid();
         var userId = Guid.NewGuid();
-        var association = new AccountUser { AccountId = accId, UserId = userId, Inactive = false };
+        var association = new AccountUser { AccountId = accId, UserId = userId, IsDeleted = false };
 
         _db.AccountUsers.Add(association);
         await _db.SaveChangesAsync();
@@ -111,7 +111,7 @@ public class RemoveUserFromAccountHandlerTests
         result.Should().BeTrue();
 
         var updated = await _db.AccountUsers.FirstAsync(au => au.AccountId == accId && au.UserId == userId);
-        updated.Inactive.Should().BeTrue();
+        updated.IsDeleted.Should().BeTrue();
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public class RemoveUserFromAccountHandlerTests
         var accId = Guid.NewGuid();
         var userId = Guid.NewGuid();
         var mockAdminId = Guid.NewGuid();
-        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, Inactive = false });
+        _db.AccountUsers.Add(new AccountUser { AccountId = accId, UserId = userId, IsDeleted = false });
         await _db.SaveChangesAsync();
 
         _permissionService.CanRemoveUserAsync(accId, userId).Returns(true);

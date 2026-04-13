@@ -21,7 +21,7 @@ public class DeleteUserHandler(
 
         var user = await db.Users
             .Include(u => u.AccountUsers)
-            .FirstOrDefaultAsync(u => u.Id == request.UserId && !u.Inactive, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Id == request.UserId && !u.IsDeleted, cancellationToken);
 
         if (user == null)
         {
@@ -29,14 +29,14 @@ public class DeleteUserHandler(
         }
 
         var ownerAccountIds = user.AccountUsers
-            .Where(au => !au.Inactive && au.Role == "Owner")
+            .Where(au => !au.IsDeleted && au.Role == "Owner")
             .Select(au => au.AccountId)
             .ToList();
 
         if (ownerAccountIds.Count > 0)
         {
             var accountsWithLastOwner = await db.AccountUsers
-                .Where(au => ownerAccountIds.Contains(au.AccountId) && !au.Inactive && au.Role == "Owner")
+                .Where(au => ownerAccountIds.Contains(au.AccountId) && !au.IsDeleted && au.Role == "Owner")
                 .GroupBy(au => au.AccountId)
                 .Select(g => new { AccountId = g.Key, OwnerCount = g.Count() })
                 .Where(x => x.OwnerCount <= 1)
@@ -56,13 +56,13 @@ public class DeleteUserHandler(
         var actorId = currentUser.GetUserId();
         string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
 
-        user.Inactive = true;
+        user.IsDeleted = true;
         user.UpdatedDt = DateTime.UtcNow;
         user.AddMetadataLog("update_history", $"Deactivated by {actor}({actorId}) at {timestamp}");
 
-        foreach (var link in user.AccountUsers.Where(au => !au.Inactive))
+        foreach (var link in user.AccountUsers.Where(au => !au.IsDeleted))
         {
-            link.Inactive = true;
+            link.IsDeleted = true;
             link.UpdatedDt = DateTime.UtcNow;
             link.AddMetadataLog("update_history", $"Removed due to User deactivation by {actor}({actorId}) at {timestamp}");
         }

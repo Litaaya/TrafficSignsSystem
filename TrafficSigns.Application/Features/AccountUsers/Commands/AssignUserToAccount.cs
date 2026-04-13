@@ -47,7 +47,7 @@ public class AssignUserToAccountHandler(
         var hasActiveOwner = await db.AccountUsers.AnyAsync(au =>
             au.AccountId == request.AccountId &&
             au.Role == "Owner" &&
-            !au.Inactive, cancellationToken);
+            !au.IsDeleted, cancellationToken);
         var effectiveRole = !hasActiveOwner ? "Owner" : request.Role;
 
         var existingLink = await db.AccountUsers
@@ -56,12 +56,12 @@ public class AssignUserToAccountHandler(
 
         if (existingLink != null)
         {
-            if (!existingLink.Inactive)
+            if (!existingLink.IsDeleted)
             {
                 throw new Exception("User is already assigned to this account and is currently active.");
             }
 
-            existingLink.Inactive = false;
+            existingLink.IsDeleted = false;
             existingLink.Role = effectiveRole;
             existingLink.UpdatedDt = DateTime.UtcNow;
             existingLink.AddMetadataLog("update_history", $"Re-activated with role {effectiveRole} by {actor}({actorId}) at {timestamp}");
@@ -76,7 +76,7 @@ public class AssignUserToAccountHandler(
             AccountId = request.AccountId,
             UserId = request.UserId,
             Role = effectiveRole,
-            Inactive = false,
+            IsDeleted = false,
             CreatedDt = DateTime.UtcNow,
             UpdatedDt = DateTime.UtcNow
         };

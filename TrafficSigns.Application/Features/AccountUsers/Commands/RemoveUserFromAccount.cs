@@ -21,7 +21,7 @@ public class RemoveUserFromAccountHandler(
         var accountUser = await db.AccountUsers
             .FirstOrDefaultAsync(au => au.AccountId == request.AccountId
                                     && au.UserId == request.UserId
-                                    && !au.Inactive, cancellationToken);
+                                    && !au.IsDeleted, cancellationToken);
 
         if (accountUser == null)
         {
@@ -34,7 +34,7 @@ public class RemoveUserFromAccountHandler(
                 au.AccountId == request.AccountId &&
                 au.UserId != request.UserId &&
                 au.Role == "Owner" &&
-                !au.Inactive, cancellationToken);
+                !au.IsDeleted, cancellationToken);
 
             if (!otherOwnersExist)
             {
@@ -46,7 +46,7 @@ public class RemoveUserFromAccountHandler(
         var actorId = currentUserService.GetUserId();
         string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
 
-        accountUser.Inactive = true;
+        accountUser.IsDeleted = true;
         accountUser.UpdatedDt = DateTime.UtcNow;
         accountUser.AddMetadataLog("update_history", $"Removed by {actor}({actorId}) at {timestamp}");
 
