@@ -11,7 +11,6 @@
         public string? Phone { get; set; }
 
         public DateTime? LastActiveDt { get; set; }
-        //public DateTime? LastActiveAt { get; set; }
 
         public virtual ICollection<AccountUser> AccountUsers { get; set; } = new List<AccountUser>();
     }

@@ -30,6 +30,18 @@ public class SyncUserFromKeycloakHandler(
 
     public async Task Handle(SyncUserFromKeycloakCommand request, CancellationToken cancellationToken)
     {
+        if (!string.IsNullOrEmpty(request.ActorId) && Guid.TryParse(request.ActorId, out var actorId))
+        {
+            var adminUser = await db.Users
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == actorId, cancellationToken);
+
+            if (adminUser != null)
+            {
+                adminUser.LastActiveDt = DateTime.UtcNow;
+            }
+        }
+
         var kcUser = await keycloakService.GetUserByIdAsync(request.UserId);
         var user = await db.Users
             .IgnoreQueryFilters()
