@@ -27,7 +27,7 @@ public class DeleteTrafficSignHandler(
             throw new UnauthorizedAccessException("Access denied.");
         }
 
-        if (sign.Inactive)
+        if (sign.IsDeleted)
         {
             throw new Exception("TrafficSign has already been inactivated before.");
         }

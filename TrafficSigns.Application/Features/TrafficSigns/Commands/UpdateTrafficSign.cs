@@ -38,7 +38,7 @@ public class UpdateTrafficSignHandler(
             throw new UnauthorizedAccessException("Access denied.");
         }
 
-        if (sign.Inactive)
+        if (sign.IsDeleted)
         {
             throw new Exception("Traffic sign is inactivated and cannot be updated.");
         }

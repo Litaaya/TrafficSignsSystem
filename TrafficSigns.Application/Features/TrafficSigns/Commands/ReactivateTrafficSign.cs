@@ -28,13 +28,13 @@ public class ReactivateTrafficSignHandler(
             throw new UnauthorizedAccessException("Access denied.");
         }
 
-        if (!sign.Inactive)
+        if (!sign.IsDeleted)
         {
             throw new Exception("Traffic Sign is already active.");
         }
 
         var duplicateSign = await session.Query<TrafficSign>()
-            .Where(s => s.Inactive == false
+            .Where(s => s.IsDeleted == false
                      && s.Id != sign.Id
                      && s.AccountId == sign.AccountId
                      && s.RoadSegmentId == sign.RoadSegmentId

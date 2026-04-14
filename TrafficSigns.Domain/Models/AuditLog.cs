@@ -19,5 +19,7 @@ namespace TrafficSigns.Domain.Models
         public string? NewValues { get; set; }
 
         public string? ChangedColumns { get; set; }
+
+        public string? RelationalId { get; set; }
     }
 }

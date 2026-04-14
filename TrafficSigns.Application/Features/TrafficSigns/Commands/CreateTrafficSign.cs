@@ -53,7 +53,7 @@ public class CreateTrafficSignHandler(
         var location = new Point(request.Longitude, request.Latitude) { SRID = 4326 };
 
         var query = session.Query<TrafficSign>()
-            .Where(s => s.Inactive == false
+            .Where(s => s.IsDeleted == false
                      && s.AccountId == request.AccountId
                      && s.Code == request.Code.Trim()
                      && s.IsForwardDirection == request.IsForwardDirection

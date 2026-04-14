@@ -9,7 +9,7 @@ public class TrafficSign
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public Point Location { get; set; } = null!;
-    public bool Inactive { get; set; }
+    public bool IsDeleted { get; set; }
     public Dictionary<string, object> Metadata { get; set; } = new();
     public Guid AccountId { get; set; }
     public long RoadSegmentId { get; set; }
@@ -24,7 +24,7 @@ public class TrafficSign
         AccountId = @event.AccountId;
         RoadSegmentId = @event.RoadSegmentId;
         IsForwardDirection = @event.IsForwardDirection;
-        Inactive = false;
+        IsDeleted = false;
         Metadata = @event.Metadata ?? new Dictionary<string, object>();
     }
 
@@ -38,6 +38,6 @@ public class TrafficSign
         Metadata = @event.Metadata;
     }
 
-    public void Apply(TrafficSignInactivated @event) => Inactive = true;
-    public void Apply(TrafficSignReactivated @event) => Inactive = false;
+    public void Apply(TrafficSignInactivated @event) => IsDeleted = true;
+    public void Apply(TrafficSignReactivated @event) => IsDeleted = false;
 }

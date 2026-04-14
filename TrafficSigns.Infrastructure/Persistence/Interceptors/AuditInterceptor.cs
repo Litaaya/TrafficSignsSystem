@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Text.Json;
 using TrafficSigns.Application.Common.Interfaces;
 using TrafficSigns.Domain.Models;
+using System.Diagnostics;
 
 namespace TrafficSigns.Infrastructure.Persistence.Interceptors;
 
@@ -41,6 +42,10 @@ public class AuditInterceptor(ICurrentUserService currentUser) : SaveChangesInte
         context.ChangeTracker.DetectChanges();
         var auditEntries = new List<AuditLog>();
 
+        var traceId = Activity.Current?.TraceId.ToString()
+                      ?? Activity.Current?.RootId
+                      ?? Guid.NewGuid().ToString();
+
         var userIdRaw = currentUser.GetUserId();
         Guid? userId = null;
         if (userIdRaw != null)
@@ -64,7 +69,8 @@ public class AuditInterceptor(ICurrentUserService currentUser) : SaveChangesInte
                 Action = entry.State.ToString().ToUpper(),
                 UserId = userId,
                 UserName = userName,
-                Timestamp = DateTime.UtcNow 
+                Timestamp = DateTime.UtcNow,
+                RelationalId = traceId
             };
 
             var oldValues = new Dictionary<string, object?>();
