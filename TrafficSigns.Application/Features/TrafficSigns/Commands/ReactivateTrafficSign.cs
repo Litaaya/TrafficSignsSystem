@@ -42,9 +42,10 @@ public class ReactivateTrafficSignHandler(
                      && s.IsForwardDirection == sign.IsForwardDirection
                      && s.MatchesSql(@"ST_DWithin(
                                        ST_GeomFromGeoJSON((data -> 'location')::text), 
-                                       ST_GeomFromGeoJSON((? -> 'location')::text), 
+                                       ST_SetSRID(ST_MakePoint(?, ?), 4326), 
                                        0.00003
-                                )", sign)).FirstOrDefaultAsync(cancellationToken);
+                                )", sign.Location.X, sign.Location.Y))
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (duplicateSign != null)
         {

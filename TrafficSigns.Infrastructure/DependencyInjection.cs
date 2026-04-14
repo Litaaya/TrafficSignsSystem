@@ -48,6 +48,8 @@ public static class DependencyInjection
             opts.AutoCreateSchemaObjects = AutoCreate.All;
             opts.DatabaseSchemaName = "public";
             opts.Projections.Snapshot<TrafficSign>(SnapshotLifecycle.Inline);
+            opts.Events.MetadataConfig.HeadersEnabled = true;
+            opts.Listeners.Add(new MartenTraceInterceptor());
 
             opts.UseSystemTextJsonForSerialization(EnumStorage.AsString, Casing.CamelCase, options =>
             {

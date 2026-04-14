@@ -109,7 +109,7 @@ public class AuditInterceptor(ICurrentUserService currentUser) : SaveChangesInte
                                 changedColumns.Add(propertyName);
                             }
                         }
-                        break;
+                    break;
                 }
             }
 

@@ -22,11 +22,12 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "la
     .WithEnvironment("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
     .WithEnvironment("KC_BOOTSTRAP_ADMIN_PASSWORD", "admin")
     .WithEnvironment("KC_DB", "postgres")
+
     .WithEnvironment("KC_DB_URL", "jdbc:postgresql://postgres:5432/keycloakdb")
     .WithEnvironment("KC_DB_USERNAME", "postgres")
     .WithEnvironment("KC_DB_PASSWORD", "postgres")
     .WithEnvironment("KC_HOSTNAME_STRICT", "false")
-    .WithBindMount("./TrafficSigns.Infrastructure/Keycloak/Realms/trafficsigns-realm.json", "/opt/keycloak/data/import/realm.json")
+    .WithBindMount("../TrafficSigns.Infrastructure/Keycloak/Realms/trafficsigns-realm.json", "/opt/keycloak/data/import/realm.json")
     .WithArgs("start-dev", "--import-realm")
     .WithUrlForEndpoint("http", _ => new()
     {
