@@ -49,7 +49,7 @@ public class ChangePasswordHandler(
 
         var isOldPasswordValid = await keycloakService.VerifyUserPasswordAsync(username, request.OldPassword);
         if (!isOldPasswordValid)
-            throw new Exception("Current user isn't incorrect");
+            throw new Exception("Current user is incorrect");
                 
         await keycloakService.ResetPasswordAsync(userId.Value, request.NewPassword);
 
@@ -57,8 +57,6 @@ public class ChangePasswordHandler(
         if (user != null)
         {
             user.UpdatedDt = DateTime.UtcNow;
-            user.AddMetadataLog("security_event", $"User changed their own password at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
-
             await db.SaveChangesAsync(cancellationToken);
         }
 

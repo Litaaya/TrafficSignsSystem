@@ -8,6 +8,17 @@ namespace TrafficSigns.Infrastructure.Persistence.Interceptors;
 
 public class AuditInterceptor(ICurrentUserService currentUser) : SaveChangesInterceptor
 {
+    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
+    {
+        var context = eventData.Context;
+        if (context != null)
+        {
+            var auditEntries = OnBeforeSaveChanges(context);
+            if (auditEntries.Count > 0) context.Set<AuditLog>().AddRange(auditEntries);
+        }
+        return base.SavingChanges(eventData, result);
+    }
+
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,
@@ -22,7 +33,6 @@ public class AuditInterceptor(ICurrentUserService currentUser) : SaveChangesInte
         {
             context.Set<AuditLog>().AddRange(auditEntries);
         }
-
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
@@ -49,7 +59,7 @@ public class AuditInterceptor(ICurrentUserService currentUser) : SaveChangesInte
             var auditLog = new AuditLog
             {
                 Id = Guid.NewGuid(),
-                EntityName = entry.Entity.GetType().Name,
+                EntityName = entry.Metadata.ClrType.Name,
                 EntityId = GetEntityId(entry),
                 Action = entry.State.ToString().ToUpper(),
                 UserId = userId,
@@ -65,7 +75,16 @@ public class AuditInterceptor(ICurrentUserService currentUser) : SaveChangesInte
             {
                 string propertyName = property.Metadata.Name;
 
-                if (propertyName.Contains("Password", StringComparison.OrdinalIgnoreCase)) continue;
+                if (propertyName.Contains("Password", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (property.IsModified)
+                    {
+                        changedColumns.Add(propertyName);
+                        newValues[propertyName] = "[PROTECTED_CHANGE]";
+                    }
+
+                    continue;
+                }
 
                 switch (entry.State)
                 {
@@ -109,11 +128,15 @@ public class AuditInterceptor(ICurrentUserService currentUser) : SaveChangesInte
 
     private Guid GetEntityId(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
     {
-        var idProperty = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Id");
-        if (idProperty?.CurrentValue is Guid guidValue && guidValue != Guid.Empty)
+        var primaryKey = entry.Metadata.FindPrimaryKey();
+        if (primaryKey == null) return Guid.Empty;
+
+        var idName = primaryKey.Properties.Select(p => p.Name).FirstOrDefault();
+        if (idName != null && entry.Property(idName).CurrentValue is Guid guidValue)
         {
             return guidValue;
         }
+
         return Guid.Empty;
     }
 }

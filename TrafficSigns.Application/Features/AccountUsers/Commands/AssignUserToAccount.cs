@@ -13,7 +13,6 @@ public record AssignUserToAccountCommand(
 
 public class AssignUserToAccountHandler(
     IApplicationDbContext db,
-    ICurrentUserService currentUser,
     IPermissionService permissionService) : IRequestHandler<AssignUserToAccountCommand, Guid>
 {
     private readonly string[] _allowedRoles = ["Viewer", "Member", "Owner"];
@@ -40,10 +39,6 @@ public class AssignUserToAccountHandler(
             throw new Exception("Account not found.");
         }
 
-        string actor = currentUser.GetUsername() ?? "Unknown";
-        var actorId = currentUser.GetUserId();
-        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-
         var hasActiveOwner = await db.AccountUsers.AnyAsync(au =>
             au.AccountId == request.AccountId &&
             au.Role == "Owner" &&
@@ -64,7 +59,6 @@ public class AssignUserToAccountHandler(
             existingLink.IsDeleted = false;
             existingLink.Role = effectiveRole;
             existingLink.UpdatedDt = DateTime.UtcNow;
-            existingLink.AddMetadataLog("update_history", $"Re-activated with role {effectiveRole} by {actor}({actorId}) at {timestamp}");
 
             await db.SaveChangesAsync(cancellationToken);
             return existingLink.Id;
@@ -80,8 +74,6 @@ public class AssignUserToAccountHandler(
             CreatedDt = DateTime.UtcNow,
             UpdatedDt = DateTime.UtcNow
         };
-
-        accountUser.AddMetadataLog("update_history", $"Assigned as {request.Role} by {actor}({actorId}) at {timestamp}");
 
         db.AccountUsers.Add(accountUser);
         await db.SaveChangesAsync(cancellationToken);

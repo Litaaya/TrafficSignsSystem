@@ -8,7 +8,6 @@ public record RemoveUserFromAccountCommand(Guid AccountId, Guid UserId) : IReque
 
 public class RemoveUserFromAccountHandler(
     IApplicationDbContext db,
-    ICurrentUserService currentUserService,
     IPermissionService permissionService) : IRequestHandler<RemoveUserFromAccountCommand, bool>
 {
     public async Task<bool> Handle(RemoveUserFromAccountCommand request, CancellationToken cancellationToken)
@@ -42,13 +41,8 @@ public class RemoveUserFromAccountHandler(
             }
         }
 
-        string actor = currentUserService.GetUsername() ?? "Unknown";
-        var actorId = currentUserService.GetUserId();
-        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-
         accountUser.IsDeleted = true;
         accountUser.UpdatedDt = DateTime.UtcNow;
-        accountUser.AddMetadataLog("update_history", $"Removed by {actor}({actorId}) at {timestamp}");
 
         await db.SaveChangesAsync(cancellationToken);
         return true;

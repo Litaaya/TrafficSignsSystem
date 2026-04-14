@@ -41,7 +41,6 @@ public record UpdateAccountCommand(
 
 public class UpdateAccountHandler(
     IApplicationDbContext db,
-    ICurrentUserService currentUser,
     IPermissionService permissionService) : IRequestHandler<UpdateAccountCommand, bool>
 {
     public async Task<bool> Handle(UpdateAccountCommand request, CancellationToken cancellationToken)
@@ -63,18 +62,12 @@ public class UpdateAccountHandler(
             throw new UnauthorizedAccessException("Access denied.");
         }
 
-        string actor = currentUser.GetUsername() ?? "Unknown";
-        var actorId = currentUser.GetUserId();
-        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-
         account.Name = request.Name.Trim();
         account.Desc = request.Desc?.Trim();
         account.Email = request.Email?.Trim();
         account.Phone = request.Phone?.Trim();
         account.System = request.System;
         account.UpdatedDt = DateTime.UtcNow;
-
-        account.AddMetadataLog("update_history", $"Updated by {actor}({actorId}) at {timestamp}");
 
         await db.SaveChangesAsync(cancellationToken);
         return true;

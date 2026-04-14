@@ -14,10 +14,9 @@ public record UpdateUserInAccountCommand(
 
 public class UpdateUserInAccountHandler(
     IApplicationDbContext db,
-    ICurrentUserService currentUser,
     IPermissionService permissionService) : IRequestHandler<UpdateUserInAccountCommand, bool>
 {
-    private readonly string[] _allowedRoles = ["Viewer", "Member", "Owner"];
+    private readonly string[] allowedRoles = ["Viewer", "Member", "Owner"];
 
     public async Task<bool> Handle(UpdateUserInAccountCommand request, CancellationToken cancellationToken)
     {
@@ -26,9 +25,9 @@ public class UpdateUserInAccountHandler(
             throw new UnauthorizedAccessException("Access denied.");
         }
 
-        if (!_allowedRoles.Contains(request.Role))
+        if (!allowedRoles.Contains(request.Role))
         {
-            throw new Exception($"Invalid role. Allowed roles are: {string.Join(", ", _allowedRoles)}");
+            throw new Exception($"Invalid role. Allowed roles are: {string.Join(", ", allowedRoles)}");
         }
 
         var accountUser = await db.AccountUsers
@@ -55,13 +54,8 @@ public class UpdateUserInAccountHandler(
             }
         }
 
-        string actor = currentUser.GetUsername() ?? "Unknown";
-        var actorId = currentUser.GetUserId();
-        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-
         accountUser.Role = request.Role;
         accountUser.UpdatedDt = DateTime.UtcNow;
-        accountUser.AddMetadataLog("update_history", $"Role updated to {request.Role} by {actor}({actorId}) at {timestamp}");
 
         await db.SaveChangesAsync(cancellationToken);
         return true;

@@ -35,7 +35,6 @@ public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
 public class UpdateUserHandler(
     IApplicationDbContext db,
     IKeycloakAdminService keycloakService,
-    ICurrentUserService currentUser,
     IPermissionService permissionService) : IRequestHandler<UpdateUserCommand, bool>
 {
     public async Task<bool> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
@@ -74,21 +73,12 @@ public class UpdateUserHandler(
             request.FirstName?.Trim() ?? "",
             request.LastName?.Trim() ?? "");
 
-        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-        string actor = currentUser.GetUsername() ?? "Unknown system";
-        var actorId = currentUser.GetUserId();
-
         user.Email = request.Email.Trim();
         user.Phone = request.Phone.Trim();
         user.FirstName = request.FirstName?.Trim();
         user.LastName = request.LastName?.Trim();
         user.UpdatedDt = DateTime.UtcNow;
-
-        user.Metadata ??= new Dictionary<string, string>();
-        var updatedMetadata = new Dictionary<string, string>(user.Metadata);
-        updatedMetadata["update_history"] = $"Updated by {actor}({actorId}) at {timestamp}";
-        user.Metadata = updatedMetadata;
-
+                
         await db.SaveChangesAsync(cancellationToken);
         return true;
     }

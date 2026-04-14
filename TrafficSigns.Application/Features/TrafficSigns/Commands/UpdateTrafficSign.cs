@@ -44,7 +44,7 @@ public class UpdateTrafficSignHandler(
         }
 
         var roadQuery = db.Database.SqlQueryRaw<int>("SELECT 1 FROM traffic_signs_map WHERE segment_id = {0} LIMIT 1", request.RoadSegmentId);
-        var roadExists = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.AnyAsync(roadQuery, cancellationToken);
+        var roadExists = await EntityFrameworkQueryableExtensions.AnyAsync(roadQuery, cancellationToken);
 
         if (!roadExists)
         {
@@ -53,33 +53,6 @@ public class UpdateTrafficSignHandler(
 
         string actor = currentUser.GetUsername() ?? "Unknown";
         var actorId = currentUser.GetUserId();
-        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-
-        var mergedMetadata = sign.Metadata != null
-            ? new Dictionary<string, object>(sign.Metadata)
-            : new Dictionary<string, object>();
-
-        string newLogEntry = $"Updated by {actor}({actorId}) at {timestamp}";
-
-        if (mergedMetadata.TryGetValue("update_history", out var oldHistoryObj) && oldHistoryObj is string oldHistory)
-        {
-            mergedMetadata["update_history"] = $"{oldHistory}\n{newLogEntry}";
-        }
-        else
-        {
-            mergedMetadata["update_history"] = newLogEntry;
-        }
-
-        if (request.Metadata != null)
-        {
-            foreach (var kvp in request.Metadata)
-            {
-                if (kvp.Key != "update_history")
-                {
-                    mergedMetadata[kvp.Key] = kvp.Value;
-                }
-            }
-        }
 
         var location = new Point(request.Longitude, request.Latitude) { SRID = 4326 };
 
@@ -90,7 +63,7 @@ public class UpdateTrafficSignHandler(
             location,
             request.RoadSegmentId,
             request.IsForwardDirection,
-            mergedMetadata
+            request.Metadata ?? new Dictionary<string, object>()
         );
 
         session.SetHeader("user-id", actorId?.ToString() ?? Guid.Empty.ToString());

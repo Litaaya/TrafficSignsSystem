@@ -13,7 +13,6 @@ public record ReactivateUserCommand(
 public class ReactivateUserHandler(
     IKeycloakAdminService keycloakService,
     IApplicationDbContext db,
-    ICurrentUserService currentUser,
     IPermissionService permissionService) : IRequestHandler<ReactivateUserCommand, Guid>
 {
     public async Task<Guid> Handle(ReactivateUserCommand request, CancellationToken cancellationToken)
@@ -35,16 +34,11 @@ public class ReactivateUserHandler(
             throw new Exception("User is already active.");
         }
 
-        string actor = currentUser.GetUsername() ?? "Unknown";
-        var actorId = currentUser.GetUserId();
-        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-
         await keycloakService.UpdateUserStatusAsync(existingUser.Id, true);
         await keycloakService.ResetPasswordAsync(existingUser.Id, request.NewPassword);
 
         existingUser.IsDeleted = false;
         existingUser.UpdatedDt = DateTime.UtcNow;
-        existingUser.AddMetadataLog("update_history", $"Reactivated by {actor}({actorId}) at {timestamp}");
 
         await db.SaveChangesAsync(cancellationToken);
         return existingUser.Id;

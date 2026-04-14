@@ -33,7 +33,7 @@ public class CreateTrafficSignHandler(
             throw new UnauthorizedAccessException("Access denied.");
         }
 
-        var accountExists = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions
+        var accountExists = await EntityFrameworkQueryableExtensions
             .AnyAsync(db.Accounts, a => a.Id == request.AccountId, cancellationToken);
 
         if (!accountExists)
@@ -42,7 +42,7 @@ public class CreateTrafficSignHandler(
         }
 
         var roadQuery = db.Database.SqlQueryRaw<int>("SELECT 1 FROM traffic_signs_map WHERE segment_id = {0} LIMIT 1", request.RoadSegmentId);
-        var roadExists = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions
+        var roadExists = await EntityFrameworkQueryableExtensions
             .AnyAsync(roadQuery, cancellationToken);
 
         if (!roadExists)
@@ -64,7 +64,7 @@ public class CreateTrafficSignHandler(
                                     0.00003
                                 )", request.Longitude, request.Latitude));
 
-        var existingSign = await Marten.QueryableExtensions.FirstOrDefaultAsync(query, cancellationToken);
+        var existingSign = await QueryableExtensions.FirstOrDefaultAsync(query, cancellationToken);
 
         if (existingSign != null)
         {
@@ -73,11 +73,9 @@ public class CreateTrafficSignHandler(
 
         string actor = currentUser.GetUsername() ?? "Unknown";
         var actorId = currentUser.GetUserId();
-        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
 
         var signId = Guid.NewGuid();
         var metadata = request.Metadata ?? new Dictionary<string, object>();
-        metadata["update_history"] = $"Created by {actor}({actorId}) at {timestamp}";
 
         var @event = new TrafficSignCreated(
             signId,

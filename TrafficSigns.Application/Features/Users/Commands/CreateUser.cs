@@ -21,7 +21,7 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
     public CreateUserCommandValidator()
     {
         RuleFor(x => x.Username).Must(UserValidationRules.IsValidUsername)
-            .WithMessage($"Username invalid (maximum {UserValidationRules.UsernameMax} symbol, no space");
+            .WithMessage($"Username invalid (minimum {UserValidationRules.UsernameMin} symbols, maximum {UserValidationRules.UsernameMax} symbols, no space)");
 
         RuleFor(x => x.Password).Must(UserValidationRules.IsStrongPassword)
             .WithMessage("Password is too weak");
@@ -43,7 +43,6 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
 public class CreateUserHandler(
     IKeycloakAdminService keycloakService,
     IApplicationDbContext db,
-    ICurrentUserService currentUser,
     IPermissionService permissionService) : IRequestHandler<CreateUserCommand, Guid>
 {
     public async Task<Guid> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -77,11 +76,7 @@ public class CreateUserHandler(
 
             throw new Exception($"{conflictMessage} already exists.");
         }
-
-        string actor = currentUser.GetUsername() ?? "Unknown";
-        var actorId = currentUser.GetUserId();
-        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-
+                
         var keycloakId = await keycloakService.CreateUserAsync
         (
             username,
@@ -104,8 +99,6 @@ public class CreateUserHandler(
             CreatedDt = DateTime.UtcNow,
             UpdatedDt = DateTime.UtcNow
         };
-
-        user.AddMetadataLog("update_history", $"Created by {actor}({actorId}) at {timestamp}");
 
         db.Users.Add(user);
         await db.SaveChangesAsync(cancellationToken);

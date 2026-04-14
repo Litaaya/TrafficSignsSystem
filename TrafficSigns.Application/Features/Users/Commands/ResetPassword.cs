@@ -47,8 +47,6 @@ public class ResetPasswordByAdminHandler(
 
         user.UpdatedDt = DateTime.UtcNow;
 
-        user.AddMetadataLog("security_event", $"Password reset by admin at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
-
         await db.SaveChangesAsync(cancellationToken);
 
         return true;

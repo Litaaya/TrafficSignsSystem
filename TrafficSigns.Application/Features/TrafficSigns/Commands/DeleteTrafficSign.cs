@@ -34,13 +34,11 @@ public class DeleteTrafficSignHandler(
 
         string actor = currentUser.GetUsername() ?? "Unknown";
         var actorId = currentUser.GetUserId();
-        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
 
         var @event = new TrafficSignInactivated(request.Id);
 
         session.SetHeader("user-id", actorId?.ToString() ?? Guid.Empty.ToString());
         session.SetHeader("user-name", actor);
-        session.SetHeader("update-history", $"Deactivated by {actor}({actorId}) at {timestamp}");
 
         session.Events.Append(request.Id, @event);
         await session.SaveChangesAsync(cancellationToken);

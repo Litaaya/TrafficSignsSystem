@@ -144,8 +144,6 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-
-
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>

@@ -72,17 +72,11 @@ public class UpdateProfileHandler(
             request.FirstName?.Trim() ?? "",
             request.LastName?.Trim() ?? "");
 
-        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-        string actor = currentUser.GetUsername() ?? "Self";
-        var actorId = currentUser.GetUserId();
-
         user.Email = email;
         user.Phone = phone;
         user.FirstName = request.FirstName?.Trim();
         user.LastName = request.LastName?.Trim();
         user.UpdatedDt = DateTime.UtcNow;
-
-        user.AddMetadataLog("update_history", $"Profile updated by user {actor}({actorId}) at {timestamp}");
 
         await db.SaveChangesAsync(cancellationToken);
         return true;

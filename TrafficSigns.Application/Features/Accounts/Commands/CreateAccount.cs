@@ -39,7 +39,6 @@ public class CreateAccountCommandValidator : AbstractValidator<CreateAccountComm
 
 public class CreateAccountHandler(
     IApplicationDbContext db,
-    ICurrentUserService currentUser,
     IPermissionService permissionService) : IRequestHandler<CreateAccountCommand, Guid>
 {
     public async Task<Guid> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
@@ -50,10 +49,6 @@ public class CreateAccountHandler(
         .AnyAsync(a => a.Name.ToLower() == request.Name.Trim().ToLower(), cancellationToken);
 
         if (isDuplicate) throw new Exception("Account name already exists.");
-
-        string actor = currentUser.GetUsername() ?? "Unknown";
-        var actorId = currentUser.GetUserId();
-        string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
 
         var account = new Account
         {
@@ -67,8 +62,6 @@ public class CreateAccountHandler(
             CreatedDt = DateTime.UtcNow,
             UpdatedDt = DateTime.UtcNow
         };
-
-        account.AddMetadataLog("update_history", $"Created by {actor}({actorId}) at {timestamp}");
 
         db.Accounts.Add(account);
         await db.SaveChangesAsync(cancellationToken);
