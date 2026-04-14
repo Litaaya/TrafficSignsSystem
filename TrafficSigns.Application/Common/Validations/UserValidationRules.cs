@@ -1,24 +1,45 @@
-﻿namespace TrafficSigns.Application.Common.Validations
+﻿using System.Text.RegularExpressions;
+
+namespace TrafficSigns.Application.Common.Validations
 {
     public static class UserValidationRules
     {
-        public const int UsernameMax = 12;
-        public static bool IsValidUsername(string? username) =>
-            !string.IsNullOrWhiteSpace(username) && username.Length <= UsernameMax && !username.Contains(" ");
-                
-        public const int NameMax = 50;
-        public static bool IsValidName(string? name) =>
-            !string.IsNullOrWhiteSpace(name) && name.Length <= NameMax;
+        public const int UsernameMin = 3;
+        public const int UsernameMax = 255;
+        private static readonly Regex UsernameRegex = new(@"^[a-zA-Z0-9._-]+$", RegexOptions.Compiled);
+        public static bool IsValidUsername(string? username)
+        {
+            if (string.IsNullOrWhiteSpace(username)) return false;
+            if (username.Length < UsernameMin || username.Length > UsernameMax) return false;
+            if (username.Any(c => c > 127)) return false;
+            return UsernameRegex.IsMatch(username);
+        }
 
-        public const string PasswordRegex = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$";
+        public const int NameMax = 255;
+        private static readonly Regex NameRegex = new(@"^[\p{L}\s'-]+$", RegexOptions.Compiled);
+        public static bool IsValidName(string? name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return false;
+            if (name.Length > NameMax) return false;
+            return NameRegex.IsMatch(name);
+        }
+
+        public const string PasswordRegexPattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$";
+        private static readonly Regex PasswordRegex = new(PasswordRegexPattern, RegexOptions.Compiled);
+
         public static bool IsStrongPassword(string? password) =>
-            !string.IsNullOrWhiteSpace(password) && System.Text.RegularExpressions.Regex.IsMatch(password, PasswordRegex);
+            !string.IsNullOrWhiteSpace(password) && PasswordRegex.IsMatch(password);
 
-        public static bool IsValidEmail(string? email) =>
-            !string.IsNullOrWhiteSpace(email) && new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(email);
+        public const int EmailMax = 255;
+        private static readonly Regex EmailRegex = new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
+        public static bool IsValidEmail(string? email)
+        {
+            if (string.IsNullOrWhiteSpace(email) || email.Length > EmailMax) return false;
+            return EmailRegex.IsMatch(email);
+        }
 
-        public const string PhoneRegex = @"^0[35789][0-9]{8}$";
+        private static readonly Regex PhoneRegex = new(@"^0[35789][0-9]{8}$", RegexOptions.Compiled);
         public static bool IsValidPhone(string? phone) =>
-            !string.IsNullOrWhiteSpace(phone) && System.Text.RegularExpressions.Regex.IsMatch(phone, PhoneRegex);
+            !string.IsNullOrWhiteSpace(phone) && PhoneRegex.IsMatch(phone);
     }
 }
