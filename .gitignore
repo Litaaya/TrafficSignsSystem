@@ -8,12 +8,12 @@
 .aspire/
 
 ## === Secrets ===
-appsettings.Development.json
 appsettings.Local.json
 
 ## === Docker ===
 .env
 .dbdata/
+elasticsearch_data/
 
 ## === Các file hệ thống khác ===
 .DS_Store

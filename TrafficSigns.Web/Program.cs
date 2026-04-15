@@ -1,3 +1,4 @@
+using Elastic.Apm.NetCoreAll;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -34,6 +35,8 @@ var keycloakSection = builder.Configuration.GetSection("Keycloak");
 var authServerUrl = keycloakSection["AuthServerUrl"]?.TrimEnd('/');
 var realmName = keycloakSection["Realm"];
 var authority = $"{authServerUrl}/realms/{realmName}";
+
+builder.Services.AddAllElasticApm();
 
 builder.Host.UseSerilog((context, configuration) =>
 {
@@ -133,7 +136,7 @@ builder.Services.AddAuthentication(options => {
                 var realmAccessClaim = context.Principal?.FindFirst("realm_access")?.Value;
                 if (!string.IsNullOrEmpty(realmAccessClaim))
                 {
-                    using var doc = System.Text.Json.JsonDocument.Parse(realmAccessClaim);
+                    using var doc = JsonDocument.Parse(realmAccessClaim);
                     if (doc.RootElement.TryGetProperty("roles", out var roles))
                     {
                         foreach (var role in roles.EnumerateArray())
@@ -143,6 +146,7 @@ builder.Services.AddAuthentication(options => {
                     }
                 }
             }
+
             return Task.CompletedTask;
         }
     };

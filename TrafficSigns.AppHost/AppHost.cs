@@ -5,8 +5,19 @@ var elasticsearch = builder.AddContainer("elasticsearch", "docker.elastic.co/ela
     .WithImageTag("8.13.0")
     .WithEnvironment("discovery.type", "single-node")
     .WithEnvironment("xpack.security.enabled", "false")
-    .WithEnvironment("ES_JAVA_OPTS", "-Xms2g -Xmx2g")
+    .WithEnvironment("ES_JAVA_OPTS", "-Xms4g -Xmx4g")
     .WithHttpEndpoint(port: 9200, targetPort: 9200, name: "http");
+    //.WithBindMount("../elasticsearch_data", "/usr/share/elasticsearch/data");
+
+// Apm server
+var apmServer = builder.AddContainer("apm-server", "docker.elastic.co/apm/apm-server")
+    .WithImageTag("8.13.0")
+    .WithEnvironment("output.elasticsearch.hosts", "http://elasticsearch:9200")
+    .WithEnvironment("apm-server.auth.anonymous.enabled", "true")
+    .WithEnvironment("apm-server.kibana.enabled", "true")
+    .WithEnvironment("apm-server.kibana.host", "http://kibana:5601")
+    .WithHttpEndpoint(port: 8200, targetPort: 8200, name: "http")
+    .WaitFor(elasticsearch);
 
 // Security
 var keycloakClientSecret = builder.AddParameter("keycloak-client-secret", secret: true);
@@ -53,9 +64,13 @@ var apiservice = builder.AddProject<Projects.TrafficSigns_Web>("apiservice")
        .WithEnvironment("Keycloak__SyncClient__ClientId", "trafficsigns-worker")
        .WithEnvironment("Keycloak__AdminClient__ClientSecret", keycloakClientSecret)
        .WithEnvironment("Keycloak__SyncClient__ClientSecret", keycloakSyncSecret)
+       .WithEnvironment("ElasticApm__ServerUrl", apmServer.GetEndpoint("http"))
+       .WithEnvironment("ElasticApm__ServiceName", "TrafficSigns-API")
+       .WithEnvironment("ElasticApm__CentralConfig", "false")
        .WaitFor(db)
        .WaitFor(keycloak)
-       .WaitFor(elasticsearch);
+       .WaitFor(elasticsearch)
+       .WaitFor(apmServer);
 
 // FrontEnd
 builder.AddJavaScriptApp("frontend", "../TrafficSigns.WebUI", "start")

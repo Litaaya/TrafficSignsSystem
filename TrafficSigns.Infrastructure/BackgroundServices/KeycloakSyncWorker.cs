@@ -15,7 +15,7 @@ public class KeycloakSyncWorker(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await Task.Delay(10000, stoppingToken);
+        await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -71,7 +71,9 @@ public class KeycloakSyncWorker(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Keycloak sync error");
+                logger.LogError(ex, "Keycloak sync failed. RelationalId: {RelationalId}. Message: {Message}",
+                System.Diagnostics.Activity.Current?.TraceId,
+                ex.Message);
             }
 
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
