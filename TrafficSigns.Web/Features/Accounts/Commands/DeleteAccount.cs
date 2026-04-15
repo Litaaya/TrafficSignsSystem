@@ -9,20 +9,9 @@ public static class DeleteAccountEndpoint
     {
         app.MapDelete("/api/accounts/{accountId:guid}", async (Guid accountId, IMediator mediator) =>
         {
-            try
-            {
-                var command = new DeleteAccountCommand(accountId);
-                var success = await mediator.Send(command);
-                return success ? Results.Ok(new { Message = "Account deleted successfully" }) : Results.NotFound();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            await mediator.Send(new DeleteAccountCommand(accountId));
+
+            return Results.Ok(new { Message = "Account deleted successfully" });
         })
         .WithTags("Accounts")
         .RequireAuthorization();

@@ -9,19 +9,8 @@ public static class CreateUserEndpoint
     {
         app.MapPost("/api/users", async (CreateUserCommand command, IMediator mediator) =>
         {
-            try
-            {
-                var userId = await mediator.Send(command);
-                return Results.Created($"/api/users/{userId}", new { Id = userId });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            var userId = await mediator.Send(command);
+            return Results.Created($"/api/users/{userId}", new { Id = userId });
         })
         .WithTags("Users")
         .RequireAuthorization();

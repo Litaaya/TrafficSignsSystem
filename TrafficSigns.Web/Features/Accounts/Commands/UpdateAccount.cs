@@ -9,21 +9,12 @@ public static class UpdateAccountEndpoint
     {
         app.MapPut("/api/accounts/{id:guid}", async (Guid id, UpdateAccountCommand command, IMediator mediator) =>
         {
-            if (id != command.Id) return Results.BadRequest(new { Message = "Id mismatch" });
+            if (id != command.Id)
+                return Results.BadRequest(new { Message = "Id mismatch" });
 
-            try
-            {
-                var success = await mediator.Send(command);
-                return success ? Results.NoContent() : Results.NotFound();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            await mediator.Send(command);
+
+            return Results.NoContent();
         })
         .WithTags("Accounts")
         .RequireAuthorization();

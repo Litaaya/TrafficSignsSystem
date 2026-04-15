@@ -75,20 +75,18 @@ public class GetAccountsHandler(
     }
 }
 
-public record GetAccountByIdQuery(Guid Id) : IRequest<AccountDto?>;
+public record GetAccountByIdQuery(Guid Id) : IRequest<AccountDto>;
 
 public class GetAccountByIdHandler(
     IApplicationDbContext db,
-    IPermissionService permissionService) : IRequestHandler<GetAccountByIdQuery, AccountDto?>
+    IPermissionService permissionService) : IRequestHandler<GetAccountByIdQuery, AccountDto>
 {
-    public async Task<AccountDto?> Handle(GetAccountByIdQuery request, CancellationToken cancellationToken)
+    public async Task<AccountDto> Handle(GetAccountByIdQuery request, CancellationToken cancellationToken)
     {
-        if (!await permissionService.CanAccessAccountAsync(request.Id))
-        {
-            throw new UnauthorizedAccessException("Access denied.");
-        }
+        if (!await permissionService.CanAccessAccountAsync(request.Id))        
+            throw new UnauthorizedAccessException("Access denied");
 
-        return await db.Accounts
+        var account = await db.Accounts
             .AsNoTracking()
             .Where(a => a.Id == request.Id)
             .Select(a => new AccountDto(
@@ -102,5 +100,10 @@ public class GetAccountByIdHandler(
                 a.CreatedDt,
                 a.Metadata))
             .FirstOrDefaultAsync(cancellationToken);
+        
+        if (account == null)
+            throw new KeyNotFoundException($"Account with id {request.Id} not found");
+
+        return account;
     }
 }

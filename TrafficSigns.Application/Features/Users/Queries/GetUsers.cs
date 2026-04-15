@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using TrafficSigns.Application.Common.Interfaces;
 using TrafficSigns.Domain.Models;
+using System.Collections.Generic;
 
 namespace TrafficSigns.Application.Features.Users.Queries;
 
@@ -31,9 +32,7 @@ public class GetUsersHandler(
     public async Task<PagedResult<UserDto>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
     {
         if (!await permissionService.CanManageGlobalUsersAsync())
-        {
-            throw new UnauthorizedAccessException("Access denied.");
-        }
+            throw new UnauthorizedAccessException("Access denied");
 
         var query = db.Users.AsNoTracking().AsQueryable();
 
@@ -91,20 +90,20 @@ public class GetUsersHandler(
     }
 }
 
-public record GetUserByIdQuery(Guid Id) : IRequest<UserDto?>;
+public record GetUserByIdQuery(Guid Id) : IRequest<UserDto>;
 
 public class GetUserByIdHandler(
     IApplicationDbContext db,
-    IPermissionService permissionService) : IRequestHandler<GetUserByIdQuery, UserDto?>
+    IPermissionService permissionService) : IRequestHandler<GetUserByIdQuery, UserDto>
 {
-    public async Task<UserDto?> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
+    public async Task<UserDto> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
     {
         if (!await permissionService.CanManageGlobalUsersAsync())
         {
-            throw new UnauthorizedAccessException("Access denied.");
+            throw new UnauthorizedAccessException("Access denied");
         }
 
-        return await db.Users
+        var user = await db.Users
             .AsNoTracking()
             .Where(u => u.Id == request.Id)
             .Select(u => new UserDto(
@@ -118,5 +117,12 @@ public class GetUserByIdHandler(
                 u.CreatedDt,
                 u.Metadata))
             .FirstOrDefaultAsync(cancellationToken);
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"User with ID {request.Id} not found");
+        }
+
+        return user;
     }
 }

@@ -10,24 +10,12 @@ public static class GetTrafficSignsEndpoint
     {
         app.MapGet("/api/traffic-signs", async (
             [FromQuery] Guid? accountId,
-            IMediator mediator
-            ) =>
+            IMediator mediator) =>
         {
-            try
-            {
-                var query = new GetTrafficSignsQuery(accountId);
-                var result = await mediator.Send(query);
+            var query = new GetTrafficSignsQuery(accountId);
+            var result = await mediator.Send(query);
 
-                return Results.Ok(result);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            return Results.Ok(result);
         })
         .WithTags("TrafficSigns")
         .RequireAuthorization();

@@ -14,19 +14,8 @@ public static class CheckAccountDuplicationEndpoint
             [FromQuery] Guid? excludeId,
             IMediator mediator) =>
         {
-            try
-            {
-                var result = await mediator.Send(new ValidateAccountField(field, value, excludeId));
-                return Results.Ok(result);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            var result = await mediator.Send(new ValidateAccountField(field, value, excludeId));
+            return Results.Ok(result);
         })
         .WithTags("Accounts")
         .RequireAuthorization();

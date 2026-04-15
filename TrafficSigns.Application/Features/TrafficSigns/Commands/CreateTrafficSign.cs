@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Marten;
 using Marten.Linq.MatchesSql;
 using NetTopologySuite.Geometries;
+using FluentValidation;
+using FluentValidation.Results;
 
 namespace TrafficSigns.Application.Features.TrafficSigns.Commands;
 
@@ -29,17 +31,14 @@ public class CreateTrafficSignHandler(
     public async Task<Guid> Handle(CreateTrafficSignCommand request, CancellationToken cancellationToken)
     {
         if (!await permissionService.CanManageTrafficSignsAsync(request.AccountId))
-        {
-            throw new UnauthorizedAccessException("Access denied.");
-        }
+            throw new UnauthorizedAccessException("Access denied");
 
         var accountExists = await EntityFrameworkQueryableExtensions
             .AnyAsync(db.Accounts, a => a.Id == request.AccountId, cancellationToken);
 
         if (!accountExists)
-        {
-            throw new Exception($"Account {request.AccountId} does not exist.");
-        }
+            throw new KeyNotFoundException($"Account {request.AccountId} does not exist");
+        
 
         var roadQuery = db.Database.SqlQueryRaw<int>("SELECT 1 FROM traffic_signs_map WHERE segment_id = {0} LIMIT 1", request.RoadSegmentId);
         var roadExists = await EntityFrameworkQueryableExtensions
@@ -47,7 +46,8 @@ public class CreateTrafficSignHandler(
 
         if (!roadExists)
         {
-            throw new Exception($"Road Segment ID {request.RoadSegmentId} is invalid.");
+            var failure = new ValidationFailure(nameof(request.RoadSegmentId), $"Road Segment ID {request.RoadSegmentId} is invalid");
+            throw new ValidationException(new[] { failure });
         }
 
         var location = new Point(request.Longitude, request.Latitude) { SRID = 4326 };
@@ -68,7 +68,8 @@ public class CreateTrafficSignHandler(
 
         if (existingSign != null)
         {
-            throw new Exception($"This position already has an active sign with code '{existingSign.Code}'.");
+            var failure = new ValidationFailure(nameof(request.Code), $"This position already has an active sign with code '{existingSign.Code}'");
+            throw new ValidationException(new[] { failure });
         }
 
         string actor = currentUser.GetUsername() ?? "Unknown";

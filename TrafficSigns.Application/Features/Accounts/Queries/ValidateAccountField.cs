@@ -20,15 +20,14 @@ public class ValidateAccountFieldHandler(
             if (!await permissionService.CanManageAccountAsync(request.ExcludeId.Value))
                 throw new UnauthorizedAccessException("Access denied");
         }
-        else
+        else if (!permissionService.IsAdmin())
         {
-            if (!permissionService.IsAdmin())
-                throw new UnauthorizedAccessException("Access denied");
+            throw new UnauthorizedAccessException("Access denied");
         }
 
-        var val = request.Value.Trim();
+        var val = request.Value?.Trim() ?? string.Empty;
         bool isDup = false;
-        string msg = string.Empty;
+        string? msg = null;
 
         switch (request.Field.ToLower())
         {
@@ -36,17 +35,12 @@ public class ValidateAccountFieldHandler(
                 if (val.Length < 1 || val.Length > 100)
                     return new ValidateAccountFieldResult(false, "Name length invalid");
 
-                isDup = await db.Accounts.AnyAsync(u => u.Name == val && u.Id != request.ExcludeId, cancellationToken);
-                break;
-
-            case "desc":
-                if (val.Length > 500)
-                    return new ValidateAccountFieldResult(false, "Description length invalid");
-
+                isDup = await db.Accounts.AnyAsync(u => u.Name.ToLower() == val.ToLower() && u.Id != request.ExcludeId, cancellationToken);
+                if (isDup) msg = "Account name already exists";
                 break;
 
             case "email":
-                if (!AccountValidationRules.IsValidEmail(val))
+                if (!string.IsNullOrEmpty(val) && !AccountValidationRules.IsValidEmail(val))
                     return new ValidateAccountFieldResult(false, "Email format invalid");
 
                 isDup = await db.Accounts.AnyAsync(u => u.Email == val && u.Id != request.ExcludeId, cancellationToken);
@@ -54,17 +48,22 @@ public class ValidateAccountFieldHandler(
                 break;
 
             case "phone":
-                if (!AccountValidationRules.IsValidPhone(val))
+                if (!string.IsNullOrEmpty(val) && !AccountValidationRules.IsValidPhone(val))
                     return new ValidateAccountFieldResult(false, "Phone format invalid");
 
                 isDup = await db.Accounts.AnyAsync(u => u.Phone == val && u.Id != request.ExcludeId, cancellationToken);
                 if (isDup) msg = "This phone is already registered";
                 break;
 
+            case "desc":
+                if (val.Length > 500)
+                    return new ValidateAccountFieldResult(false, "Description maximum letters is 500");
+                break;
+
             default:
-                throw new ArgumentException("Invalid field");
+                throw new ArgumentException($"Field '{request.Field}' is not supported for validation.");
         }
 
-        return new ValidateAccountFieldResult(!isDup, msg);
+        return new ValidateAccountFieldResult(!isDup, msg ?? string.Empty);
     }
 }

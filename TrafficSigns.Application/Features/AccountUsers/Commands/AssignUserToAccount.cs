@@ -2,6 +2,8 @@
 using TrafficSigns.Application.Common.Interfaces;
 using TrafficSigns.Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation;
+using FluentValidation.Results;
 
 namespace TrafficSigns.Application.Features.AccountUsers.Commands;
 
@@ -21,22 +23,23 @@ public class AssignUserToAccountHandler(
     {
         if (!await permissionService.CanManageAccountUsersAsync(request.AccountId))
         {
-            throw new UnauthorizedAccessException("Access denied.");
+            throw new UnauthorizedAccessException("Access denied");
         }
 
         if (!_allowedRoles.Contains(request.Role))
         {
-            throw new Exception($"Invalid role. Allowed roles are: {string.Join(", ", _allowedRoles)}");
+            var failure = new ValidationFailure(nameof(request.Role), $"Invalid role. Allowed roles are: {string.Join(", ", _allowedRoles)}");
+            throw new ValidationException(new[] { failure });
         }
 
         if (!await db.Users.AnyAsync(u => u.Id == request.UserId, cancellationToken))
         {
-            throw new Exception("User not found.");
+            throw new KeyNotFoundException("User not found");
         }
 
         if (!await db.Accounts.AnyAsync(a => a.Id == request.AccountId, cancellationToken))
         {
-            throw new Exception("Account not found.");
+            throw new KeyNotFoundException("Account not found");
         }
 
         var hasActiveOwner = await db.AccountUsers.AnyAsync(au =>
@@ -53,7 +56,8 @@ public class AssignUserToAccountHandler(
         {
             if (!existingLink.IsDeleted)
             {
-                throw new Exception("User is already assigned to this account and is currently active.");
+                var failure = new ValidationFailure(nameof(request.UserId), "User is already assigned to this account and is currently active");
+                throw new ValidationException(new[] { failure });
             }
 
             existingLink.IsDeleted = false;

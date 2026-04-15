@@ -9,23 +9,13 @@ public static class AssignUserToAccountEndpoint
     {
         app.MapPost("/api/accounts/assign-user", async (AssignUserToAccountCommand command, IMediator mediator) =>
         {
-            try
+            var accountUserId = await mediator.Send(command);
+
+            return Results.Ok(new
             {
-                var accountUserId = await mediator.Send(command);
-                return Results.Ok(new
-                {
-                    Message = "User has been assigned successfully",
-                    Id = accountUserId
-                });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+                Message = "User has been assigned successfully",
+                Id = accountUserId
+            });
         })
         .WithTags("AccountUsers")
         .RequireAuthorization();

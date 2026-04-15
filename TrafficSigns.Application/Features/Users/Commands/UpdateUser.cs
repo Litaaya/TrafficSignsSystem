@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using TrafficSigns.Application.Common.Interfaces;
 using TrafficSigns.Application.Common.Validations;
 using FluentValidation;
+using FluentValidation.Results;
+using System.Collections.Generic;
 
 namespace TrafficSigns.Application.Features.Users.Commands;
 
@@ -39,10 +41,13 @@ public class UpdateUserHandler(
 {
     public async Task<bool> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
-        if (!await permissionService.CanManageGlobalUsersAsync()) throw new UnauthorizedAccessException("Access denied");
+        if (!await permissionService.CanManageGlobalUsersAsync())
+            throw new UnauthorizedAccessException("Access denied");
 
         var user = await db.Users.FindAsync([request.Id], cancellationToken);
-        if (user == null || user.IsDeleted) return false;
+
+        if (user == null || user.IsDeleted)
+            throw new KeyNotFoundException($"User with ID {request.Id} not found or is inactive");
 
         var email = request.Email.Trim().ToLower();
         var phone = request.Phone.Trim();
@@ -52,33 +57,32 @@ public class UpdateUserHandler(
             .Select(u => new { u.Email, u.Phone })
             .ToListAsync(cancellationToken);
 
-        if (duplicates.Any())
+        if (duplicates.Count > 0)
         {
-            var conflicts = new List<string>();
+            var failures = new List<ValidationFailure>();
 
-            if (duplicates.Any(u => u.Email == email)) conflicts.Add("Email");
-            if (duplicates.Any(u => u.Phone == phone)) conflicts.Add("Phone Number");
+            if (duplicates.Any(u => u.Email == email))
+                failures.Add(new ValidationFailure(nameof(request.Email), "This email is already registered to another user"));
 
-            string conflictMessage = conflicts.Count > 1
-                ? $"{string.Join(", ", conflicts.Take(conflicts.Count - 1))} and {conflicts.Last()}"
-                : conflicts.First();
+            if (duplicates.Any(u => u.Phone == phone))
+                failures.Add(new ValidationFailure(nameof(request.Phone), "This phone number is already in use by another user"));
 
-            throw new Exception($"{conflictMessage} already exists in the system");
+            throw new ValidationException(failures);
         }
 
         await keycloakService.UpdateUserAsync(
             user.Id,
-            request.Email.Trim(),
-            request.Phone.Trim(),
+            email,
+            phone,
             request.FirstName?.Trim() ?? "",
             request.LastName?.Trim() ?? "");
 
-        user.Email = request.Email.Trim();
-        user.Phone = request.Phone.Trim();
+        user.Email = email;
+        user.Phone = phone;
         user.FirstName = request.FirstName?.Trim();
         user.LastName = request.LastName?.Trim();
         user.UpdatedDt = DateTime.UtcNow;
-                
+
         await db.SaveChangesAsync(cancellationToken);
         return true;
     }

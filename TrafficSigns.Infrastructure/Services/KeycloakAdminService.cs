@@ -7,7 +7,11 @@ using TrafficSigns.Application.Common.Interfaces;
 
 namespace TrafficSigns.Infrastructure.Services;
 
-public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, ICurrentUserService currentUserService, IMemoryCache memoryCache) : IKeycloakAdminService
+public class KeycloakAdminService(
+    HttpClient httpClient,
+    IConfiguration config,
+    ICurrentUserService currentUserService,
+    IMemoryCache memoryCache) : IKeycloakAdminService
 {
     private async Task<string> GetAdminTokenAsync()
     {
@@ -40,7 +44,7 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to obtain Keycloak token: {error}");
+            throw new HttpRequestException($"Keycloak Authentication failed with status {response.StatusCode}: {error}");
         }
 
         var data = await response.Content.ReadFromJsonAsync<JsonElement>();
@@ -52,10 +56,10 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         return token;
     }
 
-    public async Task<Guid> CreateUserAsync(string username, string email, string password, string firstName, string lastName, string phone)
+    public async Task<Guid> CreateUserAsync(string username, string email, string phone, string password, string firstName, string lastName)
     {
         if (string.IsNullOrWhiteSpace(phone))
-            throw new ArgumentException("Phone number is required by Keycloak configuration.");
+            throw new ArgumentException("Phone number is required for user creation.");
 
         var baseUrl = config["Keycloak:AuthServerUrl"]?.TrimEnd('/');
         var realm = config["Keycloak:Realm"];
@@ -64,16 +68,13 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         var payload = new
         {
             username = username.Trim(),
-            email = email,
+            email,
             enabled = true,
-            firstName = firstName,
-            lastName = lastName,
+            firstName,
+            lastName,
             emailVerified = true,
             credentials = new[] { new { type = "password", value = password, temporary = true } },
-            attributes = new Dictionary<string, string[]>()
-        {
-            { "phone", [phone] }
-        }
+            attributes = new Dictionary<string, string[]> { { "phone", [phone] } }
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/admin/realms/{realm}/users");
@@ -85,11 +86,18 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to create Keycloak user. Keycloak says: {error}");
+            throw new HttpRequestException($"Failed to create Keycloak user. Status: {response.StatusCode}. Error: {error}");
         }
 
-        var users = await httpClient.GetFromJsonAsync<List<JsonElement>>($"{baseUrl}/admin/realms/{realm}/users?username={username.Trim()}");
-        return Guid.Parse(users![0].GetProperty("id").GetString()!);
+        var location = response.Headers.Location;
+        var userIdStr = location?.PathAndQuery.Split('/').Last();
+
+        if (string.IsNullOrEmpty(userIdStr))
+        {
+            throw new InvalidOperationException("Keycloak created the user but failed to return a location header containing the User ID.");
+        }
+
+        return Guid.Parse(userIdStr);
     }
 
     public async Task UpdateUserStatusAsync(Guid userId, bool enabled)
@@ -102,7 +110,11 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         request.Content = JsonContent.Create(new { enabled });
 
-        await httpClient.SendAsync(request);
+        var response = await httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"Failed to update status for user {userId}. Status: {response.StatusCode}");
+        }
     }
 
     public async Task ResetPasswordAsync(Guid userId, string newPassword)
@@ -118,10 +130,13 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         request.Content = JsonContent.Create(payload);
 
         var response = await httpClient.SendAsync(request);
-        if (!response.IsSuccessStatusCode) throw new Exception("Failed to reset password");
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"Failed to reset password for user {userId}. Status: {response.StatusCode}");
+        }
     }
 
-    public async Task UpdateUserAsync(Guid userId, string email, string firstName, string lastName, string phone)
+    public async Task UpdateUserAsync(Guid userId, string email, string phone, string firstName, string lastName)
     {
         var baseUrl = config["Keycloak:AuthServerUrl"]?.TrimEnd('/');
         var realm = config["Keycloak:Realm"];
@@ -133,10 +148,7 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
             firstName,
             lastName,
             emailVerified = true,
-            attributes = new Dictionary<string, string[]>()
-    {
-        { "phone", [phone] }
-    }
+            attributes = new Dictionary<string, string[]> { { "phone", [phone] } }
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Put, $"{baseUrl}/admin/realms/{realm}/users/{userId}");
@@ -144,7 +156,10 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         request.Content = JsonContent.Create(payload);
 
         var response = await httpClient.SendAsync(request);
-        if (!response.IsSuccessStatusCode) throw new Exception("Failed to update user");
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"Failed to update user {userId}. Status: {response.StatusCode}");
+        }
     }
 
     public async Task DeleteUserAsync(Guid userId)
@@ -156,7 +171,11 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         using var request = new HttpRequestMessage(HttpMethod.Delete, $"{baseUrl}/admin/realms/{realm}/users/{userId}");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        await httpClient.SendAsync(request);
+        var response = await httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"Failed to delete user {userId}. Status: {response.StatusCode}");
+        }
     }
 
     public async Task<List<JsonElement>> GetUsersAsync(int first, int max)
@@ -165,12 +184,15 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         var realm = config["Keycloak:Realm"];
         var accessToken = await GetAdminTokenAsync();
 
-        var url = $"{baseUrl}/admin/realms/{realm}/users?first={first}&max={max}";
-
-        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/admin/realms/{realm}/users?first={first}&max={max}");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"Failed to retrieve users from Keycloak. Status: {response.StatusCode}");
+        }
+
         return await response.Content.ReadFromJsonAsync<List<JsonElement>>() ?? [];
     }
 
@@ -180,14 +202,16 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         var realm = config["Keycloak:Realm"];
         var accessToken = await GetAdminTokenAsync();
 
-        var url = $"{baseUrl}/admin/realms/{realm}/users/{userId}/role-mappings/realm";
-
-        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/admin/realms/{realm}/users/{userId}/role-mappings/realm");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await httpClient.SendAsync(request);
-        var roles = await response.Content.ReadFromJsonAsync<List<JsonElement>>() ?? [];
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"Failed to retrieve roles for user {userId}. Status: {response.StatusCode}");
+        }
 
+        var roles = await response.Content.ReadFromJsonAsync<List<JsonElement>>() ?? [];
         return roles.Select(r => r.GetProperty("name").GetString()!).ToList();
     }
 
@@ -204,6 +228,11 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"Failed to fetch admin events. Status: {response.StatusCode}");
+        }
+
         return await response.Content.ReadFromJsonAsync<List<JsonElement>>() ?? [];
     }
 
@@ -217,7 +246,14 @@ public class KeycloakAdminService(HttpClient httpClient, IConfiguration config, 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await httpClient.SendAsync(request);
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            return null;
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"Failed to fetch user by ID {userId}. Status: {response.StatusCode}");
+        }
 
         return await response.Content.ReadFromJsonAsync<JsonElement>();
     }

@@ -9,25 +9,14 @@ public static class ReactivateUserEndpoint
     {
         app.MapPatch("/api/users/{id:guid}/reactivate", async (Guid id, ReactivateUserRequest body, IMediator mediator) =>
         {
-            try
-            {
-                var command = new ReactivateUserCommand(id, body.NewPassword);
-                var userId = await mediator.Send(command);
+            var command = new ReactivateUserCommand(id, body.NewPassword);
+            var userId = await mediator.Send(command);
 
-                return Results.Ok(new
-                {
-                    Message = "User reactivated successfully",
-                    Id = userId
-                });
-            }
-            catch (UnauthorizedAccessException)
+            return Results.Ok(new
             {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+                Message = "User reactivated successfully",
+                Id = userId
+            });
         })
         .WithTags("Users")
         .RequireAuthorization();

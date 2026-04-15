@@ -20,7 +20,7 @@ public class ValidateUserFieldHandler(
             throw new UnauthorizedAccessException("Access denied");
         }
 
-        var val = request.Value.Trim();
+        var val = request.Value?.Trim() ?? string.Empty;
         bool isDup = false;
         string msg = string.Empty;
 
@@ -32,28 +32,28 @@ public class ValidateUserFieldHandler(
                 if (val.Contains(" "))
                     return new ValidateUserFieldResult(false, "Username format invalid");
 
-                isDup = await db.Users.AnyAsync(u => u.Username == val && u.Id != request.ExcludeId, cancellationToken);
-                if (isDup) msg = "This username is already taken.";
+                isDup = await db.Users.AnyAsync(u => u.Username.ToLower() == val.ToLower() && u.Id != request.ExcludeId, cancellationToken);
+                if (isDup) msg = "This username is already taken";
                 break;
 
             case "email":
-                if (!UserValidationRules.IsValidEmail(val))
+                if (!string.IsNullOrEmpty(val) && !UserValidationRules.IsValidEmail(val))
                     return new ValidateUserFieldResult(false, "Email format invalid");
 
                 isDup = await db.Users.AnyAsync(u => u.Email == val && u.Id != request.ExcludeId, cancellationToken);
-                if (isDup) msg = "This email is already registered.";
+                if (isDup) msg = "This email is already registered";
                 break;
 
             case "phone":
-                if (!UserValidationRules.IsValidPhone(val))
+                if (!string.IsNullOrEmpty(val) && !UserValidationRules.IsValidPhone(val))
                     return new ValidateUserFieldResult(false, "Phone format invalid");
 
                 isDup = await db.Users.AnyAsync(u => u.Phone == val && u.Id != request.ExcludeId, cancellationToken);
-                if (isDup) msg = "This phone number is already in use.";
+                if (isDup) msg = "This phone number is already in use";
                 break;
 
             default:
-                throw new ArgumentException("Invalid field");
+                throw new ArgumentException($"Field '{request.Field}' is not supported for validation");
         }
 
         return new ValidateUserFieldResult(!isDup, msg);

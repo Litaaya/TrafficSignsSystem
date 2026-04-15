@@ -11,15 +11,8 @@ public static class UpdateUserEndpoint
         {
             if (id != command.Id) return Results.BadRequest(new { Message = "Id mismatch" });
 
-            try
-            {
-                var success = await mediator.Send(command);
-                return success ? Results.NoContent() : Results.NotFound();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            var success = await mediator.Send(command);
+            return success ? Results.NoContent() : Results.NotFound();
         })
         .WithTags("Users")
         .RequireAuthorization();

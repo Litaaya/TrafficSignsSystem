@@ -26,6 +26,11 @@ public class GetUsersInAccountHandler(
             throw new UnauthorizedAccessException("Access denied.");
         }
 
+        if (!await db.Accounts.AnyAsync(a => a.Id == request.AccountId, cancellationToken))
+        {
+            throw new KeyNotFoundException($"Account not found");
+        }
+
         return await db.AccountUsers
             .AsNoTracking()
             .Where(au => au.AccountId == request.AccountId && !au.IsDeleted)

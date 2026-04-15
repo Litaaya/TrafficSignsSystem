@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using FluentValidation.Results;
 using MediatR;
 using TrafficSigns.Application.Common.Interfaces;
 using TrafficSigns.Application.Common.Validations;
@@ -22,11 +23,11 @@ public class UpdateAccountCommandValidator : AbstractValidator<UpdateAccountComm
 
         RuleFor(x => x.Email)
             .Must(AccountValidationRules.IsValidEmail)
-            .WithMessage("Account email format is invalid.");
+            .WithMessage("Account email format is invalid");
 
         RuleFor(x => x.Phone)
             .Must(AccountValidationRules.IsValidPhone)
-            .WithMessage("Account phone format is invalid.");
+            .WithMessage("Account phone format is invalid");
     }
 }
 
@@ -46,21 +47,24 @@ public class UpdateAccountHandler(
     public async Task<bool> Handle(UpdateAccountCommand request, CancellationToken cancellationToken)
     {
         var account = await db.Accounts.FindAsync([request.Id], cancellationToken);
-        if (account == null) return false;
+        if (account == null) 
+            throw new KeyNotFoundException("Account not found");
 
         var isDuplicateName = await db.Accounts.AnyAsync(a =>
-        a.Id != request.Id &&
-        a.Name.ToLower() == request.Name.Trim().ToLower(),
-        cancellationToken);
+            a.Id != request.Id &&
+            a.Name.ToLower() == request.Name.Trim().ToLower(),
+            cancellationToken);
 
-        if (isDuplicateName) throw new Exception("Another account with this name already exists.");
+        if (isDuplicateName)
+        {
+            var failure = new ValidationFailure(nameof(request.Name), "Another account with this name already exists");
+            throw new ValidationException(new[] { failure });
+        }
 
         bool isUpdatingSystemField = request.System != account.System;
 
         if (!await permissionService.CanUpdateAccountAsync(request.Id, isUpdatingSystemField))
-        {
-            throw new UnauthorizedAccessException("Access denied.");
-        }
+            throw new UnauthorizedAccessException("Access denied");
 
         account.Name = request.Name.Trim();
         account.Desc = request.Desc?.Trim();

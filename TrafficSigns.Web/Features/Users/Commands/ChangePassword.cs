@@ -9,15 +9,8 @@ public static class ChangePasswordEndpoint
     {
         app.MapPost("/api/users/profile/change-password", async (ChangePasswordCommand command, IMediator mediator) =>
         {
-            try
-            {
-                await mediator.Send(command);
-                return Results.Ok(new { Message = "Successfully change password" });
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            await mediator.Send(command);
+            return Results.Ok(new { Message = "Successfully change password" });
         })
         .WithTags("Profile")
         .RequireAuthorization();

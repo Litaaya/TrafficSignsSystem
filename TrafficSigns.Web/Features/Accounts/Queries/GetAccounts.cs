@@ -8,38 +8,16 @@ public static class GetAccountsEndpoint
     {
         app.MapGet("/api/accounts", async ([AsParameters] GetAccountsQuery query, IMediator mediator) =>
         {
-            try
-            {
-                var result = await mediator.Send(query);
-                return Results.Ok(result);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            var result = await mediator.Send(query);
+            return Results.Ok(result);
         })
         .WithTags("Accounts")
         .RequireAuthorization();
 
         app.MapGet("/api/accounts/{id:guid}", async (Guid id, IMediator mediator) =>
         {
-            try
-            {
-                var result = await mediator.Send(new GetAccountByIdQuery(id));
-                return result is not null ? Results.Ok(result) : Results.NotFound(new { Message = "Account not found." });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            var result = await mediator.Send(new GetAccountByIdQuery(id));
+            return Results.Ok(result);
         })
         .WithTags("Accounts")
         .RequireAuthorization();

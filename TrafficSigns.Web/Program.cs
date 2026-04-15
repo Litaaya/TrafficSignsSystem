@@ -196,6 +196,9 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<LogUserActivityMiddleware>();
+
 app.UseCors();
 
 app.UseAuthentication();
@@ -212,8 +215,6 @@ app.UseSerilogRequestLogging(options =>
         if (userId != null) diagnosticContext.Set("User", userId);
     };
 });
-
-app.UseMiddleware<LogUserActivityMiddleware>();
 
 app.MapControllers();
 

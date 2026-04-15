@@ -38,10 +38,12 @@ public class ResetPasswordByAdminHandler(
     public async Task<bool> Handle(ResetPasswordByAdminCommand request, CancellationToken cancellationToken)
     {
         if (!await permissionService.CanManageGlobalUsersAsync())
-            throw new UnauthorizedAccessException("Access denied"); 
+            throw new UnauthorizedAccessException("Access denied");
 
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
-        if (user == null) throw new Exception("User invalid");
+
+        if (user == null)
+            throw new KeyNotFoundException($"User with ID {request.Id} not found");
 
         await keycloakService.ResetPasswordAsync(request.Id, request.NewPassword);
 

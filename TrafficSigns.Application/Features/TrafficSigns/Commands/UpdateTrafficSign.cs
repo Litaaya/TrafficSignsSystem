@@ -5,6 +5,8 @@ using TrafficSigns.Domain.Events;
 using TrafficSigns.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
+using FluentValidation;
+using FluentValidation.Results;
 
 namespace TrafficSigns.Application.Features.TrafficSigns.Commands;
 
@@ -30,17 +32,18 @@ public class UpdateTrafficSignHandler(
         var sign = await session.LoadAsync<TrafficSign>(request.Id, cancellationToken);
         if (sign == null)
         {
-            throw new Exception($"Traffic sign with ID {request.Id} was not found.");
+            throw new KeyNotFoundException($"Traffic sign with ID {request.Id} was not found");
         }
 
         if (!await permissionService.CanManageTrafficSignsAsync(sign.AccountId))
         {
-            throw new UnauthorizedAccessException("Access denied.");
+            throw new UnauthorizedAccessException("Access denied");
         }
 
         if (sign.IsDeleted)
         {
-            throw new Exception("Traffic sign is inactivated and cannot be updated.");
+            var failure = new ValidationFailure(nameof(request.Id), "Traffic sign is inactivated and cannot be updated");
+            throw new ValidationException(new[] { failure });
         }
 
         var roadQuery = db.Database.SqlQueryRaw<int>("SELECT 1 FROM traffic_signs_map WHERE segment_id = {0} LIMIT 1", request.RoadSegmentId);
@@ -48,7 +51,8 @@ public class UpdateTrafficSignHandler(
 
         if (!roadExists)
         {
-            throw new Exception($"Road Segment ID {request.RoadSegmentId} is invalid.");
+            var failure = new ValidationFailure(nameof(request.RoadSegmentId), $"Road Segment ID {request.RoadSegmentId} is invalid");
+            throw new ValidationException(new[] { failure });
         }
 
         string actor = currentUser.GetUsername() ?? "Unknown";

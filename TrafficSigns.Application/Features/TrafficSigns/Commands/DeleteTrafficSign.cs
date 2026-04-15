@@ -3,6 +3,8 @@ using MediatR;
 using TrafficSigns.Application.Common.Interfaces;
 using TrafficSigns.Domain.Events;
 using TrafficSigns.Domain.Models;
+using FluentValidation;
+using FluentValidation.Results;
 
 namespace TrafficSigns.Application.Features.TrafficSigns.Commands;
 
@@ -19,17 +21,18 @@ public class DeleteTrafficSignHandler(
 
         if (sign == null)
         {
-            throw new Exception($"Invalid TrafficSign {request.Id}");
+            throw new KeyNotFoundException($"Invalid TrafficSign {request.Id}");
         }
 
         if (!await permissionService.CanManageTrafficSignsAsync(sign.AccountId))
         {
-            throw new UnauthorizedAccessException("Access denied.");
+            throw new UnauthorizedAccessException("Access denied");
         }
 
         if (sign.IsDeleted)
         {
-            throw new Exception("TrafficSign has already been inactivated before.");
+            var failure = new ValidationFailure(nameof(request.Id), "TrafficSign has already been inactivated before");
+            throw new ValidationException(new[] { failure });
         }
 
         string actor = currentUser.GetUsername() ?? "Unknown";

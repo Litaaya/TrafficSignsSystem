@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using TrafficSigns.Application.Common.Interfaces;
 using TrafficSigns.Application.Common.Validations;
 using FluentValidation;
+using FluentValidation.Results;
+using System.Collections.Generic;
 
 namespace TrafficSigns.Application.Features.Users.Commands;
 
@@ -39,10 +41,11 @@ public class UpdateProfileHandler(
     public async Task<bool> Handle(UpdateProfileCommand request, CancellationToken cancellationToken)
     {
         var userId = currentUser.GetUserId();
-        if (userId == null) throw new UnauthorizedAccessException();
+        if (userId == null) throw new UnauthorizedAccessException("Invalid session");
 
         var user = await db.Users.FindAsync([userId], cancellationToken);
-        if (user == null || user.IsDeleted) return false;
+        if (user == null || user.IsDeleted)
+            throw new KeyNotFoundException("User profile not found or is inactive");
 
         var email = request.Email.Trim().ToLower();
         var phone = request.Phone.Trim();
@@ -52,17 +55,17 @@ public class UpdateProfileHandler(
             .Select(u => new { u.Email, u.Phone })
             .ToListAsync(cancellationToken);
 
-        if (duplicates.Any())
+        if (duplicates.Count > 0)
         {
-            var conflicts = new List<string>();
-            if (duplicates.Any(u => u.Email == email)) conflicts.Add("Email");
-            if (duplicates.Any(u => u.Phone == phone)) conflicts.Add("Phone Number");
+            var failures = new List<ValidationFailure>();
 
-            string conflictMessage = conflicts.Count > 1
-                ? $"{string.Join(", ", conflicts.Take(conflicts.Count - 1))} and {conflicts.Last()}"
-                : conflicts.First();
+            if (duplicates.Any(u => u.Email == email))
+                failures.Add(new ValidationFailure(nameof(request.Email), "This email is already registered to another user"));
 
-            throw new Exception($"{conflictMessage} already exists in the system.");
+            if (duplicates.Any(u => u.Phone == phone))
+                failures.Add(new ValidationFailure(nameof(request.Phone), "This phone number is already in use by another user"));
+
+            throw new ValidationException(failures);
         }
 
         await keycloakService.UpdateUserAsync(

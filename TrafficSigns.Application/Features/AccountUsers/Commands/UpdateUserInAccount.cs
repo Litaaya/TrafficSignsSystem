@@ -1,6 +1,8 @@
 ﻿using MediatR;
 using TrafficSigns.Application.Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation;
+using FluentValidation.Results;
 
 namespace TrafficSigns.Application.Features.AccountUsers.Commands;
 
@@ -22,12 +24,13 @@ public class UpdateUserInAccountHandler(
     {
         if (!await permissionService.CanManageAccountUsersAsync(request.AccountId))
         {
-            throw new UnauthorizedAccessException("Access denied.");
+            throw new UnauthorizedAccessException("Access denied");
         }
 
         if (!allowedRoles.Contains(request.Role))
         {
-            throw new Exception($"Invalid role. Allowed roles are: {string.Join(", ", allowedRoles)}");
+            var failure = new ValidationFailure(nameof(request.Role), $"Invalid role. Allowed roles are: {string.Join(", ", allowedRoles)}");
+            throw new ValidationException(new[] { failure });
         }
 
         var accountUser = await db.AccountUsers
@@ -37,7 +40,7 @@ public class UpdateUserInAccountHandler(
 
         if (accountUser == null)
         {
-            throw new Exception("User association not found or is inactive.");
+            throw new KeyNotFoundException("User association not found or is inactive");
         }
 
         if (accountUser.Role == "Owner" && request.Role != "Owner")
@@ -50,7 +53,8 @@ public class UpdateUserInAccountHandler(
 
             if (!otherOwnersExist)
             {
-                throw new Exception("Cannot change the role of the last owner in this account.");
+                var failure = new ValidationFailure(nameof(request.Role), "Cannot change the role of the last owner in this account");
+                throw new ValidationException(new[] { failure });
             }
         }
 

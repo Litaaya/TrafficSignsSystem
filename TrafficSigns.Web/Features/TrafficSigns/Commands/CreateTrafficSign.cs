@@ -9,19 +9,8 @@ public static class CreateTrafficSignEndpoint
     {
         app.MapPost("/api/traffic-signs", async (CreateTrafficSignCommand command, IMediator mediator) =>
         {
-            try
-            {
-                var signId = await mediator.Send(command);
-                return Results.Created($"/api/traffic-signs/{signId}", new { Id = signId });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            var signId = await mediator.Send(command);
+            return Results.Created($"/api/traffic-signs/{signId}", new { Id = signId });
         })
         .WithTags("TrafficSigns")
         .RequireAuthorization();

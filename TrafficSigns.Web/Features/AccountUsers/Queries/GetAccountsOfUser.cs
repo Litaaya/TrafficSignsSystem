@@ -9,19 +9,8 @@ public static class GetAccountsOfUserEndpoint
     {
         app.MapGet("/api/users/{userId:guid}/accounts", async (Guid userId, IMediator mediator) =>
         {
-            try
-            {
-                var result = await mediator.Send(new GetAccountsOfUserQuery(userId));
-                return Results.Ok(result);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            var result = await mediator.Send(new GetAccountsOfUserQuery(userId));
+            return Results.Ok(result);
         })
         .WithTags("AccountUsers")
         .RequireAuthorization();

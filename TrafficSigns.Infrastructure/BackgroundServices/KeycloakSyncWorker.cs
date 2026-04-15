@@ -62,7 +62,15 @@ public class KeycloakSyncWorker(
                     {
                         foreach (var item in syncRegistry)
                         {
-                            await mediator.Send(new SyncUserFromKeycloakCommand(item.Key, item.Value), stoppingToken);
+                            try
+                            {
+                                await mediator.Send(new SyncUserFromKeycloakCommand(item.Key, item.Value), stoppingToken);
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.LogError(ex, "Individual user sync failed. UserID: {UserId}. TraceId: {TraceId}",
+                                    item.Key, System.Diagnostics.Activity.Current?.TraceId);
+                            }
                         }
                     }
 
@@ -71,9 +79,9 @@ public class KeycloakSyncWorker(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Keycloak sync failed. RelationalId: {RelationalId}. Message: {Message}",
-                System.Diagnostics.Activity.Current?.TraceId,
-                ex.Message);
+                logger.LogError(ex, "Keycloak sync batch failed. TraceId: {TraceId}. Message: {Message}",
+                    System.Diagnostics.Activity.Current?.TraceId,
+                    ex.Message);
             }
 
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);

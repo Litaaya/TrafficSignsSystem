@@ -12,19 +12,8 @@ public static class ResetPasswordEndpoint
             if (id != command.Id)
                 return Results.BadRequest(new { Message = "Id user invalid" });
 
-            try
-            {
-                await mediator.Send(command);
-                return Results.NoContent();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            await mediator.Send(command);
+            return Results.NoContent();
         })
         .WithTags("Users")
         .RequireAuthorization();

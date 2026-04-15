@@ -9,19 +9,8 @@ public static class DeleteTrafficSignEndpoint
     {
         app.MapDelete("/api/traffic-signs/{id:guid}", async (Guid id, IMediator mediator) =>
         {
-            try
-            {
-                await mediator.Send(new DeleteTrafficSignCommand(id));
-                return Results.NoContent();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            await mediator.Send(new DeleteTrafficSignCommand(id));
+            return Results.NoContent();
         })
         .WithTags("TrafficSigns")
         .RequireAuthorization();

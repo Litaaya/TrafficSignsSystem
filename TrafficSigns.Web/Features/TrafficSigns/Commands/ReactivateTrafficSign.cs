@@ -9,19 +9,8 @@ public static class ReactivateTrafficSignEndpoint
     {
         app.MapPatch("/api/traffic-signs/{id:guid}/reactivate", async (Guid id, IMediator mediator) =>
         {
-            try
-            {
-                await mediator.Send(new ReactivateTrafficSignCommand(id));
-                return Results.Ok(new { Message = "Traffic Sign reactivated successfully" });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            await mediator.Send(new ReactivateTrafficSignCommand(id));
+            return Results.Ok(new { Message = "Traffic Sign reactivated successfully" });
         })
         .WithTags("TrafficSigns")
         .RequireAuthorization();

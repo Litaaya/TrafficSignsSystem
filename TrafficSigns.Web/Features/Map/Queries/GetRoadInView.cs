@@ -9,15 +9,8 @@ public static class MapEndpoints
     {
         app.MapGet("/api/map/roads", async ([AsParameters] GetRoadsInViewQuery query, IMediator mediator) =>
         {
-            try
-            {
-                var result = await mediator.Send(query);
-                return Results.Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            var result = await mediator.Send(query);
+            return Results.Ok(result);
         })
         .WithTags("Map")
         .RequireAuthorization();

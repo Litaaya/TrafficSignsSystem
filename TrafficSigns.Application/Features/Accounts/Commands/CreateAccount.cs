@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using FluentValidation.Results;
 using MediatR;
 using TrafficSigns.Application.Common.Interfaces;
 using TrafficSigns.Application.Common.Validations;
@@ -29,11 +30,11 @@ public class CreateAccountCommandValidator : AbstractValidator<CreateAccountComm
 
         RuleFor(x => x.Email)
             .Must(AccountValidationRules.IsValidEmail)
-            .WithMessage("Account email format is invalid.");
+            .WithMessage("Account email format is invalid");
 
         RuleFor(x => x.Phone)
             .Must(AccountValidationRules.IsValidPhone)
-            .WithMessage("Account phone format is invalid.");
+            .WithMessage("Account phone format is invalid");
     }
 }
 
@@ -43,12 +44,17 @@ public class CreateAccountHandler(
 {
     public async Task<Guid> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
     {
-        if (!permissionService.IsAdmin()) throw new UnauthorizedAccessException("Access denied.");
+        if (!permissionService.IsAdmin())
+            throw new UnauthorizedAccessException("Access denied");
 
         var isDuplicate = await db.Accounts
-        .AnyAsync(a => a.Name.ToLower() == request.Name.Trim().ToLower(), cancellationToken);
+            .AnyAsync(a => a.Name.ToLower() == request.Name.Trim().ToLower(), cancellationToken);
 
-        if (isDuplicate) throw new Exception("Account name already exists.");
+        if (isDuplicate)
+        {
+            var failure = new ValidationFailure(nameof(request.Name), "Account name already exists");
+            throw new ValidationException(new[] { failure });
+        }
 
         var account = new Account
         {

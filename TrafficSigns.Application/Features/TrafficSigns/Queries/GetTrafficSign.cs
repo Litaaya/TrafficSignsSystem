@@ -20,14 +20,14 @@ public class GetTrafficSignsHandler(
         {
             if (!permissionService.IsAdmin())
             {
-                throw new UnauthorizedAccessException("Account ID is required for non-administrators.");
+                throw new UnauthorizedAccessException("Account ID is required for non-administrators");
             }
         }
         else
         {
             if (!await permissionService.CanAccessAccountAsync(request.AccountId.Value))
             {
-                throw new UnauthorizedAccessException("Access denied.");
+                throw new UnauthorizedAccessException("Access denied");
             }
         }
 

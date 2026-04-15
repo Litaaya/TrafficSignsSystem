@@ -1,6 +1,8 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using TrafficSigns.Application.Common.Interfaces;
+using FluentValidation;
+using FluentValidation.Results;
 
 namespace TrafficSigns.Application.Features.Users.Commands;
 
@@ -15,7 +17,7 @@ public class DeleteUserHandler(
     {
         if (!await permissionService.CanManageGlobalUsersAsync())
         {
-            throw new UnauthorizedAccessException("Access denied.");
+            throw new UnauthorizedAccessException("Access denied");
         }
 
         var user = await db.Users
@@ -24,7 +26,7 @@ public class DeleteUserHandler(
 
         if (user == null)
         {
-            throw new Exception("User not found or already inactivated.");
+            throw new KeyNotFoundException("User not found or already inactivated");
         }
 
         var ownerAccountIds = user.AccountUsers
@@ -44,8 +46,8 @@ public class DeleteUserHandler(
 
             if (accountsWithLastOwner.Count > 0)
             {
-                var ids = string.Join(", ", accountsWithLastOwner);
-                throw new Exception($"User cannot be deleted because it is the sole owner of the: {ids} accounts. Please specify a new owner first.");
+                var failure = new ValidationFailure(nameof(request.UserId), $"User cannot be deleted because it is the sole owner of the following accounts: {string.Join(", ", accountsWithLastOwner)}. Please specify a new owner first");
+                throw new ValidationException(new[] { failure });
             }
         }
 

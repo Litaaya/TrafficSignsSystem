@@ -13,24 +13,13 @@ public static class UpdateUserInAccountEndpoint
             UpdateUserInAccountRequest request,
             IMediator mediator) =>
         {
-            try
-            {
-                var command = new UpdateUserInAccountCommand(
-                    accountId,
-                    userId,
-                    request.Role);
+            var command = new UpdateUserInAccountCommand(
+                accountId,
+                userId,
+                request.Role);
 
-                var success = await mediator.Send(command);
-                return Results.Ok(new { Message = "User role updated successfully" });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            var success = await mediator.Send(command);
+            return Results.Ok(new { Message = "User role updated successfully" });
         })
         .WithTags("AccountUsers")
         .RequireAuthorization();

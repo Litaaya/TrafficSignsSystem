@@ -14,19 +14,8 @@ public static class UpdateTrafficSignEndpoint
                 return Results.BadRequest(new { Message = "ID mismatch between URL and body." });
             }
 
-            try
-            {
-                await mediator.Send(command);
-                return Results.NoContent();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            await mediator.Send(command);
+            return Results.NoContent();
         })
         .WithTags("TrafficSigns")
         .RequireAuthorization();

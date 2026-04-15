@@ -9,19 +9,8 @@ public static class CreateAccountEndpoint
     {
         app.MapPost("/api/accounts", async (CreateAccountCommand command, IMediator mediator) =>
         {
-            try
-            {
-                var accountId = await mediator.Send(command);
-                return Results.Created($"/api/accounts/{accountId}", new { Id = accountId });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            var accountId = await mediator.Send(command);
+            return Results.Created($"/api/accounts/{accountId}", new { Id = accountId });
         })
         .WithTags("Accounts")
         .RequireAuthorization();

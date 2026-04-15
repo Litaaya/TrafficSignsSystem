@@ -1,6 +1,8 @@
 ﻿using MediatR;
 using TrafficSigns.Application.Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation;
+using FluentValidation.Results;
 
 namespace TrafficSigns.Application.Features.AccountUsers.Commands;
 
@@ -14,7 +16,7 @@ public class RemoveUserFromAccountHandler(
     {
         if (!await permissionService.CanRemoveUserAsync(request.AccountId, request.UserId))
         {
-            throw new UnauthorizedAccessException("Access denied or cannot remove the last owner.");
+            throw new UnauthorizedAccessException("Access denied or cannot remove the last owner");
         }
 
         var accountUser = await db.AccountUsers
@@ -24,7 +26,7 @@ public class RemoveUserFromAccountHandler(
 
         if (accountUser == null)
         {
-            throw new Exception("User association not found or already inactive.");
+            throw new KeyNotFoundException("User association not found or already inactive");
         }
 
         if (accountUser.Role == "Owner")
@@ -37,7 +39,8 @@ public class RemoveUserFromAccountHandler(
 
             if (!otherOwnersExist)
             {
-                throw new Exception("Cannot remove the last owner of the account.");
+                var failure = new ValidationFailure(nameof(request.UserId), "Cannot remove the last owner of the account. Please assign another owner first");
+                throw new ValidationException(new[] { failure });
             }
         }
 

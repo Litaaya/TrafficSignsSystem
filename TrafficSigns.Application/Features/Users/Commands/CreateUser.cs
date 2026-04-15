@@ -4,6 +4,7 @@ using TrafficSigns.Application.Common.Validations;
 using TrafficSigns.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
+using FluentValidation.Results;
 
 namespace TrafficSigns.Application.Features.Users.Commands;
 
@@ -47,7 +48,8 @@ public class CreateUserHandler(
 {
     public async Task<Guid> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
-        if (!await permissionService.CanManageGlobalUsersAsync()) throw new UnauthorizedAccessException("Access denied.");
+        if (!await permissionService.CanManageGlobalUsersAsync())
+            throw new UnauthorizedAccessException("Access denied");
 
         var username = request.Username.Trim();
         var email = request.Email.Trim().ToLower();
@@ -61,30 +63,34 @@ public class CreateUserHandler(
 
         if (existingUser != null)
         {
+            var failures = new List<ValidationFailure>();
+
             if (existingUser.IsDeleted)
-                throw new Exception("This user already exists but has been inactivated.");
+            {
+                failures.Add(new ValidationFailure(nameof(request.Username), "This user already exists but has been inactivated"));
+            }
+            else
+            {
+                if (existingUser.Username.Equals(username, StringComparison.OrdinalIgnoreCase))
+                    failures.Add(new ValidationFailure(nameof(request.Username), "Username already exists"));
 
-            var conflicts = new List<string>();
+                if ((existingUser.Email ?? "").Equals(email, StringComparison.OrdinalIgnoreCase))
+                    failures.Add(new ValidationFailure(nameof(request.Email), "Email already exists"));
 
-            if (existingUser.Username.Equals(username, StringComparison.OrdinalIgnoreCase)) conflicts.Add("Username");
-            if ((existingUser.Email ?? "").Equals(email, StringComparison.OrdinalIgnoreCase)) conflicts.Add("Email");
-            if (existingUser.Phone == phone) conflicts.Add("Phone Number");
+                if (existingUser.Phone == phone)
+                    failures.Add(new ValidationFailure(nameof(request.Phone), "Phone number already exists"));
+            }
 
-            string conflictMessage = conflicts.Count > 1
-                ? $"{string.Join(", ", conflicts.Take(conflicts.Count - 1))} and {conflicts.Last()}"
-                : conflicts.First();
-
-            throw new Exception($"{conflictMessage} already exists.");
+            if (failures.Count > 0) throw new ValidationException(failures);
         }
-                
-        var keycloakId = await keycloakService.CreateUserAsync
-        (
+
+        var keycloakId = await keycloakService.CreateUserAsync(
             username,
             email,
             phone,
             request.Password,
             request.FirstName?.Trim() ?? "",
-            request.LastName?.Trim() ?? ""            
+            request.LastName?.Trim() ?? ""
         );
 
         var user = new User

@@ -1,5 +1,7 @@
 ﻿using MediatR;
 using TrafficSigns.Application.Common.Interfaces;
+using FluentValidation;
+using FluentValidation.Results;
 
 namespace TrafficSigns.Application.Features.Users.Commands;
 
@@ -19,19 +21,20 @@ public class ReactivateUserHandler(
     {
         if (!await permissionService.CanManageGlobalUsersAsync())
         {
-            throw new UnauthorizedAccessException("Access denied.");
+            throw new UnauthorizedAccessException("Access denied");
         }
 
         var existingUser = await db.Users.FindAsync([request.UserId], cancellationToken);
 
         if (existingUser == null)
         {
-            throw new Exception("User not found.");
+            throw new KeyNotFoundException("User not found");
         }
 
         if (!existingUser.IsDeleted)
         {
-            throw new Exception("User is already active.");
+            var failure = new ValidationFailure(nameof(request.UserId), "User is already active");
+            throw new ValidationException(new[] { failure });
         }
 
         await keycloakService.UpdateUserStatusAsync(existingUser.Id, true);

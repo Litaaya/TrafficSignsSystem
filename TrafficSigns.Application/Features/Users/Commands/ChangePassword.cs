@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using FluentValidation.Results;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using TrafficSigns.Application.Common.Interfaces;
@@ -49,16 +50,20 @@ public class ChangePasswordHandler(
 
         var isOldPasswordValid = await keycloakService.VerifyUserPasswordAsync(username, request.OldPassword);
         if (!isOldPasswordValid)
-            throw new Exception("Current user is incorrect");
-                
+        {
+            var failure = new ValidationFailure(nameof(request.OldPassword), "Current password is incorrect");
+            throw new ValidationException(new[] { failure });
+        }
+
         await keycloakService.ResetPasswordAsync(userId.Value, request.NewPassword);
 
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
-        if (user != null)
-        {
-            user.UpdatedDt = DateTime.UtcNow;
-            await db.SaveChangesAsync(cancellationToken);
-        }
+
+        if (user == null)
+            throw new KeyNotFoundException("User profile not found");
+
+        user.UpdatedDt = DateTime.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
 
         return true;
     }

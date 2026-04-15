@@ -8,21 +8,10 @@ public static class DeleteUserEndpoint
     {
         app.MapDelete("/api/users/{userId:guid}", async (Guid userId, IMediator mediator) =>
         {
-            try
-            {
-                var success = await mediator.Send(new DeleteUserCommand(userId));
-                return success
-                    ? Results.Ok(new { Message = "User deactivated successfully" })
-                    : Results.NotFound();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Results.Forbid();
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { Message = ex.Message });
-            }
+            var success = await mediator.Send(new DeleteUserCommand(userId));
+            return success
+                ? Results.Ok(new { Message = "User deactivated successfully" })
+                : Results.NotFound();
         })
         .WithTags("Users")
         .RequireAuthorization();

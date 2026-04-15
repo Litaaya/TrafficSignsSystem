@@ -24,7 +24,12 @@ public class GetAccountsOfUserHandler(
 
         if (!permissionService.IsAdmin() && currentUserId != request.UserId)
         {
-            throw new UnauthorizedAccessException("Access denied.");
+            throw new UnauthorizedAccessException("Access denied");
+        }
+
+        if (!await db.Users.AnyAsync(u => u.Id == request.UserId, cancellationToken))
+        {
+            throw new KeyNotFoundException("User not found");
         }
 
         if (permissionService.IsAdmin() && currentUserId == request.UserId)
