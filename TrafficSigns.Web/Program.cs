@@ -4,6 +4,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using NetTopologySuite.IO.Converters;
 using Scalar.AspNetCore;
+using Serilog;
+using Serilog.Sinks.Elasticsearch;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -31,6 +34,21 @@ var keycloakSection = builder.Configuration.GetSection("Keycloak");
 var authServerUrl = keycloakSection["AuthServerUrl"]?.TrimEnd('/');
 var realmName = keycloakSection["Realm"];
 var authority = $"{authServerUrl}/realms/{realmName}";
+
+builder.Host.UseSerilog((context, configuration) =>
+{
+    var elasticUri = context.Configuration["ElasticConfiguration:Uri"] ?? "http://localhost:9200";
+
+    configuration
+        .Enrich.FromLogContext()
+        .Enrich.WithMachineName()
+        .WriteTo.Console()
+        .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticUri))
+        {
+            AutoRegisterTemplate = true,
+            IndexFormat = "trafficsigns-logs-{0:yyyy.MM.dd}",
+        });
+});
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -136,7 +154,7 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddHttpClient<IKeycloakAdminService, KeycloakAdminService>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8181/");
+    client.BaseAddress = new Uri(builder.Configuration["Keycloak:AuthServerUrl"] ?? "http://localhost:8181");
 });
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
@@ -178,6 +196,18 @@ app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseSerilogRequestLogging(options =>
+{
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        var traceId = Activity.Current?.TraceId.ToString();
+        diagnosticContext.Set("RelationalId", traceId);
+
+        var userId = httpContext.User?.Identity?.Name;
+        if (userId != null) diagnosticContext.Set("User", userId);
+    };
+});
 
 app.UseMiddleware<LogUserActivityMiddleware>();
 

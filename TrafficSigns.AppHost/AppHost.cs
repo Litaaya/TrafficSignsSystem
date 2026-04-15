@@ -1,5 +1,13 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
+// Elasticsearch
+var elasticsearch = builder.AddContainer("elasticsearch", "docker.elastic.co/elasticsearch/elasticsearch")
+    .WithImageTag("8.13.0")
+    .WithEnvironment("discovery.type", "single-node")
+    .WithEnvironment("xpack.security.enabled", "false")
+    .WithEnvironment("ES_JAVA_OPTS", "-Xms2g -Xmx2g")
+    .WithHttpEndpoint(port: 9200, targetPort: 9200, name: "http");
+
 // Security
 var keycloakClientSecret = builder.AddParameter("keycloak-client-secret", secret: true);
 var keycloakSyncSecret = builder.AddParameter("keycloak-sync-secret", secret: true);
@@ -33,10 +41,11 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "la
     {
          Url = "/admin/trafficsigns-realm/console/",
          DisplayText = "Traffic-Signs Console"
-    });    
+    });
 
 // API service
 var apiservice = builder.AddProject<Projects.TrafficSigns_Web>("apiservice")
+       .WithEnvironment("ElasticConfiguration__Uri", elasticsearch.GetEndpoint("http"))
        .WithReference(db)
        .WithReference(keycloak.GetEndpoint("http"))
        .WithEnvironment("Keycloak__AuthServerUrl", keycloak.GetEndpoint("http"))
@@ -45,7 +54,8 @@ var apiservice = builder.AddProject<Projects.TrafficSigns_Web>("apiservice")
        .WithEnvironment("Keycloak__AdminClient__ClientSecret", keycloakClientSecret)
        .WithEnvironment("Keycloak__SyncClient__ClientSecret", keycloakSyncSecret)
        .WaitFor(db)
-       .WaitFor(keycloak);
+       .WaitFor(keycloak)
+       .WaitFor(elasticsearch);
 
 // FrontEnd
 builder.AddJavaScriptApp("frontend", "../TrafficSigns.WebUI", "start")
@@ -56,5 +66,17 @@ builder.AddJavaScriptApp("frontend", "../TrafficSigns.WebUI", "start")
     .WithEnvironment("KEYCLOAK_REALM", "trafficsigns-realm")
     .WithEnvironment("KEYCLOAK_CLIENT_ID", "trafficsigns-ui")
     .WithEnvironment("PORT", "4200");
+
+// Kibana
+var kibana = builder.AddContainer("kibana", "docker.elastic.co/kibana/kibana")
+    .WithImageTag("8.13.0")
+    .WithEnvironment("ELASTICSEARCH_HOSTS", "http://elasticsearch:9200")
+    .WithHttpEndpoint(port: 5601, targetPort: 5601, name: "http")
+    .WithUrlForEndpoint("http", _ => new()
+    {
+        Url = "/app/discover",
+        DisplayText = "Kibana Analytics"
+    })
+    .WaitFor(elasticsearch);
 
 builder.Build().Run();
