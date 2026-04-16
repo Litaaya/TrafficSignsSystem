@@ -14,13 +14,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { AppComponent } from './app';
 import { AppRoutingModule } from './app-routing-module';
 import { AuthInterceptor } from './core/interceptors/auth-interceptor';
+import { ErrorInterceptor } from './core/interceptors/error-interceptor';
 
 // Components
 import { MainLayoutComponent } from './layout/main-layout';
 import { AccountListComponent } from './features/admin/accounts/account-list';
 import { UserListComponent } from './features/admin/users/user-list';
 import { MapPageComponent } from './features/map/map-page';
-import { AuthService } from './core/services/auth.service';
+import { AuthService } from './core/services/auth-service';
 export function initializeOAuth(authService: AuthService) {
   return () => authService.initAuth();
 }
@@ -51,6 +52,11 @@ export function initializeOAuth(authService: AuthService) {
       provide: APP_INITIALIZER,
       useFactory: initializeOAuth,
       deps: [AuthService],
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ErrorInterceptor,
       multi: true
     }
   ],

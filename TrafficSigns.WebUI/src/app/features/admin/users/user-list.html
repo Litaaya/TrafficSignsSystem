@@ -76,12 +76,12 @@
               </button>
               <ng-container>
                 <button *ngIf="!user.inactive"
-                        (click)="openConfirmModal('DELETE', user)"
+                        (click)="deleteUser(user)"
                         class="text-red-600 hover:underline font-bold text-xs uppercase whitespace-nowrap">
                   Delete
                 </button>
                 <button *ngIf="user.inactive"
-                        (click)="openConfirmModal('REACTIVATE', user)"
+                        (click)="openReactivateModal(user)"
                         class="text-green-600 hover:underline font-bold text-xs uppercase whitespace-nowrap">
                   Reactivate
                 </button>
@@ -217,8 +217,8 @@
                       </span>
                     </td>
                     <td class="p-4 flex justify-center gap-3">
-                      <button (click)="openConfirmModal('UPDATE_ACC_ROLE', selectedUser, acc)" class="text-blue-600 font-bold hover:text-blue-800 transition-colors text-[9px] uppercase tracking-tighter">Role</button>
-                      <button (click)="openConfirmModal('REMOVE_ACC', selectedUser, acc)" class="text-red-400 hover:text-red-600 font-bold transition-colors text-[9px] uppercase tracking-tighter">Withdraw</button>
+                      <button (click)="openRoleModal('UPDATE', selectedUser, acc)" class="text-blue-600 font-bold hover:text-blue-800 transition-colors text-[9px] uppercase tracking-tighter">Role</button>
+                      <button (click)="removeAccount(selectedUser, acc)" class="text-red-400 hover:text-red-600 font-bold transition-colors text-[9px] uppercase tracking-tighter">Withdraw</button>
                     </td>
                   </tr>
                 </tbody>
@@ -247,7 +247,7 @@
 
       <div class="max-h-56 overflow-y-auto overflow-x-hidden space-y-1 custom-scrollbar">
         <button *ngFor="let a of availableAccounts"
-                (click)="openConfirmModal('ASSIGN_ACC', selectedUser, a)"
+                (click)="openRoleModal('ASSIGN', selectedUser, a)"
                 class="w-full text-left p-3 hover:bg-blue-50 rounded-xl text-xs font-bold text-slate-600 flex justify-between items-center group transition-all">
           <span class="truncate pr-2 block flex-1" [innerHTML]="highlight(a.name, searchAccountTerm)"></span>
           <span class="text-blue-600 font-black opacity-0 group-hover:opacity-100 flex-shrink-0">+</span>
@@ -260,22 +260,17 @@
     </div>
   </mat-menu>
 
-  <div *ngIf="isConfirming" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+  <div *ngIf="isRoleModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
     <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 animate-fadeIn">
       <div class="text-center mb-6">
-        <h3 class="text-lg font-black text-slate-800 uppercase italic tracking-tight">Security Confirmation</h3>
-        <p class="text-[10px] text-slate-500 mt-1">Action: <b class="text-blue-600 uppercase">{{ pendingAction?.replace('_', ' ') }}</b></p>
-        <p *ngIf="pendingAccTarget" class="text-[9px] text-slate-400 font-bold mt-1 tracking-tighter italic">Target: {{ pendingAccTarget.accountName || pendingAccTarget.name }}</p>
+        <h3 class="text-lg font-black text-slate-800 uppercase italic tracking-tight">Confirm Role</h3>
+        <p class="text-[10px] text-slate-500 mt-1">Workspace: <b class="text-blue-600">{{ roleTargetAccount?.accountName || roleTargetAccount?.name }}</b></p>
       </div>
-      <div *ngIf="confirmErrorMessage" class="mb-4 p-3 bg-red-50 text-red-600 text-[10px] font-bold rounded-xl border border-red-100 italic">⚠️ {{ confirmErrorMessage }}</div>
 
-      <div class="mb-4" *ngIf="pendingAction === 'ASSIGN_ACC' || pendingAction === 'UPDATE_ACC_ROLE'">
-        <label class="block text-[10px] font-black uppercase text-blue-500 mb-1 italic">Select Role for User:</label>
-
+      <div class="mb-6">
+        <label class="block text-[10px] font-black uppercase text-blue-500 mb-2 italic">Select Role for User:</label>
         <div class="relative">
-          <button (click)="toggleRoleDropdown()"
-                  type="button"
-                  class="w-full flex items-center justify-between p-4 bg-blue-50 border border-blue-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-700 transition-all shadow-inner">
+          <button (click)="toggleRoleDropdown()" type="button" class="w-full flex items-center justify-between p-4 bg-blue-50 border border-blue-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-700 transition-all shadow-inner">
             <span class="text-xs uppercase tracking-widest">{{ selectedRole }}</span>
             <span [class.rotate-180]="isRoleDropdownOpen" class="text-[10px] transition-transform duration-300">▼</span>
           </button>
@@ -288,12 +283,12 @@
 
             <div (click)="selectRole('Viewer')" class="p-3 hover:bg-blue-50 rounded-xl cursor-pointer transition-colors flex flex-col">
               <span class="text-xs font-black text-slate-700">VIEWER</span>
-              <span class="text-[9px] text-slate-400 italic">Read-only access, cannot modify data.</span>
+              <span class="text-[9px] text-slate-400 italic">Read-only access.</span>
             </div>
 
             <div (click)="selectRole('Member')" class="p-3 hover:bg-blue-50 rounded-xl cursor-pointer transition-colors flex flex-col">
               <span class="text-xs font-black text-slate-700">MEMBER</span>
-              <span class="text-[9px] text-slate-400 italic">Can add or modify workspace data.</span>
+              <span class="text-[9px] text-slate-400 italic">Can modify workspace data.</span>
             </div>
 
             <div (click)="selectRole('Owner')" class="p-3 hover:bg-blue-50 rounded-xl cursor-pointer transition-colors flex flex-col border-t border-slate-50 mt-1">
@@ -304,17 +299,34 @@
         </div>
       </div>
 
-      <div class="mb-4">
-        <label class="block text-[10px] font-black uppercase text-slate-400 mb-1 italic">Admin Password:</label>
-        <input type="password" [(ngModel)]="confirmPassword" (focus)="confirmErrorMessage = ''" (keyup.enter)="handleActionConfirm()" placeholder="••••••••" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-medium text-center transition-all">
-      </div>
-      <div class="mb-6" *ngIf="pendingAction === 'REACTIVATE'">
-        <label class="block text-[10px] font-black uppercase text-blue-500 mb-1 italic">New Password for User:</label>
-        <input type="password" [(ngModel)]="newReactivatePassword" (focus)="confirmErrorMessage = ''" (keyup.enter)="handleActionConfirm()" placeholder="Input Password..." class="w-full p-4 bg-blue-50 border border-blue-100 rounded-2xl outline-none focus:border-blue-500 font-medium text-center shadow-inner">
-      </div>
       <div class="flex gap-3">
-        <button (click)="isConfirming = false" class="flex-1 py-3 text-xs font-bold text-slate-400 uppercase hover:text-slate-600 transition-colors">Cancel</button>
-        <button (click)="handleActionConfirm()" [disabled]="isSubmitting || !confirmPassword" class="flex-1 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase hover:bg-blue-600 shadow-lg disabled:opacity-50 transition-all">{{ isSubmitting ? 'PROCESSING...' : 'OK' }}</button>
+        <button (click)="closeRoleModal()" class="flex-1 py-3 text-xs font-bold text-slate-400 uppercase hover:text-slate-600 transition-colors">Cancel</button>
+        <button (click)="roleActionType === 'ASSIGN' ? runAssignToAccount() : runUpdateUserRole()"
+                [disabled]="isSubmitting"
+                class="flex-1 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase hover:bg-blue-600 shadow-lg disabled:opacity-50 transition-all">
+          {{ isSubmitting ? 'PROCESSING...' : 'CONFIRM' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="isReactivateModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 animate-fadeIn">
+      <div class="text-center mb-6">
+        <h3 class="text-lg font-black text-slate-800 uppercase italic tracking-tight">Reactivate User</h3>
+        <p class="text-[10px] text-slate-500 mt-1">Target: <b class="text-blue-600 uppercase">{{ reactivateTargetUser?.username }}</b></p>
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-[10px] font-black uppercase text-blue-500 mb-2 italic">New Password:</label>
+        <input type="password" [(ngModel)]="newReactivatePassword" placeholder="Input Password..." class="w-full p-4 bg-blue-50 border border-blue-100 rounded-2xl outline-none focus:border-blue-500 font-medium text-center shadow-inner">
+      </div>
+
+      <div class="flex gap-3">
+        <button (click)="closeReactivateModal()" class="flex-1 py-3 text-xs font-bold text-slate-400 uppercase hover:text-slate-600 transition-colors">Cancel</button>
+        <button (click)="runReactivateUser()" [disabled]="isSubmitting || !newReactivatePassword" class="flex-1 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase hover:bg-blue-600 shadow-lg disabled:opacity-50 transition-all">
+          {{ isSubmitting ? 'PROCESSING...' : 'CONFIRM' }}
+        </button>
       </div>
     </div>
   </div>
@@ -326,15 +338,127 @@
         <button (click)="closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl">×</button>
       </div>
       <div class="p-8 grid grid-cols-2 gap-4">
-        <div class="col-span-2" *ngIf="errorMessage"><div [ngClass]="errorMessage.includes('Nothing has been changed') ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-red-50 text-red-600 border-red-100'" class="p-3 text-xs font-bold rounded-xl border italic">⚠️ {{ errorMessage }}</div></div>
-        <div class="col-span-1 relative"><label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Username *</label><div class="relative"><input type="text" [(ngModel)]="newUser.username" [disabled]="!!selectedUser" (ngModelChange)="onFieldChange('username', $event)" class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium pr-10 disabled:opacity-50"><div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center"><div *ngIf="fieldStatus.username.checking" class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div><span *ngIf="!fieldStatus.username.checking && fieldStatus.username.valid" class="text-green-500 font-bold">✓</span><div *ngIf="!fieldStatus.username.checking && fieldStatus.username.error" class="group relative flex items-center"><span class="text-red-500 font-bold cursor-help text-lg">×</span><div class="absolute bottom-full mb-2 right-0 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50">{{ fieldStatus.username.error }}</div></div></div></div></div>
-        <div class="col-span-1" *ngIf="!selectedUser"><label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Password *</label><input type="password" [(ngModel)]="newUser.password" class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium"></div>
-        <div class="col-span-1 relative"><label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Email *</label><div class="relative"><input type="email" [(ngModel)]="newUser.email" (ngModelChange)="onFieldChange('email', $event)" class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium pr-10"><div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center"><div *ngIf="fieldStatus.email.checking" class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div><span *ngIf="!fieldStatus.email.checking && fieldStatus.email.valid" class="text-green-500 font-bold">✓</span><div *ngIf="!fieldStatus.email.checking && fieldStatus.email.error" class="group relative flex items-center"><span class="text-red-500 font-bold cursor-help text-lg">×</span><div class="absolute bottom-full mb-2 right-0 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50">{{ fieldStatus.email.error }}</div></div></div></div></div>
-        <div class="col-span-1 relative"><label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Phone *</label><div class="relative"><input type="text" [(ngModel)]="newUser.phone" (ngModelChange)="onFieldChange('phone', $event)" class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium pr-10"><div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center"><div *ngIf="fieldStatus.phone.checking" class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div><span *ngIf="!fieldStatus.phone.checking && fieldStatus.phone.valid" class="text-green-500 font-bold">✓</span><div *ngIf="!fieldStatus.phone.checking && fieldStatus.phone.error" class="group relative flex items-center"><span class="text-red-500 font-bold cursor-help text-lg">×</span><div class="absolute bottom-full mb-2 right-0 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50">{{ fieldStatus.phone.error }}</div></div></div></div></div>
-        <div class="col-span-1"><label class="block text-[10px] font-black uppercase text-slate-400 mb-1">First Name</label><input type="text" [(ngModel)]="newUser.firstName" (ngModelChange)="onInputChange()" class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium"></div>
-        <div class="col-span-1"><label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Last Name</label><input type="text" [(ngModel)]="newUser.lastName" (ngModelChange)="onInputChange()" class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium"></div>
+
+        <div class="col-span-1 relative">
+          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Username *</label>
+          <div class="relative">
+            <input type="text"
+                   [(ngModel)]="newUser.username"
+                   [disabled]="!!selectedUser"
+                   (ngModelChange)="onFieldChange('username', $event)"
+                   class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium pr-10 disabled:opacity-50">
+
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+              <div *ngIf="fieldStatus.username.checking"
+                   class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full">
+              </div>
+              <span *ngIf="!fieldStatus.username.checking && fieldStatus.username.valid"
+                    class="text-green-500 font-bold">✓</span>
+              <div *ngIf="!fieldStatus.username.checking && fieldStatus.username.error"
+                   class="group relative flex items-center">
+                <span class="text-red-500 font-bold cursor-help text-lg">×</span>
+                <div class="absolute bottom-full mb-2 right-0 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50">
+                  {{ fieldStatus.username.error }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-span-1" *ngIf="!selectedUser">
+          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Password *</label>
+          <div class="relative">
+            <input type="password"
+                   [(ngModel)]="newUser.password"
+                   (ngModelChange)="onFieldChange('password', $event)"
+                   class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium pr-10">
+
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+              <div *ngIf="fieldStatus.password.checking"
+                   class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full">
+              </div>
+              <span *ngIf="!fieldStatus.password.checking && fieldStatus.password.valid"
+                    class="text-green-500 font-bold">✓</span>
+              <div *ngIf="!fieldStatus.password.checking && fieldStatus.password.error"
+                   class="group relative flex items-center">
+                <span class="text-red-500 font-bold cursor-help text-lg">×</span>
+                <div class="absolute bottom-full mb-2 right-0 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50">
+                  {{ fieldStatus.password.error }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-span-1 relative">
+          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Email *</label>
+          <div class="relative">
+            <input type="email"
+                   [(ngModel)]="newUser.email"
+                   (ngModelChange)="onFieldChange('email', $event)"
+                   class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium pr-10">
+
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+              <div *ngIf="fieldStatus.email.checking"
+                   class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full">
+              </div>
+              <span *ngIf="!fieldStatus.email.checking && fieldStatus.email.valid"
+                    class="text-green-500 font-bold">✓</span>
+              <div *ngIf="!fieldStatus.email.checking && fieldStatus.email.error"
+                   class="group relative flex items-center">
+                <span class="text-red-500 font-bold cursor-help text-lg">×</span>
+                <div class="absolute bottom-full mb-2 right-0 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50">
+                  {{ fieldStatus.email.error }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-span-1 relative">
+          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Phone *</label>
+          <div class="relative">
+            <input type="text"
+                   [(ngModel)]="newUser.phone"
+                   (ngModelChange)="onFieldChange('phone', $event)"
+                   class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium pr-10">
+
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+              <div *ngIf="fieldStatus.phone.checking"
+                   class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full">
+              </div>
+              <span *ngIf="!fieldStatus.phone.checking && fieldStatus.phone.valid"
+                    class="text-green-500 font-bold">✓</span>
+              <div *ngIf="!fieldStatus.phone.checking && fieldStatus.phone.error"
+                   class="group relative flex items-center">
+                <span class="text-red-500 font-bold cursor-help text-lg">×</span>
+                <div class="absolute bottom-full mb-2 right-0 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50">
+                  {{ fieldStatus.phone.error }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-span-1">
+          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">First Name</label>
+          <input type="text"
+                 [(ngModel)]="newUser.firstName"
+                 class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium">
+        </div>
+
+        <div class="col-span-1">
+          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Last Name</label>
+          <input type="text"
+                 [(ngModel)]="newUser.lastName"
+                 class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium">
+        </div>
+
       </div>
-      <div class="p-8 bg-slate-50 flex justify-end gap-3"><button (click)="closeModal()" class="px-6 py-3 text-xs font-bold uppercase text-slate-400">Cancel</button><button (click)="selectedUser ? onConfirmUpdate() : openConfirmModal('CREATE')" [disabled]="!canSubmit()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-xs uppercase shadow-lg disabled:bg-slate-200 disabled:text-slate-400 transition-all">Confirm</button></div>
+      <div class="p-8 bg-slate-50 flex justify-end gap-3">
+        <button (click)="closeModal()" class="px-6 py-3 text-xs font-bold uppercase text-slate-400">Cancel</button>
+        <button (click)="selectedUser ? runUpdateUser() : runCreateUser()" [disabled]="!canSubmit()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-xs uppercase shadow-lg disabled:bg-slate-200 disabled:text-slate-400 transition-all">Confirm</button>
+      </div>
     </div>
   </div>
 </div>

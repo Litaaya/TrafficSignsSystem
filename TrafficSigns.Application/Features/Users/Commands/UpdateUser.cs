@@ -4,7 +4,6 @@ using TrafficSigns.Application.Common.Interfaces;
 using TrafficSigns.Application.Common.Validations;
 using FluentValidation;
 using FluentValidation.Results;
-using System.Collections.Generic;
 
 namespace TrafficSigns.Application.Features.Users.Commands;
 

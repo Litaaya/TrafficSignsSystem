@@ -1,7 +1,8 @@
 import { Component, OnInit, inject, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { MatMenuTrigger } from '@angular/material/menu';
-import { Subject, debounceTime, switchMap, distinctUntilChanged } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, switchMap, map, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-account-list',
@@ -13,6 +14,7 @@ export class AccountListComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private availableSearchSubject = new Subject<string>();
   private accountSearchSubject = new Subject<string>();
+  private checkSubject = new Subject<{ field: string, value: string }>();
 
   accounts: any[] = [];
   totalCount = 0;
@@ -25,12 +27,7 @@ export class AccountListComponent implements OnInit {
   showModal = false;
   showDetailsModal = false;
   isSubmitting = false;
-  errorMessage = '';
-  isConfirming = false;
-  confirmPassword = '';
-  pendingAction: 'CREATE' | 'UPDATE' | 'DELETE' | 'REACTIVATE' | 'ASSIGN_USER' | 'UPDATE_USER_ROLE' | 'REMOVE_USER' | null = null;
   selectedAccount: any = null;
-  confirmErrorMessage = '';
   selectedRole: string = 'Viewer';
   isRoleDropdownOpen = false;
   activeTab: 'info' | 'users' = 'info';
@@ -40,17 +37,20 @@ export class AccountListComponent implements OnInit {
   searchAvailableTerm = '';
   availablePage = 1;
   hasMoreAvailable = true;
-  pendingUserTarget: any = null;
   userListSearchTerm = '';
   userListFilter: 'all' | 'owner' = 'all';
   newAccount = { name: '', desc: '', email: '', phone: '', system: false };
   isStatusDropdownOpen = false;
-  selectAccountStatus(status: 'all' | 'active' | 'inactive') {
-    this.accountStatusFilter = status;
-    this.isStatusDropdownOpen = false;
-    this.pageNumber = 1;
-    this.fetchData();
-  }
+
+  fieldStatus: any = {
+    name: { checking: false, valid: false, error: '' },
+    email: { checking: false, valid: true, error: '' },
+    phone: { checking: false, valid: true, error: '' }
+  };
+
+  isRoleModalOpen = false;
+  roleActionType: 'ASSIGN' | 'UPDATE' = 'ASSIGN';
+  roleTargetUser: any = null;
 
   @ViewChild('assignTrigger', { read: MatMenuTrigger }) assignTrigger!: MatMenuTrigger;
   @ViewChild('jumpTrigger', { read: MatMenuTrigger }) jumpTrigger!: MatMenuTrigger;
@@ -58,6 +58,7 @@ export class AccountListComponent implements OnInit {
 
   ngOnInit(): void {
     this.fetchData();
+    this.initRealtimeValidation();
 
     this.accountSearchSubject.pipe(debounceTime(400), distinctUntilChanged()).subscribe(term => {
       this.accountSearchTerm = term;
@@ -69,6 +70,104 @@ export class AccountListComponent implements OnInit {
       this.searchAvailableTerm = term;
       this.fetchAvailableUsers(true);
     });
+  }
+
+  initRealtimeValidation() {
+    this.checkSubject.pipe(
+      debounceTime(600),
+      switchMap((data: any) => {
+        this.fieldStatus[data.field].checking = true;
+        this.cdr.detectChanges();
+
+        let queryParams: any = { field: data.field, value: data.value };
+        if (this.selectedAccount?.id) queryParams.excludeId = this.selectedAccount.id;
+
+        return this.http.get<any>(`https://localhost:7272/api/accounts/validate-field`, { params: queryParams })
+          .pipe(
+            map((res: any) => ({ ...res, field: data.field })),
+            catchError(() => {
+              return of({ isValid: false, message: 'Validation error', field: data.field, hasError: true });
+            })
+          );
+      })
+    ).subscribe({
+      next: (res: any) => {
+        this.fieldStatus[res.field].checking = false;
+        if (res.hasError) {
+          this.fieldStatus[res.field].valid = false;
+          this.fieldStatus[res.field].error = res.message;
+        } else {
+          this.fieldStatus[res.field].valid = res.isValid;
+          this.fieldStatus[res.field].error = res.isValid ? '' : res.message;
+        }
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  onFieldChange(field: string, value: string) {
+    if (!value || value.trim().length < 2) {
+      this.fieldStatus[field] = { checking: false, valid: field !== 'name', error: '' };
+      return;
+    }
+    this.fieldStatus[field].checking = true;
+    this.fieldStatus[field].valid = false;
+    this.fieldStatus[field].error = '';
+    this.checkSubject.next({ field, value });
+  }
+
+  canSubmit(): boolean {
+    if (this.isSubmitting) return false;
+    const isAllValid = this.fieldStatus.name.valid && this.fieldStatus.email.valid && this.fieldStatus.phone.valid;
+    const hasRequired = !!this.newAccount.name.trim();
+    const hasChange = this.selectedAccount ? this.isDataChanged() : true;
+    return isAllValid && hasRequired && hasChange;
+  }
+
+  isDataChanged(): boolean {
+    if (!this.selectedAccount) return true;
+    return (
+      this.newAccount.name.trim() !== (this.selectedAccount.name || '') ||
+      (this.newAccount.desc?.trim() || '') !== (this.selectedAccount.desc || '') ||
+      (this.newAccount.email?.trim() || '') !== (this.selectedAccount.email || '') ||
+      (this.newAccount.phone?.trim() || '') !== (this.selectedAccount.phone || '') ||
+      this.newAccount.system !== (this.selectedAccount.system || false)
+    );
+  }
+
+  openModal(): void {
+    this.selectedAccount = null;
+    this.resetForm();
+    this.fieldStatus = {
+      name: { checking: false, valid: false, error: '' },
+      email: { checking: false, valid: true, error: '' },
+      phone: { checking: false, valid: true, error: '' }
+    };
+    this.showModal = true;
+  }
+
+  openEditModal(acc: any) {
+    this.selectedAccount = acc;
+    this.newAccount = {
+      name: acc.name,
+      desc: acc.desc || '',
+      email: acc.email || '',
+      phone: acc.phone || '',
+      system: acc.system || false
+    };
+    this.fieldStatus = {
+      name: { checking: false, valid: true, error: '' },
+      email: { checking: false, valid: true, error: '' },
+      phone: { checking: false, valid: true, error: '' }
+    };
+    this.showModal = true;
+  }
+
+  selectAccountStatus(status: 'all' | 'active' | 'inactive') {
+    this.accountStatusFilter = status;
+    this.isStatusDropdownOpen = false;
+    this.pageNumber = 1;
+    this.fetchData();
   }
 
   onAccountSearch(term: string) {
@@ -83,68 +182,52 @@ export class AccountListComponent implements OnInit {
     return text.replace(re, '<b class="text-blue-600 font-black">$1</b>');
   }
 
-  canSubmit(): boolean {
-    if (this.isSubmitting) return false;
-    const hasRequired = !!this.newAccount.name.trim();
-    const hasChange = this.selectedAccount ? this.isDataChanged() : true;
-    return hasRequired && hasChange;
-  }
-
-  isDataChanged(): boolean {
-    if (!this.selectedAccount) return true;
-    return (
-      this.newAccount.name.trim() !== (this.selectedAccount.name || '') ||
-      (this.newAccount.desc?.trim() || '') !== (this.selectedAccount.desc || '') ||
-      (this.newAccount.email?.trim() || '') !== (this.selectedAccount.email || '') ||
-      (this.newAccount.phone?.trim() || '') !== (this.selectedAccount.phone || '') ||
-      this.newAccount.system !== (this.selectedAccount.system || false)
-    );
-  }
-
-  onConfirmUpdate() {
-    if (!this.isDataChanged()) {
-      this.errorMessage = "Nothing difference, don't need update process.";
-      return;
+  deleteAccount(acc: any) {
+    if (confirm(`Are you sure you want to delete workspace: ${acc.name}?`)) {
+      this.isSubmitting = true;
+      this.http.delete(`https://localhost:7272/api/accounts/${acc.id}`).subscribe({
+        next: () => this.onSuccessCleanup(),
+        error: () => this.isSubmitting = false
+      });
     }
-    this.errorMessage = '';
-    this.openConfirmModal('UPDATE', this.selectedAccount);
   }
 
-  openConfirmModal(action: any, data?: any, targetUser?: any) {
-    this.pendingAction = action;
-    if (data) this.selectedAccount = data;
-    if (targetUser) this.pendingUserTarget = targetUser;
-    if (action === 'ASSIGN_USER' && this.assignTrigger) this.assignTrigger.closeMenu();
-
-    if (action === 'ASSIGN_USER') {
-      this.selectedRole = 'Viewer';
-    } else if (action === 'UPDATE_USER_ROLE') {
-      this.selectedRole = targetUser?.role || (targetUser?.isOwner ? 'Owner' : 'Viewer');
-    }
-
-    this.confirmPassword = '';
-    this.confirmErrorMessage = '';
-    this.isConfirming = true;
-    this.cdr.detectChanges();
-  }
-
-  handleActionConfirm() {
-    if (!this.confirmPassword) {
-      this.confirmErrorMessage = "Input Admin Password!";
-      this.cdr.detectChanges();
-      return;
-    }
+  reactivateAccount(acc: any) {
     this.isSubmitting = true;
-    this.cdr.detectChanges();
-
-    this.http.post('https://localhost:7272/api/auth/verify-password', { password: this.confirmPassword }).subscribe({
-      next: () => this.executePendingAction(),
-      error: (err) => {
-        this.isSubmitting = false;
-        this.confirmErrorMessage = err.error?.message || "Wrong Password!";
-        this.cdr.detectChanges();
-      }
+    this.http.patch(`https://localhost:7272/api/accounts/${acc.id}/reactivate`, {}).subscribe({
+      next: () => this.onSuccessCleanup(),
+      error: () => this.isSubmitting = false
     });
+  }
+
+  removeUser(acc: any, user: any) {
+    if (confirm(`Remove user ${user.username} from this workspace?`)) {
+      this.isSubmitting = true;
+      const targetId = user.userId || user.id;
+      this.http.delete(`https://localhost:7272/api/accounts/${acc.id}/users/${targetId}`).subscribe({
+        next: () => {
+          this.fetchAccountUsers(acc.id);
+          this.isSubmitting = false;
+        },
+        error: () => this.isSubmitting = false
+      });
+    }
+  }
+
+  openRoleModal(type: 'ASSIGN' | 'UPDATE', acc: any, user: any) {
+    this.roleActionType = type;
+    this.selectedAccount = acc;
+    this.roleTargetUser = user;
+    this.selectedRole = type === 'UPDATE' ? (user.role || (user.isOwner ? 'Owner' : 'Viewer')) : 'Viewer';
+    this.isRoleModalOpen = true;
+    if (type === 'ASSIGN' && this.assignTrigger) this.assignTrigger.closeMenu();
+    this.cdr.detectChanges();
+  }
+
+  closeRoleModal() {
+    this.isRoleModalOpen = false;
+    this.roleTargetUser = null;
+    this.isRoleDropdownOpen = false;
   }
 
   toggleRoleDropdown() {
@@ -157,116 +240,56 @@ export class AccountListComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  get filteredAccountUsers() {
-    return this.accountUsers.filter(u => {
-      const term = this.userListSearchTerm.toLowerCase();
-      const matchesSearch = u.username.toLowerCase().includes(term) || (u.email && u.email.toLowerCase().includes(term));
-      const matchesFilter = this.userListFilter === 'all' || (this.userListFilter === 'owner' && u.isOwner);
-      return matchesSearch && matchesFilter;
-    });
-  }
-
-  private executePendingAction() {
-    switch (this.pendingAction) {
-      case 'CREATE': this.runCreateAccount(); break;
-      case 'UPDATE': this.runUpdateAccount(); break;
-      case 'DELETE': this.runDeleteAccount(); break;
-      case 'REACTIVATE': this.runReactivateAccount(); break;
-      case 'ASSIGN_USER': this.runAssignUserToAccount(); break;
-      case 'UPDATE_USER_ROLE': this.runUpdateUserRole(); break;
-      case 'REMOVE_USER': this.runRemoveUserFromAccount(); break;
-    }
-  }
-
-  private runAssignUserToAccount() {
-    const body = { accountId: this.selectedAccount.id, userId: this.pendingUserTarget.id, role: this.selectedRole };
+  runAssignUserToAccount() {
+    this.isSubmitting = true;
+    const body = { accountId: this.selectedAccount.id, userId: this.roleTargetUser.id, role: this.selectedRole };
     this.http.post('https://localhost:7272/api/accounts/assign-user', body).subscribe({
-      next: () => this.onRelationSuccess(),
-      error: (err) => this.onRelationError(err)
+      next: () => {
+        this.fetchAccountUsers(this.selectedAccount.id);
+        this.closeRoleModal();
+        this.isSubmitting = false;
+      },
+      error: () => this.isSubmitting = false
     });
   }
 
-  private runUpdateUserRole() {
+  runUpdateUserRole() {
+    this.isSubmitting = true;
     const body = { role: this.selectedRole };
-    const targetId = this.pendingUserTarget.userId || this.pendingUserTarget.id;
-
+    const targetId = this.roleTargetUser.userId || this.roleTargetUser.id;
     this.http.put(`https://localhost:7272/api/accounts/${this.selectedAccount.id}/users/${targetId}/role`, body).subscribe({
       next: () => {
-        this.pendingUserTarget.role = this.selectedRole;
-        this.onRelationSuccess();
+        this.fetchAccountUsers(this.selectedAccount.id);
+        this.closeRoleModal();
+        this.isSubmitting = false;
       },
-      error: (err) => this.onRelationError(err)
+      error: () => this.isSubmitting = false
     });
   }
 
-  private runRemoveUserFromAccount() {
-    const targetId = this.pendingUserTarget.userId || this.pendingUserTarget.id;
-    this.http.delete(`https://localhost:7272/api/accounts/${this.selectedAccount.id}/users/${targetId}`).subscribe({
-      next: () => this.onRelationSuccess(),
-      error: (err) => this.onRelationError(err)
-    });
-  }
-
-  private onRelationSuccess() {
-    this.fetchAccountUsers(this.selectedAccount.id);
-    this.isConfirming = false;
-    this.isSubmitting = false;
-    this.pendingUserTarget = null;
-    this.confirmPassword = '';
-    this.cdr.markForCheck();
-    this.cdr.detectChanges();
-  }
-
-  private onRelationError(err: any) {
-    this.isSubmitting = false;
-    this.confirmErrorMessage = err.error?.message || "Action fail";
-    this.cdr.detectChanges();
-  }
-
-  private runCreateAccount() {
+  runCreateAccount() {
+    this.isSubmitting = true;
     this.http.post('https://localhost:7272/api/accounts', this.newAccount).subscribe({
       next: () => this.onSuccessCleanup(),
-      error: (err) => this.onErrorCleanup(err.error?.message)
+      error: () => this.isSubmitting = false
     });
   }
 
-  private runUpdateAccount() {
+  runUpdateAccount() {
+    this.isSubmitting = true;
     const payload = { ...this.newAccount, id: this.selectedAccount.id };
     this.http.put(`https://localhost:7272/api/accounts/${this.selectedAccount.id}`, payload).subscribe({
       next: () => this.onSuccessCleanup(),
-      error: (err) => this.onErrorCleanup(err.error?.message)
-    });
-  }
-
-  private runDeleteAccount() {
-    this.http.delete(`https://localhost:7272/api/accounts/${this.selectedAccount.id}`).subscribe({
-      next: () => this.onSuccessCleanup(),
-      error: (err) => this.onErrorCleanup(err.error?.message)
-    });
-  }
-
-  private runReactivateAccount() {
-    this.http.patch(`https://localhost:7272/api/accounts/${this.selectedAccount.id}/reactivate`, {}).subscribe({
-      next: () => this.onSuccessCleanup(),
-      error: (err) => this.onErrorCleanup(err.error?.message)
+      error: () => this.isSubmitting = false
     });
   }
 
   private onSuccessCleanup() {
     this.fetchData();
     this.closeModal();
-    this.isConfirming = false;
     this.isSubmitting = false;
     this.selectedAccount = null;
     this.cdr.markForCheck();
-    this.cdr.detectChanges();
-  }
-
-  private onErrorCleanup(msg: string) {
-    this.isSubmitting = false;
-    this.isConfirming = false;
-    if (this.showModal) this.errorMessage = msg;
-    else this.confirmErrorMessage = msg;
     this.cdr.detectChanges();
   }
 
@@ -292,6 +315,15 @@ export class AccountListComponent implements OnInit {
         this.accountUsers = res || [];
         this.cdr.detectChanges();
       }
+    });
+  }
+
+  get filteredAccountUsers() {
+    return this.accountUsers.filter(u => {
+      const term = this.userListSearchTerm.toLowerCase();
+      const matchesSearch = u.username.toLowerCase().includes(term) || (u.email && u.email.toLowerCase().includes(term));
+      const matchesFilter = this.userListFilter === 'all' || (this.userListFilter === 'owner' && u.isOwner);
+      return matchesSearch && matchesFilter;
     });
   }
 
@@ -374,26 +406,6 @@ export class AccountListComponent implements OnInit {
     this.showDetailsModal = true;
     this.fetchAccountUsers(acc.id);
     this.cdr.detectChanges();
-  }
-
-  openModal(): void {
-    this.selectedAccount = null;
-    this.resetForm();
-    this.showModal = true;
-    this.errorMessage = '';
-  }
-
-  openEditModal(acc: any) {
-    this.selectedAccount = acc;
-    this.newAccount = {
-      name: acc.name,
-      desc: acc.desc || '',
-      email: acc.email || '',
-      phone: acc.phone || '',
-      system: acc.system || false
-    };
-    this.showModal = true;
-    this.errorMessage = '';
   }
 
   closeModal(): void {

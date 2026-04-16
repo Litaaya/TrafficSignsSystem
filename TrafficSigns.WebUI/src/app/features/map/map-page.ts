@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import * as L from 'leaflet';
 import { OsmRoadService } from './osm-road.service';
 import { SIGN_TEMPLATES, SPEED_OPTIONS, VEHICLE_OPTIONS, SignTemplate } from './traffic-sign-rules';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService } from '../../core/services/auth-service';
 
 @Component({
   selector: 'app-map-page',

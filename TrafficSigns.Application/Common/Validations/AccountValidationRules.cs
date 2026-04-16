@@ -2,10 +2,11 @@
 
 public static class AccountValidationRules
 {
+    public const int NameMin = 1;
     public const int NameMax = 100;
     public const int DescMax = 500;
 
-    public static bool isValidDescription(string? desc) =>
+    public static bool IsValidDescription(string? desc) =>
         string.IsNullOrEmpty(desc) || desc.Length <= DescMax;
 
     public static bool IsValidName(string? name) =>

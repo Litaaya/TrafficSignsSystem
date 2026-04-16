@@ -1,8 +1,9 @@
 import { Component, OnInit, inject, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth-service';
 import { MatMenuTrigger } from '@angular/material/menu';
-import { Subject, debounceTime, switchMap, map, distinctUntilChanged } from 'rxjs';
+import { Subject, debounceTime, switchMap, map, distinctUntilChanged, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-user-list',
@@ -28,13 +29,7 @@ export class UserListComponent implements OnInit {
   showModal = false;
   showDetailsModal = false;
   isSubmitting = false;
-  errorMessage = '';
-  isConfirming = false;
-  confirmPassword = '';
-  newReactivatePassword = '';
-  pendingAction: 'CREATE' | 'UPDATE' | 'DELETE' | 'REACTIVATE' | 'ASSIGN_ACC' | 'UPDATE_ACC_ROLE' | 'REMOVE_ACC' | null = null;
   selectedUser: any = null;
-  confirmErrorMessage = '';
   selectedRole: string = 'Viewer';
   isRoleDropdownOpen = false;
   activeTab: 'info' | 'accounts' = 'info';
@@ -43,7 +38,6 @@ export class UserListComponent implements OnInit {
   loadingAccounts = false;
   loadingAvailable = false;
   searchAccountTerm = '';
-  pendingAccTarget: any = null;
   accountListSearchTerm = '';
   accountListFilter: 'all' | 'owner' = 'all';
   newUser = { username: '', password: '', email: '', phone: '', firstName: '', lastName: '' };
@@ -54,13 +48,14 @@ export class UserListComponent implements OnInit {
   };
   isStatusDropdownOpen = false;
 
-  selectUserStatus(status: 'all' | 'active' | 'inactive') {
-    this.userStatusFilter = status;
-    this.isStatusDropdownOpen = false;
-    this.pageNumber = 1;
-    this.fetchData();
-  }
-  
+  isRoleModalOpen = false;
+  roleActionType: 'ASSIGN' | 'UPDATE' = 'ASSIGN';
+  roleTargetAccount: any = null;
+
+  isReactivateModalOpen = false;
+  reactivateTargetUser: any = null;
+  newReactivatePassword = '';
+
   @ViewChild('assignTrigger', { read: MatMenuTrigger }) assignTrigger!: MatMenuTrigger;
   @ViewChild('jumpTrigger', { read: MatMenuTrigger }) jumpTrigger!: MatMenuTrigger;
   @ViewChild('tableContainer') tableContainer!: ElementRef;
@@ -77,6 +72,13 @@ export class UserListComponent implements OnInit {
     });
   }
 
+  selectUserStatus(status: 'all' | 'active' | 'inactive') {
+    this.userStatusFilter = status;
+    this.isStatusDropdownOpen = false;
+    this.pageNumber = 1;
+    this.fetchData();
+  }
+
   onUserSearch(term: string) {
     this.pageNumber = 1;
     this.userSearchSubject.next(term);
@@ -88,22 +90,30 @@ export class UserListComponent implements OnInit {
       switchMap(data => {
         this.fieldStatus[data.field].checking = true;
         this.cdr.detectChanges();
+
         let queryParams: any = { field: data.field, value: data.value };
         if (this.selectedUser?.id) queryParams.excludeId = this.selectedUser.id;
-        return this.http.get<any>(`https://localhost:7272/api/users/check-duplicate`, { params: queryParams })
-          .pipe(map(res => ({ ...res, field: data.field })));
+
+        return this.http.get<any>(`https://localhost:7272/api/users/validate-field`, { params: queryParams })
+          .pipe(
+            map((res: any) => ({ ...res, field: data.field })),
+            catchError((err: any) => {
+              return of({ isValid: false, message: 'Validation service error', field: data.field, hasError: true });
+            })
+          );
       })
     ).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.fieldStatus[res.field].checking = false;
-        this.fieldStatus[res.field].valid = !res.isDuplicate;
-        this.fieldStatus[res.field].error = res.isDuplicate ? res.message : '';
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.fieldStatus.username.checking = false;
-        this.fieldStatus.email.checking = false;
-        this.fieldStatus.phone.checking = false;
+
+        if (res.hasError) {
+          this.fieldStatus[res.field].valid = false;
+          this.fieldStatus[res.field].error = res.message;
+        } else {
+          this.fieldStatus[res.field].valid = res.isValid;
+          this.fieldStatus[res.field].error = res.isValid ? '' : res.message;
+        }
+
         this.cdr.detectChanges();
       }
     });
@@ -140,7 +150,6 @@ export class UserListComponent implements OnInit {
   }
 
   onFieldChange(field: string, value: string) {
-    this.onInputChange();
     if (!value || value.trim().length < 2) {
       this.fieldStatus[field] = { checking: false, valid: false, error: '' };
       return;
@@ -149,10 +158,6 @@ export class UserListComponent implements OnInit {
     this.fieldStatus[field].valid = false;
     this.fieldStatus[field].error = '';
     this.checkSubject.next({ field, value });
-  }
-
-  onInputChange() {
-    if (this.errorMessage.includes('nothing difference')) this.errorMessage = '';
   }
 
   canSubmit(): boolean {
@@ -173,50 +178,44 @@ export class UserListComponent implements OnInit {
       (this.newUser.lastName?.trim() || '') !== (this.selectedUser.lastName || ''));
   }
 
-  onConfirmUpdate() {
-    if (!this.isDataChanged()) {
-      this.errorMessage = "nothing difference, don't need update process.";
-      return;
+  deleteUser(user: any) {
+    if (confirm(`Are you sure you want to delete user: ${user.username}?`)) {
+      this.isSubmitting = true;
+      this.http.delete(`https://localhost:7272/api/users/${user.id}`).subscribe({
+        next: () => this.onSuccessCleanup(),
+        error: () => this.isSubmitting = false
+      });
     }
-    this.errorMessage = '';
-    this.openConfirmModal('UPDATE', this.selectedUser);
   }
 
-  openConfirmModal(action: any, data?: any, targetAcc?: any) {
-    this.pendingAction = action;
-    if (data) this.selectedUser = data;
-    if (targetAcc) this.pendingAccTarget = targetAcc;
-    if (action === 'ASSIGN_ACC' && this.assignTrigger) this.assignTrigger.closeMenu();
-
-    if (action === 'ASSIGN_ACC') {
-      this.selectedRole = 'Viewer';
-    } else if (action === 'UPDATE_ACC_ROLE') {
-      this.selectedRole = targetAcc?.role || (targetAcc?.isOwner ? 'Owner' : 'Viewer');
+  removeAccount(user: any, acc: any) {
+    if (confirm(`Remove user ${user.username} from workspace ${acc.accountName || acc.name}?`)) {
+      this.isSubmitting = true;
+      const accId = acc.accountId || acc.id;
+      this.http.delete(`https://localhost:7272/api/accounts/${accId}/users/${user.id}`).subscribe({
+        next: () => {
+          this.fetchUserAccounts(user.id);
+          this.isSubmitting = false;
+        },
+        error: () => this.isSubmitting = false
+      });
     }
+  }
 
-    this.confirmPassword = '';
-    this.newReactivatePassword = '';
-    this.confirmErrorMessage = '';
-    this.isConfirming = true;
+  openRoleModal(type: 'ASSIGN' | 'UPDATE', user: any, acc: any) {
+    this.roleActionType = type;
+    this.selectedUser = user;
+    this.roleTargetAccount = acc;
+    this.selectedRole = type === 'UPDATE' ? (acc.role || (acc.isOwner ? 'Owner' : 'Viewer')) : 'Viewer';
+    this.isRoleModalOpen = true;
+    if (type === 'ASSIGN' && this.assignTrigger) this.assignTrigger.closeMenu();
     this.cdr.detectChanges();
   }
 
-  handleActionConfirm() {
-    if (!this.confirmPassword) {
-      this.confirmErrorMessage = "Input Admin Password!";
-      this.cdr.detectChanges();
-      return;
-    }
-    this.isSubmitting = true;
-    this.cdr.detectChanges();
-    this.http.post('https://localhost:7272/api/auth/verify-password', { password: this.confirmPassword }).subscribe({
-      next: () => this.executePendingAction(),
-      error: (err) => {
-        this.isSubmitting = false;
-        this.confirmErrorMessage = err.error?.message || "Wrong Password!";
-        this.cdr.detectChanges();
-      }
-    });
+  closeRoleModal() {
+    this.isRoleModalOpen = false;
+    this.roleTargetAccount = null;
+    this.isRoleDropdownOpen = false;
   }
 
   toggleRoleDropdown() {
@@ -229,119 +228,89 @@ export class UserListComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  get filteredUserAccounts() {
-    return this.userAccounts.filter(acc => {
-      const matchesSearch = acc.accountName.toLowerCase().includes(this.accountListSearchTerm.toLowerCase());
-      const matchesFilter = this.accountListFilter === 'all' || (this.accountListFilter === 'owner' && acc.isOwner);
-      return matchesSearch && matchesFilter;
-    });
-  }
-
-  private executePendingAction() {
-    switch (this.pendingAction) {
-      case 'CREATE': this.runCreateUser(); break;
-      case 'UPDATE': this.runUpdateUser(); break;
-      case 'DELETE': this.runDeleteUser(); break;
-      case 'REACTIVATE': this.runReactivateUser(); break;
-      case 'ASSIGN_ACC': this.runAssignToAccount(); break;
-      case 'UPDATE_ACC_ROLE': this.runUpdateUserRole(); break;
-      case 'REMOVE_ACC': this.runRemoveUserFromAccount(); break;
-    }
-  }
-
-  private runAssignToAccount() {
-    const body = { accountId: this.pendingAccTarget.id, userId: this.selectedUser.id, role: this.selectedRole };
+  runAssignToAccount() {
+    this.isSubmitting = true;
+    const body = { accountId: this.roleTargetAccount.id, userId: this.selectedUser.id, role: this.selectedRole };
     this.http.post('https://localhost:7272/api/accounts/assign-user', body).subscribe({
-      next: () => this.onAccSuccess(),
-      error: (err) => this.onAccError(err)
+      next: () => {
+        this.fetchUserAccounts(this.selectedUser.id);
+        this.closeRoleModal();
+        this.isSubmitting = false;
+      },
+      error: () => this.isSubmitting = false
     });
   }
 
-  private runUpdateUserRole() {
+  runUpdateUserRole() {
+    this.isSubmitting = true;
     const body = { role: this.selectedRole };
-    const accId = this.pendingAccTarget.accountId || this.pendingAccTarget.id;
+    const accId = this.roleTargetAccount.accountId || this.roleTargetAccount.id;
     this.http.put(`https://localhost:7272/api/accounts/${accId}/users/${this.selectedUser.id}/role`, body).subscribe({
       next: () => {
-        this.pendingAccTarget.role = this.selectedRole;
-        this.onAccSuccess();
+        this.fetchUserAccounts(this.selectedUser.id);
+        this.closeRoleModal();
+        this.isSubmitting = false;
       },
-      error: (err) => this.onAccError(err)
+      error: () => this.isSubmitting = false
     });
   }
 
-  private runRemoveUserFromAccount() {
-    const accId = this.pendingAccTarget.accountId || this.pendingAccTarget.id;
-    this.http.delete(`https://localhost:7272/api/accounts/${accId}/users/${this.selectedUser.id}`).subscribe({
-      next: () => this.onAccSuccess(),
-      error: (err) => this.onAccError(err)
+  openReactivateModal(user: any) {
+    this.reactivateTargetUser = user;
+    this.newReactivatePassword = '';
+    this.isReactivateModalOpen = true;
+  }
+
+  closeReactivateModal() {
+    this.isReactivateModalOpen = false;
+    this.reactivateTargetUser = null;
+    this.newReactivatePassword = '';
+  }
+
+  runReactivateUser() {
+    this.isSubmitting = true;
+    this.http.patch(`https://localhost:7272/api/users/${this.reactivateTargetUser.id}/reactivate`, { newPassword: this.newReactivatePassword }).subscribe({
+      next: () => {
+        this.closeReactivateModal();
+        this.onSuccessCleanup();
+      },
+      error: () => this.isSubmitting = false
     });
   }
 
-  private onAccSuccess() {
-    this.fetchUserAccounts(this.selectedUser.id);
-    this.isConfirming = false;
-    this.isSubmitting = false;
-    this.pendingAccTarget = null;
-    this.confirmPassword = '';
-    if (this.assignTrigger) {
-      this.assignTrigger.closeMenu();
-    }
-    this.cdr.markForCheck();
-    this.cdr.detectChanges();
-  }
-
-  private onAccError(err: any) {
-    this.isSubmitting = false;
-    this.confirmErrorMessage = err.error?.message || "Action fail";
-    this.cdr.detectChanges();
-  }
-
-  private runCreateUser() {
+  runCreateUser() {
+    this.isSubmitting = true;
     const headers = new HttpHeaders({ 'X-Actor-Id': this.authService.getUserId() || '' });
     this.http.post('https://localhost:7272/api/users', this.newUser, { headers }).subscribe({
       next: () => this.onSuccessCleanup(),
-      error: (err) => this.onErrorCleanup(err.error?.message)
+      error: () => this.isSubmitting = false
     });
   }
 
-  private runUpdateUser() {
+  runUpdateUser() {
+    this.isSubmitting = true;
     const payload = { ...this.newUser, id: this.selectedUser.id };
     this.http.put(`https://localhost:7272/api/users/${this.selectedUser.id}`, payload).subscribe({
       next: () => this.onSuccessCleanup(),
-      error: (err) => this.onErrorCleanup(err.error?.message)
-    });
-  }
-
-  private runDeleteUser() {
-    this.http.delete(`https://localhost:7272/api/users/${this.selectedUser.id}`).subscribe({
-      next: () => this.onSuccessCleanup(),
-      error: (err) => this.onErrorCleanup(err.error?.message)
-    });
-  }
-
-  private runReactivateUser() {
-    this.http.patch(`https://localhost:7272/api/users/${this.selectedUser.id}/reactivate`, { newPassword: this.newReactivatePassword }).subscribe({
-      next: () => this.onSuccessCleanup(),
-      error: (err) => this.onErrorCleanup(err.error?.message)
+      error: () => this.isSubmitting = false
     });
   }
 
   private onSuccessCleanup() {
     this.fetchData();
     this.closeModal();
-    this.isConfirming = false;
     this.isSubmitting = false;
     this.selectedUser = null;
     this.cdr.markForCheck();
     this.cdr.detectChanges();
   }
 
-  private onErrorCleanup(msg: string) {
-    this.isSubmitting = false;
-    this.isConfirming = false;
-    if (this.showModal) this.errorMessage = msg;
-    else this.confirmErrorMessage = msg;
-    this.cdr.detectChanges();
+  get filteredUserAccounts() {
+    return this.userAccounts.filter(acc => {
+      const matchesSearch = acc.accountName.toLowerCase().includes(this.accountListSearchTerm.toLowerCase());
+      const matchesFilter = this.accountListFilter === 'all' || (this.accountListFilter === 'owner' && acc.isOwner);
+      return matchesSearch && matchesFilter;
+    });
   }
 
   fetchData(): void {
@@ -430,8 +399,12 @@ export class UserListComponent implements OnInit {
     this.selectedUser = null;
     this.resetForm();
     this.showModal = true;
-    this.errorMessage = '';
-    this.fieldStatus = { username: { valid: false }, email: { valid: false }, phone: { valid: false } };
+    this.fieldStatus = {
+      username: { checking: false, valid: false, error: '' },
+      email: { checking: false, valid: false, error: '' },
+      phone: { checking: false, valid: false, error: '' },
+      password: { checking: false, valid: false, error: '' }
+    };
   }
 
   openEditModal(user: any) {
@@ -446,7 +419,6 @@ export class UserListComponent implements OnInit {
     };
     this.fieldStatus = { username: { valid: true }, email: { valid: true }, phone: { valid: true } };
     this.showModal = true;
-    this.errorMessage = '';
   }
 
   onAccountSearch(term: string) {

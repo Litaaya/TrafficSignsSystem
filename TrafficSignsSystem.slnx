@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Solution Items/">
     <File Path=".gitignore" />
+    <File Path="WorkList.txt" />
   </Folder>
   <Project Path="TrafficSigns.AppHost/TrafficSigns.AppHost.csproj" />
   <Project Path="TrafficSigns.Application/TrafficSigns.Application.csproj" />

@@ -26,7 +26,6 @@ namespace TrafficSigns.Application.Common.Validations
 
         public const string PasswordRegexPattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$";
         private static readonly Regex PasswordRegex = new(PasswordRegexPattern, RegexOptions.Compiled);
-
         public static bool IsStrongPassword(string? password) =>
             !string.IsNullOrWhiteSpace(password) && PasswordRegex.IsMatch(password);
 

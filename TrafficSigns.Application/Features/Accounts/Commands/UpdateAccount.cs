@@ -18,7 +18,7 @@ public class UpdateAccountCommandValidator : AbstractValidator<UpdateAccountComm
             .WithMessage($"Account name is required and cannot exceed {AccountValidationRules.NameMax} characters");
 
         RuleFor(x => x.Desc)
-            .Must(AccountValidationRules.isValidDescription)
+            .Must(AccountValidationRules.IsValidDescription)
             .WithMessage($"Description maximum letters is {AccountValidationRules.DescMax} characters");
 
         RuleFor(x => x.Email)
