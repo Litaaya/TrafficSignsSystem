@@ -7,6 +7,7 @@ Nút lộ diện mật khẩu sẽ tự biến mất khi nhấp qua ô khác và
 Độ trễ sau khi tắt modal cho tới khi bấm được vào button khác
 Xóa user 1 đang là Owner only của Account 1
 Thanh scroll bar hướng dọc, cạnh bên phải ở account list và user list
+Nút workspace cancel
 
 # Hôm qua
 - Fix bug keycloak không nhận token của be [v] Lý do: cacheKey giữ Token của bot và sử dụng nó để truy cập vào keycloak thực hiện quyền của api
