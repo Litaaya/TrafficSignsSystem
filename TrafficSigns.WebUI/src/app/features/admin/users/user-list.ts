@@ -43,7 +43,7 @@ export class UserListComponent implements OnInit {
   hasMoreAvailable = true;
 
   accountListSearchTerm = '';
-  accountListFilter: 'all' | 'owner' = 'all';
+  accountListFilter: 'all' | 'Owner' | 'Member' | 'Viewer' = 'all';
   newUser = { username: '', password: '', email: '', phone: '', firstName: '', lastName: '' };
   formIsValid = false;
 
@@ -64,6 +64,23 @@ export class UserListComponent implements OnInit {
   searchAvailableTerm: string = '';
   availableUsers: any[] = [];
   selectedAccount: any;
+
+  isAccountRoleFilterOpen = false;
+
+  isClosingModal = false;
+  isClosingDetails = false;
+  isClosingRole = false;
+  isClosingReactivate = false;
+
+  isDeleteModalOpen = false;
+  isClosingDelete = false;
+  deleteTargetUser: any = null;
+
+  isWithdrawModalOpen = false;
+  isClosingWithdraw = false;
+  withdrawTargetAccount: any = null;
+
+  isPageSizeDropdownOpen = false;
 
   @ViewChild('assignTrigger', { read: MatMenuTrigger }) assignTrigger!: MatMenuTrigger;
   @ViewChild('jumpTrigger', { read: MatMenuTrigger }) jumpTrigger!: MatMenuTrigger;
@@ -88,6 +105,12 @@ export class UserListComponent implements OnInit {
     this.fetchData();
   }
 
+  selectPageSize(size: number) {
+    this.pageSize = size;
+    this.isPageSizeDropdownOpen = false;
+    this.onPageSizeChange();
+  }
+
   onUserSearch(term: string) {
     this.pageNumber = 1;
     this.userSearchSubject.next(term);
@@ -95,7 +118,7 @@ export class UserListComponent implements OnInit {
 
   initRealtimeValidation() {
     this.checkSubject.pipe(
-      debounceTime(600),
+      debounceTime(300),
       switchMap(data => {
         this.fieldStatus[data.field].checking = true;
         this.updateFormValidity();
@@ -119,6 +142,8 @@ export class UserListComponent implements OnInit {
           this.fieldStatus[res.field].error = res.isValid ? '' : res.message;
         }
         this.updateFormValidity();
+
+        this.cdr.markForCheck();
         this.cdr.detectChanges();
       }
     });
@@ -186,12 +211,14 @@ export class UserListComponent implements OnInit {
     if (!value || value.trim().length < 2) {
       this.fieldStatus[field] = { checking: false, valid: false, error: '' };
       this.updateFormValidity();
+      this.cdr.detectChanges();
       return;
     }
     this.fieldStatus[field].checking = true;
     this.fieldStatus[field].valid = false;
     this.fieldStatus[field].error = '';
     this.updateFormValidity();
+    this.cdr.detectChanges();
     this.checkSubject.next({ field, value });
   }
 
@@ -208,10 +235,13 @@ export class UserListComponent implements OnInit {
 
   isDataChanged(): boolean {
     if (!this.selectedUser) return true;
-    return (this.newUser.email.trim() !== (this.selectedUser.email || '') ||
-      this.newUser.phone.trim() !== (this.selectedUser.phone || '') ||
-      (this.newUser.firstName?.trim() || '') !== (this.selectedUser.firstName || '') ||
-      (this.newUser.lastName?.trim() || '') !== (this.selectedUser.lastName || ''));
+
+    const emailChanged = (this.newUser.email?.trim() || '') !== (this.selectedUser.email || '');
+    const phoneChanged = (this.newUser.phone?.trim() || '') !== (this.selectedUser.phone || '');
+    const firstNameChanged = (this.newUser.firstName?.trim() || '') !== (this.selectedUser.firstName || '');
+    const lastNameChanged = (this.newUser.lastName?.trim() || '') !== (this.selectedUser.lastName || '');
+
+    return emailChanged || phoneChanged || firstNameChanged || lastNameChanged;
   }
 
   deleteUser(user: any) {
@@ -219,21 +249,6 @@ export class UserListComponent implements OnInit {
       this.isSubmitting = true;
       this.http.delete(`https://localhost:7272/api/users/${user.id}`).subscribe({
         next: () => this.onSuccessCleanup(),
-        error: () => { this.isSubmitting = false; this.updateFormValidity(); }
-      });
-    }
-  }
-
-  removeAccount(user: any, acc: any) {
-    if (confirm(`Remove user ${user.username} from workspace ${acc.accountName || acc.name}?`)) {
-      this.isSubmitting = true;
-      const accId = acc.accountId || acc.id;
-      this.http.delete(`https://localhost:7272/api/accounts/${accId}/users/${user.id}`).subscribe({
-        next: () => {
-          this.fetchUserAccounts(user.id);
-          this.isSubmitting = false;
-          this.updateFormValidity();
-        },
         error: () => { this.isSubmitting = false; this.updateFormValidity(); }
       });
     }
@@ -250,9 +265,32 @@ export class UserListComponent implements OnInit {
   }
 
   closeRoleModal() {
-    this.isRoleModalOpen = false;
-    this.roleTargetAccount = null;
-    this.isRoleDropdownOpen = false;
+    this.isClosingRole = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.isRoleModalOpen = false;
+      this.isClosingRole = false;
+      this.roleTargetAccount = null;
+      this.isRoleDropdownOpen = false;
+      this.cdr.detectChanges();
+    }, 350);
+  }
+
+  openWithdrawModal(acc: any) {
+    this.withdrawTargetAccount = acc;
+    this.isWithdrawModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeWithdrawModal() {
+    this.isClosingWithdraw = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.isWithdrawModalOpen = false;
+      this.isClosingWithdraw = false;
+      this.withdrawTargetAccount = null;
+      this.cdr.detectChanges();
+    }, 350);
   }
 
   toggleRoleDropdown() {
@@ -265,6 +303,23 @@ export class UserListComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  openDeleteModal(user: any) {
+    this.deleteTargetUser = user;
+    this.isDeleteModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeDeleteModal() {
+    this.isClosingDelete = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.isDeleteModalOpen = false;
+      this.isClosingDelete = false;
+      this.deleteTargetUser = null;
+      this.cdr.detectChanges();
+    }, 350);
+  }
+
   runAssignToAccount() {
     this.isSubmitting = true;
     const body = { accountId: this.roleTargetAccount.id, userId: this.selectedUser.id, role: this.selectedRole };
@@ -273,8 +328,23 @@ export class UserListComponent implements OnInit {
         this.fetchUserAccounts(this.selectedUser.id);
         this.closeRoleModal();
         this.isSubmitting = false;
+        this.cdr.detectChanges();
       },
-      error: () => this.isSubmitting = false
+      error: () => {
+        this.isSubmitting = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  runDeleteUser() {
+    this.isSubmitting = true;
+    this.http.delete(`https://localhost:7272/api/users/${this.deleteTargetUser.id}`).subscribe({
+      next: () => {
+        this.closeDeleteModal();
+        this.onSuccessCleanup();
+      },
+      error: () => { this.isSubmitting = false; this.cdr.detectChanges(); }
     });
   }
 
@@ -299,9 +369,15 @@ export class UserListComponent implements OnInit {
   }
 
   closeReactivateModal() {
-    this.isReactivateModalOpen = false;
-    this.reactivateTargetUser = null;
-    this.newReactivatePassword = '';
+    this.isClosingReactivate = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.isReactivateModalOpen = false;
+      this.isClosingReactivate = false;
+      this.reactivateTargetUser = null;
+      this.newReactivatePassword = '';
+      this.cdr.detectChanges();
+    }, 350);
   }
 
   runReactivateUser() {
@@ -335,6 +411,20 @@ export class UserListComponent implements OnInit {
     });
   }
 
+  runWithdrawAccount() {
+    this.isSubmitting = true;
+    const accId = this.withdrawTargetAccount.accountId || this.withdrawTargetAccount.id;
+    this.http.delete(`https://localhost:7272/api/accounts/${accId}/users/${this.selectedUser.id}`).subscribe({
+      next: () => {
+        this.fetchUserAccounts(this.selectedUser.id);
+        this.closeWithdrawModal();
+        this.isSubmitting = false;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.isSubmitting = false; this.cdr.detectChanges(); }
+    });
+  }
+
   private onSuccessCleanup() {
     this.fetchData();
     this.closeModal();
@@ -347,9 +437,14 @@ export class UserListComponent implements OnInit {
 
   get filteredUserAccounts() {
     return this.userAccounts.filter(acc => {
-      const matchesSearch = acc.accountName.toLowerCase().includes(this.accountListSearchTerm.toLowerCase());
-      const currentRole = acc.role || acc.Role || 'Viewer';
-      const matchesFilter = this.accountListFilter === 'all' || (this.accountListFilter === 'owner' && currentRole === 'Owner');
+      const term = this.accountListSearchTerm.toLowerCase();
+      const matchesSearch = acc.accountName.toLowerCase().includes(term);
+    
+      const accRole = (acc.role || acc.Role || 'Viewer').toLowerCase();
+      const filterValue = this.accountListFilter.toLowerCase();
+    
+      const matchesFilter = filterValue === 'all' || accRole === filterValue;
+
       return matchesSearch && matchesFilter;
     });
   }
@@ -448,8 +543,24 @@ export class UserListComponent implements OnInit {
   }
 
   closeModal(): void {
-    this.showModal = false;
-    this.resetForm();
+    this.isClosingModal = true;
+    this.cdr.detectChanges()
+    setTimeout(() => {
+      this.showModal = false;
+      this.isClosingModal = false;
+      this.resetForm();
+      this.cdr.detectChanges();
+    }, 350);
+  }
+
+  closeDetails(): void {
+    this.isClosingDetails = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.showDetailsModal = false;
+      this.isClosingDetails = false;
+      this.cdr.detectChanges();
+    }, 350);
   }
 
   resetForm(): void {

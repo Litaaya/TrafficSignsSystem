@@ -3,16 +3,21 @@ Giới hạn để xóa đi một data sau khi bị inactive là bao lâu ?
 Bug set time traffic sign speed limit
 Chưa check đã tick (field account)
 Reset khi reactivate chưa set rule mật khẩu
+Nút lộ diện mật khẩu sẽ tự biến mất khi nhấp qua ô khác và không quay trở lại
+Độ trễ sau khi tắt modal cho tới khi bấm được vào button khác
+Xóa user 1 đang là Owner only của Account 1
+Thanh scroll bar hướng dọc, cạnh bên phải ở account list và user list
 
 # Hôm qua
 - Fix bug keycloak không nhận token của be [v] Lý do: cacheKey giữ Token của bot và sử dụng nó để truy cập vào keycloak thực hiện quyền của api
-- Viết lại ui gán user vào account [v]
-- filter all roles trong workspace list và user list trong view, điều chỉnh modal []
-- Loading cho thanh scrollbar trong danh sách user trong wp list            []
-- Thiết kế UI cho owner quản lý user của account []
+- Viết lại modal ui gán user vào account [v]
+- fix ui frontend và viết thêm ux [v]
+- Thiết kế UI modal cho owner quản lý user của account [v]
 - Thiết kế UI cho user quản lý bản thân []
 - Fix lỗi không check khoảng trắng trong field []
 - Fix lỗi tự tick khi chưa điền gì trong field account []
+- Fix lỗi spam api khi click lại cùng 1 cửa sổ khi đang ở cửa sổ đó []
+- Sửa tên hàm inactive trong frontend
 
 # In Development:
 UnitTest (chưa hoàn chỉnh)
@@ -21,6 +26,7 @@ Search cho name đường
 Viết tool bổ sung db
 Bổ sung validate rule email cho account
 Giảm bớt quyền admin lên admin
+Tạo modal khi search danh sách ?
 
 # Low priority:
 Cấu hình lại cho keycloak khi user đặt lại mật khẩu lần đầu đăng nhập

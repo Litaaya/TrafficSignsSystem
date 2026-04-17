@@ -54,6 +54,8 @@ export class AccountListComponent implements OnInit {
   roleActionType: 'ASSIGN' | 'UPDATE' = 'ASSIGN';
   roleTargetUser: any = null;
 
+  isUserRoleFilterOpen = false;
+
   @ViewChild('assignTrigger', { read: MatMenuTrigger }) assignTrigger!: MatMenuTrigger;
   @ViewChild('jumpTrigger', { read: MatMenuTrigger }) jumpTrigger!: MatMenuTrigger;
   @ViewChild('tableContainer') tableContainer!: ElementRef;
@@ -318,9 +320,14 @@ export class AccountListComponent implements OnInit {
   get filteredAccountUsers() {
     return this.accountUsers.filter(u => {
       const term = this.userListSearchTerm.toLowerCase();
-      const matchesSearch = u.username.toLowerCase().includes(term) || (u.email && u.email.toLowerCase().includes(term));
-      const userRole = u.role || u.Role || 'Viewer';
-      const matchesFilter = this.userListFilter === 'all' || (this.userListFilter === 'owner' && userRole === 'Owner');
+      const matchesSearch = u.username.toLowerCase().includes(term) || 
+        (u.email && u.email.toLowerCase().includes(term));
+    
+      const userRole = (u.role || u.Role || 'Viewer').toLowerCase();
+      const filterValue = this.userListFilter.toLowerCase();
+    
+      const matchesFilter = filterValue === 'all' || userRole === filterValue;
+
       return matchesSearch && matchesFilter;
     });
   }

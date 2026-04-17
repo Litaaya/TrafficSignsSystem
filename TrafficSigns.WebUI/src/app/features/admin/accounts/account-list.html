@@ -88,14 +88,43 @@
         <span class="text-xs font-medium text-slate-500">Total: <b class="text-slate-800">{{ totalCount }}</b></span>
       </div>
       <div class="flex items-center gap-1">
-        <button [disabled]="pageNumber === 1" (click)="onPageChange(1)" class="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white font-bold transition-all hover:bg-slate-100 disabled:opacity-30">«</button>
-        <button [disabled]="pageNumber === 1" (click)="onPageChange(pageNumber - 1)" class="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white font-bold transition-all hover:bg-slate-100 disabled:opacity-30">‹</button>
+        <button [disabled]="pageNumber === 1" (click)="onPageChange(1)"
+                class="group flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white transition-all hover:bg-slate-100 disabled:opacity-30">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-600 group-hover:text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5" />
+          </svg>
+        </button>
+
+        <button [disabled]="pageNumber === 1" (click)="onPageChange(pageNumber - 1)"
+                class="group flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white transition-all hover:bg-slate-100 disabled:opacity-30">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-600 group-hover:text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+
         <ng-container *ngFor="let p of visiblePages">
-          <button *ngIf="p !== '...'" (click)="onPageChange(p)" [class]="p === pageNumber ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'" class="h-8 w-8 rounded-xl border text-xs font-bold transition-all">{{ p }}</button>
-          <span *ngIf="p === '...'" #jumpTrigger="matMenuTrigger" [matMenuTriggerFor]="jumpMenu" class="flex h-8 w-8 cursor-pointer items-center justify-center font-bold text-slate-400 hover:text-blue-600">...</span>
+          <button *ngIf="p !== '...'" (click)="onPageChange(p)"
+                  [class]="p === pageNumber ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'"
+                  class="font-black h-8 w-8 rounded-xl border text-[11px] transition-all">
+            {{ p }}
+          </button>
+          <span *ngIf="p === '...'" #jumpTrigger="matMenuTrigger" [matMenuTriggerFor]="jumpMenu"
+                class="flex h-8 w-8 cursor-pointer items-center justify-center font-bold text-slate-400 hover:text-blue-600">...</span>
         </ng-container>
-        <button [disabled]="pageNumber === totalPages" (click)="onPageChange(pageNumber + 1)" class="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white font-bold transition-all hover:bg-slate-100 disabled:opacity-30">›</button>
-        <button [disabled]="pageNumber === totalPages" (click)="onPageChange(totalPages)" class="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white font-bold transition-all hover:bg-slate-100 disabled:opacity-30">»</button>
+
+        <button [disabled]="pageNumber === totalPages" (click)="onPageChange(pageNumber + 1)"
+                class="group flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white transition-all hover:bg-slate-100 disabled:opacity-30">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-600 group-hover:text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+
+        <button [disabled]="pageNumber === totalPages" (click)="onPageChange(totalPages)"
+                class="group flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white transition-all hover:bg-slate-100 disabled:opacity-30">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-600 group-hover:text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 4.5l7.5 7.5-7.5 7.5m-6-15l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
       </div>
     </div>
   </div>
