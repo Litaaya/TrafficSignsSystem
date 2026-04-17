@@ -1,235 +1,177 @@
-<div class="h-full flex flex-col pt-0 px-8 pb-8">
-  <div class="sticky top-0 z-20 bg-[#f8fafc] pt-4 pb-6 flex flex-col flex-shrink-0">
-    <h1 class="text-3xl font-black text-slate-800 uppercase tracking-tighter mb-4">User Management</h1>
+﻿<div class="flex h-full flex-col px-8 pb-8 pt-0">
+  <div class="sticky top-0 z-20 flex flex-shrink-0 flex-col bg-[#f8fafc] pb-6 pt-4">
+    <h1 class="font-black mb-4 text-3xl uppercase tracking-tighter text-slate-800">User Management</h1>
 
     <div class="flex items-center gap-3">
       <div class="relative w-80">
-        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 text-sm">🔍</span>
+        <span class="-translate-y-1/2 absolute left-3 top-1/2 text-sm text-slate-300">🔍</span>
         <input type="text"
                [(ngModel)]="userSearchTerm"
                (input)="onUserSearch($any($event.target).value)"
                (keyup.enter)="fetchData()"
                placeholder="Find username, email, phone..."
-               class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:border-blue-500 shadow-sm transition-all placeholder:text-slate-300">
+               class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-xs font-bold shadow-sm outline-none transition-all placeholder:text-slate-300 focus:border-blue-500">
       </div>
 
       <div class="relative min-w-[140px]">
-        <div *ngIf="isStatusDropdownOpen"
-             (click)="isStatusDropdownOpen = false"
-             class="fixed inset-0 z-30 bg-transparent"></div>
-
+        <div *ngIf="isStatusDropdownOpen" (click)="isStatusDropdownOpen = false" class="fixed inset-0 z-30 bg-transparent"></div>
         <button (click)="isStatusDropdownOpen = !isStatusDropdownOpen"
-                class="relative z-40 w-full bg-white border border-slate-200 text-slate-500 text-[10px] font-black rounded-2xl px-4 py-2.5 outline-none focus:border-blue-500 shadow-sm uppercase tracking-widest transition-all flex items-center justify-between gap-3 h-[42px]">
-          <span>
-            {{ userStatusFilter === 'all' ? 'All Status' : (userStatusFilter === 'active' ? '🟢 Active' : '🔴 Inactive') }}
-          </span>
+                class="font-black relative z-40 flex h-[42px] w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 uppercase tracking-widest text-slate-500 text-[10px] shadow-sm outline-none transition-all focus:border-blue-500">
+          <span>{{ userStatusFilter === 'all' ? 'All Status' : (userStatusFilter === 'active' ? '🟢 Active' : '🔴 Inactive') }}</span>
           <span [class.rotate-180]="isStatusDropdownOpen" class="text-[8px] transition-transform duration-300">▼</span>
         </button>
-
-        <div [class.opacity-100]="isStatusDropdownOpen"
-             [class.translate-y-0]="isStatusDropdownOpen"
-             [class.pointer-events-auto]="isStatusDropdownOpen"
-             class="absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-xl z-50 opacity-0 -translate-y-2 pointer-events-none transition-all duration-300 ease-out overflow-hidden p-1.5 flex flex-col gap-1">
-          <button (click)="selectUserStatus('all')" class="text-left px-3 py-2.5 hover:bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest rounded-xl transition-colors">All Status</button>
-          <button (click)="selectUserStatus('active')" class="text-left px-3 py-2.5 hover:bg-slate-50 text-[10px] font-black text-green-600 uppercase tracking-widest rounded-xl transition-colors">🟢 Active</button>
-          <button (click)="selectUserStatus('inactive')" class="text-left px-3 py-2.5 hover:bg-slate-50 text-[10px] font-black text-red-500 uppercase tracking-widest rounded-xl transition-colors">🔴 Inactive</button>
+        <div [class.opacity-100]="isStatusDropdownOpen" [class.translate-y-0]="isStatusDropdownOpen" [class.pointer-events-auto]="isStatusDropdownOpen"
+             class="-translate-y-2 pointer-events-none absolute left-0 top-full z-50 mt-2 flex w-full flex-col gap-1 overflow-hidden rounded-2xl border border-slate-100 bg-white p-1.5 opacity-0 shadow-xl transition-all duration-300 ease-out">
+          <button (click)="selectUserStatus('all')" class="font-black rounded-xl px-3 py-2.5 text-left uppercase tracking-widest text-[10px] text-slate-500 transition-colors hover:bg-slate-50">All Status</button>
+          <button (click)="selectUserStatus('active')" class="font-black rounded-xl px-3 py-2.5 text-left uppercase tracking-widest text-[10px] text-green-600 transition-colors hover:bg-slate-50">🟢 Active</button>
+          <button (click)="selectUserStatus('inactive')" class="font-black rounded-xl px-3 py-2.5 text-left uppercase tracking-widest text-[10px] text-red-500 transition-colors hover:bg-slate-50">🔴 Inactive</button>
         </div>
       </div>
 
-      <button (click)="openModal()"
-              class="bg-white border border-slate-200 text-slate-500 px-5 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all shadow-sm flex items-center gap-2 h-[42px]">
-        <span class="text-blue-500 text-sm">+</span>
-        Create new User
+      <button (click)="openModal()" class="font-black flex h-[42px] items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-2.5 uppercase tracking-widest text-slate-500 text-[10px] shadow-sm transition-all hover:border-blue-500 hover:text-blue-600">
+        <span class="text-sm text-blue-500">+</span> Create new User
       </button>
     </div>
   </div>
 
-  <div class="bg-white rounded-3xl shadow-xl border border-slate-100 flex flex-col overflow-hidden">
-    <div #tableContainer class="overflow-y-auto custom-scrollbar" style="max-height: 70vh;">
-      <table class="w-full text-left border-collapse" style="table-layout: fixed;">
-        <thead class="bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
+  <div class="flex flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-xl">
+    <div #tableContainer class="custom-scrollbar overflow-y-auto" style="max-height: 70vh;">
+      <table class="w-full border-collapse text-left" style="table-layout: fixed;">
+        <thead class="sticky top-0 z-10 border-b border-slate-100 bg-slate-50">
           <tr>
-            <th class="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50" style="width: 30%;">Name</th>
-            <th class="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50" style="width: 20%;">Username</th>
-            <th class="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-50" style="width: 30%;">Email/Phone</th>
-            <th class="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest text-start bg-slate-50" style="width: 20%;">Action</th>
+            <th class="font-black bg-slate-50 p-5 uppercase tracking-widest text-[10px] text-slate-400" style="width: 30%;">Name</th>
+            <th class="font-black bg-slate-50 p-5 uppercase tracking-widest text-[10px] text-slate-400" style="width: 20%;">Username</th>
+            <th class="font-black bg-slate-50 p-5 uppercase tracking-widest text-[10px] text-slate-400" style="width: 30%;">Email/Phone</th>
+            <th class="font-black bg-slate-50 p-5 text-start uppercase tracking-widest text-[10px] text-slate-400" style="width: 20%;">Action</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
-          <tr *ngFor="let user of users" class="hover:bg-slate-50/50 transition-colors">
+          <tr *ngFor="let user of users" class="transition-colors hover:bg-slate-50/50">
             <td class="p-5 text-sm font-bold text-slate-700">
               <div class="flex items-center gap-2">
-                <div [class]="user.inactive ? 'bg-slate-200' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'" class="w-2 h-2 rounded-full transition-all"></div>
+                <div [class]="user.inactive ? 'bg-slate-200' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'" class="h-2 w-2 rounded-full transition-all"></div>
                 <span>{{ user.firstName }} {{ user.lastName }}</span>
               </div>
             </td>
-            <td class="p-5 text-sm font-mono text-slate-500" [innerHTML]="highlight(user.username, userSearchTerm)"></td>
+            <td class="p-5 font-mono text-sm text-slate-500" [innerHTML]="highlight(user.username, userSearchTerm)"></td>
             <td class="p-5 text-sm text-slate-500">
               <div class="truncate font-medium" title="{{ user.email }}" [innerHTML]="highlight(user.email, userSearchTerm)"></div>
-              <div class="text-[10px] text-slate-400 font-bold mt-0.5" [innerHTML]="highlight(user.phone || '', userSearchTerm)"></div>
+              <div class="mt-0.5 font-bold text-[10px] text-slate-400" [innerHTML]="highlight(user.phone || '', userSearchTerm)"></div>
             </td>
-            <td class="p-5 flex justify-start items-center gap-4">
-              <button (click)="openDetailsModal(user)"
-                      class="w-10 text-left text-slate-400 hover:text-blue-600 font-black text-xs uppercase tracking-tighter transition-colors">
-                View
-              </button>
-              <button (click)="openEditModal(user)"
-                      class="w-10 text-left text-blue-600 hover:underline font-bold text-xs uppercase">
-                Edit
-              </button>
+            <td class="flex items-center justify-start gap-4 p-5">
+              <button (click)="openDetailsModal(user)" class="font-black w-10 text-left text-xs uppercase tracking-tighter text-slate-400 transition-colors hover:text-blue-600">View</button>
+              <button (click)="openEditModal(user)" class="w-10 text-left text-xs font-bold uppercase text-blue-600 hover:underline">Edit</button>
               <ng-container>
-                <button *ngIf="!user.inactive"
-                        (click)="deleteUser(user)"
-                        class="text-red-600 hover:underline font-bold text-xs uppercase whitespace-nowrap">
-                  Delete
-                </button>
-                <button *ngIf="user.inactive"
-                        (click)="openReactivateModal(user)"
-                        class="text-green-600 hover:underline font-bold text-xs uppercase whitespace-nowrap">
-                  Reactivate
-                </button>
+                <button *ngIf="!user.inactive" (click)="deleteUser(user)" class="whitespace-nowrap text-xs font-bold uppercase text-red-600 hover:underline">Delete</button>
+                <button *ngIf="user.inactive" (click)="openReactivateModal(user)" class="whitespace-nowrap text-xs font-bold uppercase text-green-600 hover:underline">Reactivate</button>
               </ng-container>
             </td>
           </tr>
           <tr *ngIf="users.length === 0">
-            <td colspan="4" class="p-10 text-center text-slate-400 text-xs font-bold italic">No users found.</td>
+            <td colspan="4" class="p-10 text-center text-xs font-bold italic text-slate-400">No users found.</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <div class="p-5 bg-slate-50 border-t border-slate-100 flex justify-between items-center flex-shrink-0">
+    <div class="flex flex-shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50 p-5">
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-2">
-          <span class="text-[10px] font-black text-slate-400 uppercase">Display</span>
-          <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" class="bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-lg p-1 outline-none">
+          <span class="font-black uppercase text-[10px] text-slate-400">Display</span>
+          <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" class="rounded-lg border border-slate-200 bg-white p-1 text-xs font-bold text-slate-600 outline-none">
             <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
           </select>
         </div>
-        <span class="text-xs text-slate-500 font-medium">Total: <b class="text-slate-800">{{ totalCount }}</b></span>
+        <span class="text-xs font-medium text-slate-500">Total: <b class="text-slate-800">{{ totalCount }}</b></span>
       </div>
-
-      <div class="flex gap-1 items-center">
-        <button [disabled]="pageNumber === 1" (click)="onPageChange(1)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-30 transition-all font-bold">«</button>
-        <button [disabled]="pageNumber === 1" (click)="onPageChange(pageNumber - 1)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-30 transition-all font-bold">‹</button>
+      <div class="flex items-center gap-1">
+        <button [disabled]="pageNumber === 1" (click)="onPageChange(1)" class="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white font-bold transition-all hover:bg-slate-100 disabled:opacity-30">«</button>
+        <button [disabled]="pageNumber === 1" (click)="onPageChange(pageNumber - 1)" class="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white font-bold transition-all hover:bg-slate-100 disabled:opacity-30">‹</button>
         <ng-container *ngFor="let p of visiblePages">
-          <button *ngIf="p !== '...'" (click)="onPageChange(p)" [class]="p === pageNumber ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'" class="w-8 h-8 rounded-xl text-xs font-bold border transition-all">{{ p }}</button>
-          <span *ngIf="p === '...'" #jumpTrigger="matMenuTrigger" [matMenuTriggerFor]="jumpMenu" class="w-8 h-8 flex items-center justify-center text-slate-400 font-bold cursor-pointer hover:text-blue-600">...</span>
+          <button *ngIf="p !== '...'" (click)="onPageChange(p)" [class]="p === pageNumber ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'" class="h-8 w-8 rounded-xl border text-xs font-bold transition-all">{{ p }}</button>
+          <span *ngIf="p === '...'" #jumpTrigger="matMenuTrigger" [matMenuTriggerFor]="jumpMenu" class="flex h-8 w-8 cursor-pointer items-center justify-center font-bold text-slate-400 hover:text-blue-600">...</span>
         </ng-container>
-        <button [disabled]="pageNumber === totalPages" (click)="onPageChange(pageNumber + 1)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-30 transition-all font-bold">›</button>
-        <button [disabled]="pageNumber === totalPages" (click)="onPageChange(totalPages)" class="w-8 h-8 flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-30 transition-all font-bold">»</button>
+        <button [disabled]="pageNumber === totalPages" (click)="onPageChange(pageNumber + 1)" class="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white font-bold transition-all hover:bg-slate-100 disabled:opacity-30">›</button>
+        <button [disabled]="pageNumber === totalPages" (click)="onPageChange(totalPages)" class="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white font-bold transition-all hover:bg-slate-100 disabled:opacity-30">»</button>
       </div>
     </div>
   </div>
 
   <mat-menu #jumpMenu="matMenu">
-    <div class="p-4 w-60 flex flex-col gap-3" (click)="$event.stopPropagation()">
-      <label class="block text-[10px] font-black uppercase text-slate-400">Page (1 - {{ totalPages }})</label>
+    <div class="flex w-60 flex-col gap-3 p-4" (click)="$event.stopPropagation()">
+      <label class="font-black block uppercase text-[10px] text-slate-400">Page (1 - {{ totalPages }})</label>
       <div class="flex gap-2">
-        <input type="number" [(ngModel)]="jumpPageInput" (keyup.enter)="jumpToPage()" class="flex-1 p-2 bg-slate-50 border rounded-lg outline-none text-xs">
-        <button (click)="jumpToPage()" class="bg-blue-600 text-white px-3 py-2 rounded-lg font-bold text-xs">Go</button>
+        <input type="number" [(ngModel)]="jumpPageInput" (keyup.enter)="jumpToPage()" class="flex-1 rounded-lg border bg-slate-50 p-2 text-xs outline-none">
+        <button (click)="jumpToPage()" class="rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white">Go</button>
       </div>
     </div>
   </mat-menu>
 
-  <div *ngIf="showDetailsModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-    <div class="bg-white w-full max-w-4xl h-[650px] rounded-[32px] shadow-2xl overflow-hidden animate-fadeIn flex flex-col">
-      <div class="flex justify-between items-center px-8 border-b border-slate-100 bg-white flex-shrink-0">
+  <div *ngIf="showDetailsModal" class="z-[60] fixed inset-0 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+    <div class="animate-fadeIn flex h-[650px] w-full max-w-4xl flex-col overflow-hidden rounded-[32px] bg-white shadow-2xl">
+      <div class="flex flex-shrink-0 items-center justify-between border-b border-slate-100 bg-white px-8">
         <div class="flex gap-2">
-          <button (click)="setTab('info')"
-                  [class]="activeTab === 'info' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'"
-                  class="px-6 py-5 border-b-2 font-black text-[10px] uppercase tracking-widest transition-all duration-300">
-            👤 Personal Information
-          </button>
-          <button (click)="setTab('accounts')"
-                  [class]="activeTab === 'accounts' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'"
-                  class="px-6 py-5 border-b-2 font-black text-[10px] uppercase tracking-widest transition-all duration-300">
-            🏢 Workspace List
-          </button>
+          <button (click)="setTab('info')" [class]="activeTab === 'info' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'" class="font-black border-b-2 px-6 py-5 uppercase tracking-widest text-[10px] transition-all duration-300">👤 Personal Information</button>
+          <button (click)="setTab('accounts')" [class]="activeTab === 'accounts' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'" class="font-black border-b-2 px-6 py-5 uppercase tracking-widest text-[10px] transition-all duration-300">🏢 Workspace List</button>
         </div>
-        <button (click)="showDetailsModal = false" class="text-slate-300 hover:text-slate-600 text-2xl transition-colors">×</button>
+        <button (click)="showDetailsModal = false" class="text-2xl text-slate-300 transition-colors hover:text-slate-600">×</button>
       </div>
 
-      <div class="flex-1 relative overflow-hidden bg-slate-50/30">
-        <div [class.opacity-100]="activeTab === 'info'"
-             [class.translate-x-0]="activeTab === 'info'"
-             [class.opacity-0]="activeTab !== 'info'"
-             [class.-translate-x-4]="activeTab !== 'info'"
-             [class.pointer-events-none]="activeTab !== 'info'"
-             class="absolute inset-0 p-10 transition-all duration-500 ease-out overflow-y-auto">
-          <h2 class="text-2xl font-black text-slate-800 mb-6 tracking-tight">{{ selectedUser?.firstName }} {{ selectedUser?.lastName }}</h2>
-          <div class="grid grid-cols-2 gap-6 bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
-            <div class="space-y-1"><label class="block text-[10px] font-black uppercase text-slate-300 tracking-widest">Username</label><p class="text-sm font-bold text-slate-700">{{ selectedUser?.username }}</p></div>
-            <div class="space-y-1"><label class="block text-[10px] font-black uppercase text-slate-300 tracking-widest">User ID</label><p class="text-[10px] font-bold text-slate-400 font-mono">{{ selectedUser?.id }}</p></div>
-            <div class="space-y-1"><label class="block text-[10px] font-black uppercase text-slate-300 tracking-widest">Email Address</label><p class="text-sm font-bold text-slate-700">{{ selectedUser?.email }}</p></div>
-            <div class="space-y-1"><label class="block text-[10px] font-black uppercase text-slate-300 tracking-widest">Phone Number</label><p class="text-sm font-bold text-slate-700">{{ selectedUser?.phone || '---' }}</p></div>
-            <div class="space-y-1 col-span-2"><label class="block text-[10px] font-black uppercase text-slate-300 tracking-widest">Created At</label><p class="text-sm font-bold text-slate-700">{{ selectedUser?.createdDt | date:'dd/MM/yyyy HH:mm' }}</p></div>
+      <div class="relative flex-1 overflow-hidden bg-slate-50/30">
+        <div [class.opacity-100]="activeTab === 'info'" [class.translate-x-0]="activeTab === 'info'" [class.opacity-0]="activeTab !== 'info'" [class.-translate-x-4]="activeTab !== 'info'" [class.pointer-events-none]="activeTab !== 'info'"
+             class="absolute inset-0 overflow-y-auto p-10 transition-all duration-500 ease-out">
+          <h2 class="font-black mb-6 text-2xl tracking-tight text-slate-800">{{ selectedUser?.firstName }} {{ selectedUser?.lastName }}</h2>
+          <div class="grid grid-cols-2 gap-6 rounded-[32px] border border-slate-100 bg-white p-8 shadow-sm">
+            <div class="space-y-1"><label class="font-black block uppercase tracking-widest text-[10px] text-slate-300">Username</label><p class="text-sm font-bold text-slate-700">{{ selectedUser?.username }}</p></div>
+            <div class="space-y-1"><label class="font-black block uppercase tracking-widest text-[10px] text-slate-300">User ID</label><p class="font-mono font-bold text-[10px] text-slate-400">{{ selectedUser?.id }}</p></div>
+            <div class="space-y-1"><label class="font-black block uppercase tracking-widest text-[10px] text-slate-300">Email Address</label><p class="text-sm font-bold text-slate-700">{{ selectedUser?.email }}</p></div>
+            <div class="space-y-1"><label class="font-black block uppercase tracking-widest text-[10px] text-slate-300">Phone Number</label><p class="text-sm font-bold text-slate-700">{{ selectedUser?.phone || '---' }}</p></div>
+            <div class="col-span-2 space-y-1"><label class="font-black block uppercase tracking-widest text-[10px] text-slate-300">Created At</label><p class="text-sm font-bold text-slate-700">{{ selectedUser?.createdDt | date:'dd/MM/yyyy HH:mm' }}</p></div>
           </div>
         </div>
 
-        <div [class.opacity-100]="activeTab === 'accounts'"
-             [class.translate-x-0]="activeTab === 'accounts'"
-             [class.opacity-0]="activeTab !== 'accounts'"
-             [class.translate-x-4]="activeTab !== 'accounts'"
-             [class.pointer-events-none]="activeTab !== 'accounts'"
-             class="absolute inset-0 p-8 transition-all duration-500 ease-out flex flex-col">
-          <div class="flex justify-between items-center mb-6 flex-shrink-0 gap-4">
-            <div class="flex items-center gap-3 flex-1 max-w-xl">
+        <div [class.opacity-100]="activeTab === 'accounts'" [class.translate-x-0]="activeTab === 'accounts'" [class.opacity-0]="activeTab !== 'accounts'" [class.translate-x-4]="activeTab !== 'accounts'" [class.pointer-events-none]="activeTab !== 'accounts'"
+             class="absolute inset-0 flex flex-col p-8 transition-all duration-500 ease-out">
+          <div class="mb-6 flex flex-shrink-0 items-center justify-between gap-4">
+            <div class="flex max-w-xl flex-1 items-center gap-3">
               <div class="relative flex-1">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 text-[10px]">🔍</span>
-                <input type="text"
-                       [(ngModel)]="accountListSearchTerm"
-                       placeholder="Search in list ..."
-                       class="w-full pl-8 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-bold outline-none focus:border-blue-500 shadow-sm transition-all">
+                <span class="-translate-y-1/2 absolute left-3 top-1/2 text-slate-300 text-[10px]">🔍</span>
+                <input type="text" [(ngModel)]="accountListSearchTerm" placeholder="Search in list ..." class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-8 pr-4 font-bold text-[10px] shadow-sm outline-none transition-all focus:border-blue-500">
               </div>
-
-              <select [(ngModel)]="accountListFilter"
-                      class="bg-white border border-slate-200 text-slate-500 text-[10px] font-black rounded-xl px-3 py-2 outline-none focus:border-blue-500 shadow-sm uppercase tracking-tighter">
+              <select [(ngModel)]="accountListFilter" class="font-black rounded-xl border border-slate-200 bg-white px-3 py-2 uppercase tracking-tighter text-slate-500 text-[10px] shadow-sm outline-none focus:border-blue-500">
                 <option value="all">All Roles</option>
                 <option value="owner">Only Owner</option>
               </select>
             </div>
-
-            <button #assignTrigger="matMenuTrigger"
-                    [matMenuTriggerFor]="assignMenu"
-                    (click)="openAssignSection()"
-                    class="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-lg hover:bg-blue-600 transition-all flex-shrink-0">
-              + Assign To Workspace
-            </button>
+            <button #assignTrigger="matMenuTrigger" [matMenuTriggerFor]="assignMenu" (click)="openAssignSection()" class="font-black flex-shrink-0 rounded-xl bg-slate-900 px-5 py-2.5 uppercase text-white text-[10px] shadow-lg transition-all hover:bg-blue-600">+ Assign To Workspace</button>
           </div>
 
-          <div class="flex-1 border border-slate-100 rounded-2xl overflow-hidden bg-white flex flex-col shadow-sm">
-            <div class="overflow-y-auto custom-scrollbar flex-1">
-              <table class="w-full text-left text-xs border-collapse">
-                <thead class="bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
+          <div class="flex flex-1 flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <div class="custom-scrollbar flex-1 overflow-y-auto">
+              <table class="w-full border-collapse text-left text-xs">
+                <thead class="sticky top-0 z-10 border-b border-slate-100 bg-slate-50">
                   <tr>
-                    <th class="p-4 font-black uppercase text-slate-400 text-[9px]">Workspace Name</th>
-                    <th class="p-4 font-black uppercase text-slate-400 text-[9px]">Authority</th>
-                    <th class="p-4 font-black uppercase text-slate-400 text-[9px] text-center">Action</th>
+                    <th class="font-black p-4 uppercase text-slate-400 text-[9px]">Workspace Name</th>
+                    <th class="font-black p-4 uppercase text-slate-400 text-[9px]">Authority</th>
+                    <th class="font-black p-4 text-center uppercase text-slate-400 text-[9px]">Action</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
-                  <tr *ngFor="let acc of filteredUserAccounts" class="hover:bg-slate-50/50 transition-colors">
+                  <tr *ngFor="let acc of filteredUserAccounts" class="transition-colors hover:bg-slate-50/50">
                     <td class="p-4 font-bold text-slate-700" [innerHTML]="highlight(acc.accountName, accountListSearchTerm)"></td>
                     <td class="p-4">
-                      <span [ngClass]="{
-                              'bg-amber-50 text-amber-600 border-amber-100': acc.role === 'Owner' || acc.Role === 'Owner',
-                              'bg-blue-50 text-blue-600 border-blue-100': acc.role === 'Member' || acc.Role === 'Member',
-                              'bg-slate-50 text-slate-400 border-slate-100': acc.role === 'Viewer' || acc.Role === 'Viewer' || (!acc.role && !acc.Role)
-                            }"
-                            class="px-2 py-1 rounded-md font-black text-[8px] border uppercase">
-                        {{ acc.role || acc.Role || 'VIEWER' }}
-                      </span>
+                      <span [ngClass]="{'bg-amber-50 text-amber-600 border-amber-100': acc.role === 'Owner' || acc.Role === 'Owner','bg-blue-50 text-blue-600 border-blue-100': acc.role === 'Member' || acc.Role === 'Member','bg-slate-50 text-slate-400 border-slate-100': acc.role === 'Viewer' || acc.Role === 'Viewer' || (!acc.role && !acc.Role)}"
+                            class="font-black rounded-md border px-2 py-1 uppercase text-[8px]">{{ acc.role || acc.Role || 'VIEWER' }}</span>
                     </td>
-                    <td class="p-4 flex justify-center gap-3">
-                      <button (click)="openRoleModal('UPDATE', selectedUser, acc)" class="text-blue-600 font-bold hover:text-blue-800 transition-colors text-[9px] uppercase tracking-tighter">Role</button>
-                      <button (click)="removeAccount(selectedUser, acc)" class="text-red-400 hover:text-red-600 font-bold transition-colors text-[9px] uppercase tracking-tighter">Withdraw</button>
+                    <td class="flex justify-center gap-3 p-4">
+                      <button (click)="openRoleModal('UPDATE', selectedUser, acc)" class="font-bold uppercase tracking-tighter text-blue-600 text-[9px] transition-colors hover:text-blue-800">Role</button>
+                      <button (click)="removeAccount(selectedUser, acc)" class="font-bold uppercase tracking-tighter text-red-400 text-[9px] transition-colors hover:text-red-600">Withdraw</button>
                     </td>
                   </tr>
                 </tbody>
               </table>
-              <div *ngIf="userAccounts.length === 0 && !loadingAccounts" class="p-20 text-center flex flex-col items-center">
-                <span class="text-2xl mb-2 opacity-20">🏢</span><p class="text-slate-400 italic font-bold text-[10px]">Not yet assigned to any Workspace.</p>
+              <div *ngIf="userAccounts.length === 0 && !loadingAccounts" class="flex flex-col items-center p-20 text-center">
+                <span class="mb-2 text-2xl opacity-20">🏢</span><p class="font-bold italic text-slate-400 text-[10px]">Not yet assigned to any Workspace.</p>
               </div>
             </div>
           </div>
@@ -238,227 +180,123 @@
     </div>
   </div>
 
-  <mat-menu #assignMenu="matMenu">
-    <div class="p-4 w-60 overflow-x-hidden flex flex-col" (click)="$event.stopPropagation()">
-      <label class="block text-[10px] font-black uppercase text-slate-400 mb-2">Workspace</label>
-
-      <div class="relative mb-3">
-        <input type="text"
-               [(ngModel)]="searchAccountTerm"
-               (ngModelChange)="onAccountSearch($event)"
-               placeholder="Find workspace..."
-               class="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs outline-none focus:border-blue-500 font-medium">
-      </div>
-
-      <div class="max-h-56 overflow-y-auto overflow-x-hidden space-y-1 custom-scrollbar">
-        <button *ngFor="let a of availableAccounts"
-                (click)="openRoleModal('ASSIGN', selectedUser, a)"
-                class="w-full text-left p-3 hover:bg-blue-50 rounded-xl text-xs font-bold text-slate-600 flex justify-between items-center group transition-all">
-          <span class="truncate pr-2 block flex-1" [innerHTML]="highlight(a.name, searchAccountTerm)"></span>
-          <span class="text-blue-600 font-black opacity-0 group-hover:opacity-100 flex-shrink-0">+</span>
-        </button>
-
-        <div *ngIf="availableAccounts.length === 0" class="text-[9px] text-slate-400 text-center py-4 italic bg-slate-50 rounded-xl">
-          Cannot find any Workspace.
+  <mat-menu #assignMenu="matMenu" class="modern-menu" xPosition="before">
+    <div class="flex w-60 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl" (click)="$event.stopPropagation()">
+      <div class="border-b border-slate-50 bg-slate-50/50 px-5 py-4">
+        <label class="font-black tracking-[0.1em] mb-3 block uppercase text-[11px] text-slate-400">Assign to Workspace</label>
+        <div class="relative">
+          <span class="-translate-y-1/2 absolute left-3 top-1/2 text-xs text-slate-400">🔍</span>
+          <input type="text" [(ngModel)]="searchAccountTerm" (ngModelChange)="onAccountSearch($event)" placeholder="Search workspace name..." class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-xs font-medium outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5">
         </div>
+      </div>
+      <div class="custom-scrollbar max-h-64 overflow-y-auto overflow-x-hidden p-2" (scroll)="onScrollAvailableAccounts($event)">
+        <div *ngIf="availableAccounts.length > 0" class="flex flex-col gap-1">
+          <button *ngFor="let acc of availableAccounts" (click)="openRoleModal('ASSIGN', selectedUser, acc)" class="group flex w-full items-center justify-between rounded-xl p-3 text-left transition-all duration-200 hover:bg-blue-50/80">
+            <div class="flex min-w-0 items-center gap-3">
+              <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg transition-colors group-hover:bg-blue-100">🏢</div>
+              <div class="flex min-w-0 flex-col">
+                <span class="truncate text-xs font-bold text-slate-700 group-hover:text-blue-700" [innerHTML]="highlight(acc.name, searchAccountTerm)"></span>
+                <span class="font-bold uppercase tracking-tighter text-[9px] text-slate-400">{{ acc.system ? 'System' : 'Regular' }}</span>
+              </div>
+            </div>
+            <div class="flex h-6 w-6 flex-shrink-0 scale-90 items-center justify-center rounded-lg bg-blue-100/50 text-blue-600 opacity-0 transition-all group-hover:scale-100 group-hover:opacity-100"><span class="text-sm font-bold">+</span></div>
+          </button>
+        </div>
+        <div *ngIf="loadingAvailable" class="flex justify-center py-6"><div class="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div></div>
+        <div *ngIf="!hasMoreAvailable && availableAccounts.length > 0" class="py-3 text-center border-t border-slate-50 mt-1"><span class="font-black uppercase tracking-widest text-[8px] text-slate-300">End of results</span></div>
+        <div *ngIf="availableAccounts.length === 0 && !loadingAvailable" class="flex flex-col items-center justify-center py-10 text-center"><span class="mb-2 text-2xl opacity-20">🏢</span><p class="px-4 font-bold italic text-[11px] text-slate-400">No workspaces available.</p></div>
       </div>
     </div>
   </mat-menu>
 
-  <div *ngIf="isRoleModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 animate-fadeIn">
-      <div class="text-center mb-6">
-        <h3 class="text-lg font-black text-slate-800 uppercase italic tracking-tight">Confirm Role</h3>
-        <p class="text-[10px] text-slate-500 mt-1">Workspace: <b class="text-blue-600">{{ roleTargetAccount?.accountName || roleTargetAccount?.name }}</b></p>
+  <div *ngIf="isRoleModalOpen" class="z-[100] fixed inset-0 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+    <div class="animate-fadeIn w-full max-w-sm rounded-3xl bg-white p-8 shadow-2xl">
+      <div class="mb-6 text-center">
+        <h3 class="font-black text-lg uppercase italic tracking-tight text-slate-800">Confirm Role</h3>
+        <p class="mt-1 text-[10px] text-slate-500">Workspace: <b class="text-blue-600">{{ roleTargetAccount?.accountName || roleTargetAccount?.name }}</b></p>
       </div>
-
       <div class="mb-6">
-        <label class="block text-[10px] font-black uppercase text-blue-500 mb-2 italic">Select Role for User:</label>
+        <label class="font-black mb-2 block uppercase italic text-[10px] text-blue-500">Select Role for User:</label>
         <div class="relative">
-          <div *ngIf="isRoleDropdownOpen"
-               (click)="isRoleDropdownOpen = false"
-               class="fixed inset-0 z-10 bg-transparent"></div>
-
-          <button (click)="toggleRoleDropdown()" type="button" class="relative z-20 w-full flex items-center justify-between p-4 bg-blue-50 border border-blue-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-700 transition-all shadow-inner">
+          <div *ngIf="isRoleDropdownOpen" (click)="isRoleDropdownOpen = false" class="fixed inset-0 z-10 bg-transparent"></div>
+          <button (click)="toggleRoleDropdown()" type="button" class="relative z-20 flex w-full items-center justify-between rounded-2xl border border-blue-100 bg-blue-50 p-4 font-bold text-slate-700 shadow-inner outline-none transition-all focus:border-blue-500">
             <span class="text-xs uppercase tracking-widest">{{ selectedRole }}</span>
             <span [class.rotate-180]="isRoleDropdownOpen" class="text-[10px] transition-transform duration-300">▼</span>
           </button>
-
-          <div [class.opacity-100]="isRoleDropdownOpen"
-               [class.translate-y-0]="isRoleDropdownOpen"
-               [class.pointer-events-auto]="isRoleDropdownOpen"
-               class="absolute left-0 right-0 mt-2 p-2 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[110]
-                      opacity-0 -translate-y-2 pointer-events-none transition-all duration-300 ease-out">
-
-            <div (click)="selectRole('Viewer')" class="p-3 hover:bg-blue-50 rounded-xl cursor-pointer transition-colors flex flex-col">
-              <span class="text-xs font-black text-slate-700">VIEWER</span>
-              <span class="text-[9px] text-slate-400 italic">Read-only access.</span>
-            </div>
-
-            <div (click)="selectRole('Member')" class="p-3 hover:bg-blue-50 rounded-xl cursor-pointer transition-colors flex flex-col">
-              <span class="text-xs font-black text-slate-700">MEMBER</span>
-              <span class="text-[9px] text-slate-400 italic">Can modify workspace data.</span>
-            </div>
-
-            <div (click)="selectRole('Owner')" class="p-3 hover:bg-blue-50 rounded-xl cursor-pointer transition-colors flex flex-col border-t border-slate-50 mt-1">
-              <span class="text-xs font-black text-blue-600">OWNER</span>
-              <span class="text-[9px] text-slate-400 italic">Full administrative access.</span>
-            </div>
+          <div [class.opacity-100]="isRoleDropdownOpen" [class.translate-y-0]="isRoleDropdownOpen" [class.pointer-events-auto]="isRoleDropdownOpen"
+               class="z-[110] -translate-y-2 pointer-events-none absolute left-0 right-0 mt-2 rounded-2xl border border-slate-100 bg-white p-2 opacity-0 shadow-2xl transition-all duration-300 ease-out">
+            <div (click)="selectRole('Viewer')" class="flex cursor-pointer flex-col rounded-xl p-3 transition-colors hover:bg-blue-50"><span class="font-black text-xs text-slate-700">VIEWER</span><span class="italic text-[9px] text-slate-400">Read-only access.</span></div>
+            <div (click)="selectRole('Member')" class="flex cursor-pointer flex-col rounded-xl p-3 transition-colors hover:bg-blue-50"><span class="font-black text-xs text-slate-700">MEMBER</span><span class="italic text-[9px] text-slate-400">Can modify workspace data.</span></div>
+            <div (click)="selectRole('Owner')" class="mt-1 flex cursor-pointer flex-col rounded-xl border-t border-slate-50 p-3 transition-colors hover:bg-blue-50"><span class="font-black text-xs text-blue-600">OWNER</span><span class="italic text-[9px] text-slate-400">Full administrative access.</span></div>
           </div>
         </div>
       </div>
-
       <div class="flex gap-3">
-        <button (click)="closeRoleModal()" class="flex-1 py-3 text-xs font-bold text-slate-400 uppercase hover:text-slate-600 transition-colors">Cancel</button>
-        <button (click)="roleActionType === 'ASSIGN' ? runAssignToAccount() : runUpdateUserRole()"
-                [disabled]="isSubmitting"
-                class="flex-1 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase hover:bg-blue-600 shadow-lg disabled:opacity-50 transition-all">
-          {{ isSubmitting ? 'PROCESSING...' : 'CONFIRM' }}
-        </button>
+        <button (click)="closeRoleModal()" class="flex-1 py-3 text-xs font-bold uppercase text-slate-400 transition-colors hover:text-slate-600">Cancel</button>
+        <button (click)="roleActionType === 'ASSIGN' ? runAssignToAccount() : runUpdateUserRole()" [disabled]="isSubmitting" class="font-black flex-1 rounded-2xl bg-slate-900 py-3 text-xs uppercase text-white shadow-lg transition-all hover:bg-blue-600 disabled:opacity-50">{{ isSubmitting ? 'PROCESSING...' : 'CONFIRM' }}</button>
       </div>
     </div>
   </div>
 
-  <div *ngIf="isReactivateModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 animate-fadeIn">
-      <div class="text-center mb-6">
-        <h3 class="text-lg font-black text-slate-800 uppercase italic tracking-tight">Reactivate User</h3>
-        <p class="text-[10px] text-slate-500 mt-1">Target: <b class="text-blue-600 uppercase">{{ reactivateTargetUser?.username }}</b></p>
+  <div *ngIf="isReactivateModalOpen" class="z-[100] fixed inset-0 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+    <div class="animate-fadeIn w-full max-w-sm rounded-3xl bg-white p-8 shadow-2xl">
+      <div class="mb-6 text-center">
+        <h3 class="font-black text-lg uppercase italic tracking-tight text-slate-800">Reactivate User</h3>
+        <p class="mt-1 text-[10px] text-slate-500">Target: <b class="uppercase text-blue-600">{{ reactivateTargetUser?.username }}</b></p>
       </div>
-
       <div class="mb-6">
-        <label class="block text-[10px] font-black uppercase text-blue-500 mb-2 italic">New Password:</label>
-        <input type="password" [(ngModel)]="newReactivatePassword" placeholder="Input Password..." class="w-full p-4 bg-blue-50 border border-blue-100 rounded-2xl outline-none focus:border-blue-500 font-medium text-center shadow-inner">
+        <label class="font-black mb-2 block uppercase italic text-[10px] text-blue-500">New Password:</label>
+        <input type="password" [(ngModel)]="newReactivatePassword" placeholder="Input Password..." class="w-full rounded-2xl border border-blue-100 bg-blue-50 p-4 text-center font-medium shadow-inner outline-none focus:border-blue-500">
       </div>
-
       <div class="flex gap-3">
-        <button (click)="closeReactivateModal()" class="flex-1 py-3 text-xs font-bold text-slate-400 uppercase hover:text-slate-600 transition-colors">Cancel</button>
-        <button (click)="runReactivateUser()" [disabled]="isSubmitting || !newReactivatePassword" class="flex-1 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase hover:bg-blue-600 shadow-lg disabled:opacity-50 transition-all">
-          {{ isSubmitting ? 'PROCESSING...' : 'CONFIRM' }}
-        </button>
+        <button (click)="closeReactivateModal()" class="flex-1 py-3 text-xs font-bold uppercase text-slate-400 transition-colors hover:text-slate-600">Cancel</button>
+        <button (click)="runReactivateUser()" [disabled]="isSubmitting || !newReactivatePassword" class="font-black flex-1 rounded-2xl bg-slate-900 py-3 text-xs uppercase text-white shadow-lg transition-all hover:bg-blue-600 disabled:opacity-50">{{ isSubmitting ? 'PROCESSING...' : 'CONFIRM' }}</button>
       </div>
     </div>
   </div>
 
-  <div *ngIf="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-    <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden">
-      <div class="p-8 border-b border-slate-100 flex justify-between items-center">
-        <h2 class="text-xl font-black text-slate-800 uppercase">{{ selectedUser ? 'Update User' : 'Create User' }}</h2>
-        <button (click)="closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl">×</button>
-      </div>
-      <div class="p-8 grid grid-cols-2 gap-4">
-
-        <div class="col-span-1 relative">
-          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Username *</label>
+  <div *ngIf="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+    <div class="w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-100 p-8"><h2 class="font-black text-xl uppercase text-slate-800">{{ selectedUser ? 'Update User' : 'Create User' }}</h2><button (click)="closeModal()" class="text-2xl text-slate-400 hover:text-slate-600">×</button></div>
+      <div class="grid grid-cols-2 gap-4 p-8">
+        <div class="relative col-span-1">
+          <label class="font-black mb-1 block uppercase text-[10px] text-slate-400">Username *</label>
           <div class="relative">
-            <input type="text"
-                   [(ngModel)]="newUser.username"
-                   [disabled]="!!selectedUser"
-                   (ngModelChange)="onFieldChange('username', $event)"
-                   class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium pr-10 disabled:opacity-50">
-
-            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-              <div *ngIf="fieldStatus.username.checking"
-                   class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full">
-              </div>
-              <span *ngIf="!fieldStatus.username.checking && fieldStatus.username.valid"
-                    class="text-green-500 font-bold">✓</span>
-              <div *ngIf="!fieldStatus.username.checking && fieldStatus.username.error"
-                   class="group relative flex items-center">
-                <span class="text-red-500 font-bold cursor-help text-lg">×</span>
-                <div class="absolute bottom-full mb-2 right-0 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50">
-                  {{ fieldStatus.username.error }}
-                </div>
-              </div>
+            <input type="text" [(ngModel)]="newUser.username" [disabled]="!!selectedUser" (ngModelChange)="onFieldChange('username', $event)" class="w-full rounded-xl border bg-slate-50 p-3 pr-10 font-medium outline-none disabled:opacity-50">
+            <div class="-translate-y-1/2 absolute right-3 top-1/2 flex items-center">
+              <div *ngIf="fieldStatus.username.checking" class="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+              <span *ngIf="!fieldStatus.username.checking && fieldStatus.username.valid" class="font-bold text-green-500">✓</span>
+              <div *ngIf="!fieldStatus.username.checking && fieldStatus.username.error" class="group relative flex items-center"><span class="cursor-help text-lg font-bold text-red-500">×</span><div class="absolute bottom-full right-0 z-50 mb-2 hidden w-48 rounded-lg bg-slate-800 p-2 text-white text-[10px] shadow-xl group-hover:block">{{ fieldStatus.username.error }}</div></div>
             </div>
           </div>
         </div>
-
-        <div class="col-span-1" *ngIf="!selectedUser">
-          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Password *</label>
+        <div class="col-span-1" *ngIf="!selectedUser"><label class="font-black mb-1 block uppercase text-[10px] text-slate-400">Password *</label><input type="password" [(ngModel)]="newUser.password" (ngModelChange)="updateFormValidity()" class="w-full rounded-xl border bg-slate-50 p-3 pr-10 font-medium outline-none"></div>
+        <div class="relative col-span-1">
+          <label class="font-black mb-1 block uppercase text-[10px] text-slate-400">Email *</label>
           <div class="relative">
-            <input type="password"
-                   [(ngModel)]="newUser.password"
-                   (ngModelChange)="updateFormValidity()"
-                   class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium pr-10">
-          </div>
-        </div>
-
-        <div class="col-span-1 relative">
-          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Email *</label>
-          <div class="relative">
-            <input type="email"
-                   [(ngModel)]="newUser.email"
-                   (ngModelChange)="onFieldChange('email', $event)"
-                   class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium pr-10">
-
-            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-              <div *ngIf="fieldStatus.email.checking"
-                   class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full">
-              </div>
-              <span *ngIf="!fieldStatus.email.checking && fieldStatus.email.valid"
-                    class="text-green-500 font-bold">✓</span>
-              <div *ngIf="!fieldStatus.email.checking && fieldStatus.email.error"
-                   class="group relative flex items-center">
-                <span class="text-red-500 font-bold cursor-help text-lg">×</span>
-                <div class="absolute bottom-full mb-2 right-0 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50">
-                  {{ fieldStatus.email.error }}
-                </div>
-              </div>
+            <input type="email" [(ngModel)]="newUser.email" (ngModelChange)="onFieldChange('email', $event)" class="w-full rounded-xl border bg-slate-50 p-3 pr-10 font-medium outline-none">
+            <div class="-translate-y-1/2 absolute right-3 top-1/2 flex items-center">
+              <div *ngIf="fieldStatus.email.checking" class="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+              <span *ngIf="!fieldStatus.email.checking && fieldStatus.email.valid" class="font-bold text-green-500">✓</span>
+              <div *ngIf="!fieldStatus.email.checking && fieldStatus.email.error" class="group relative flex items-center"><span class="cursor-help text-lg font-bold text-red-500">×</span><div class="absolute bottom-full right-0 z-50 mb-2 hidden w-48 rounded-lg bg-slate-800 p-2 text-white text-[10px] shadow-xl group-hover:block">{{ fieldStatus.email.error }}</div></div>
             </div>
           </div>
         </div>
-
-        <div class="col-span-1 relative">
-          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Phone *</label>
+        <div class="relative col-span-1">
+          <label class="font-black mb-1 block uppercase text-[10px] text-slate-400">Phone *</label>
           <div class="relative">
-            <input type="text"
-                   [(ngModel)]="newUser.phone"
-                   (ngModelChange)="onFieldChange('phone', $event)"
-                   class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium pr-10">
-
-            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-              <div *ngIf="fieldStatus.phone.checking"
-                   class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full">
-              </div>
-              <span *ngIf="!fieldStatus.phone.checking && fieldStatus.phone.valid"
-                    class="text-green-500 font-bold">✓</span>
-              <div *ngIf="!fieldStatus.phone.checking && fieldStatus.phone.error"
-                   class="group relative flex items-center">
-                <span class="text-red-500 font-bold cursor-help text-lg">×</span>
-                <div class="absolute bottom-full mb-2 right-0 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50">
-                  {{ fieldStatus.phone.error }}
-                </div>
-              </div>
+            <input type="text" [(ngModel)]="newUser.phone" (ngModelChange)="onFieldChange('phone', $event)" class="w-full rounded-xl border bg-slate-50 p-3 pr-10 font-medium outline-none">
+            <div class="-translate-y-1/2 absolute right-3 top-1/2 flex items-center">
+              <div *ngIf="fieldStatus.phone.checking" class="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+              <span *ngIf="!fieldStatus.phone.checking && fieldStatus.phone.valid" class="font-bold text-green-500">✓</span>
+              <div *ngIf="!fieldStatus.phone.checking && fieldStatus.phone.error" class="group relative flex items-center"><span class="cursor-help text-lg font-bold text-red-500">×</span><div class="absolute bottom-full right-0 z-50 mb-2 hidden w-48 rounded-lg bg-slate-800 p-2 text-white text-[10px] shadow-xl group-hover:block">{{ fieldStatus.phone.error }}</div></div>
             </div>
           </div>
         </div>
-
-        <div class="col-span-1">
-          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">First Name</label>
-          <input type="text"
-                 [(ngModel)]="newUser.firstName"
-                 (ngModelChange)="updateFormValidity()"
-                 class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium">
-        </div>
-
-        <div class="col-span-1">
-          <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Last Name</label>
-          <input type="text"
-                 [(ngModel)]="newUser.lastName"
-                 (ngModelChange)="updateFormValidity()"
-                 class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium">
-        </div>
-
+        <div class="col-span-1"><label class="font-black mb-1 block uppercase text-[10px] text-slate-400">First Name</label><input type="text" [(ngModel)]="newUser.firstName" (ngModelChange)="updateFormValidity()" class="w-full rounded-xl border bg-slate-50 p-3 font-medium outline-none"></div>
+        <div class="col-span-1"><label class="font-black mb-1 block uppercase text-[10px] text-slate-400">Last Name</label><input type="text" [(ngModel)]="newUser.lastName" (ngModelChange)="updateFormValidity()" class="w-full rounded-xl border bg-slate-50 p-3 font-medium outline-none"></div>
       </div>
-      <div class="p-8 bg-slate-50 flex justify-end gap-3">
-        <button (click)="closeModal()" class="px-6 py-3 text-xs font-bold uppercase text-slate-400">Cancel</button>
-        <button (click)="selectedUser ? runUpdateUser() : runCreateUser()"
-                [disabled]="!formIsValid"
-                class="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-xs uppercase shadow-lg disabled:bg-slate-200 disabled:text-slate-400 transition-all">
-          Confirm
-        </button>
-      </div>
+      <div class="flex justify-end gap-3 bg-slate-50 p-8"><button (click)="closeModal()" class="px-6 py-3 text-xs font-bold uppercase text-slate-400">Cancel</button><button (click)="selectedUser ? runUpdateUser() : runCreateUser()" [disabled]="!formIsValid" class="font-black rounded-xl bg-blue-600 px-8 py-3 text-xs uppercase text-white shadow-lg transition-all disabled:bg-slate-200 disabled:text-slate-400">Confirm</button></div>
     </div>
   </div>
 </div>

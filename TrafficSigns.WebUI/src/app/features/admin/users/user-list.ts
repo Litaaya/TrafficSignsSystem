@@ -34,10 +34,14 @@ export class UserListComponent implements OnInit {
   isRoleDropdownOpen = false;
   activeTab: 'info' | 'accounts' = 'info';
   userAccounts: any[] = [];
-  availableAccounts: any[] = [];
   loadingAccounts = false;
+  
+  availableAccounts: any[] = [];
   loadingAvailable = false;
   searchAccountTerm = '';
+  availablePage = 1;
+  hasMoreAvailable = true;
+
   accountListSearchTerm = '';
   accountListFilter: 'all' | 'owner' = 'all';
   newUser = { username: '', password: '', email: '', phone: '', firstName: '', lastName: '' };
@@ -56,6 +60,10 @@ export class UserListComponent implements OnInit {
   isReactivateModalOpen = false;
   reactivateTargetUser: any = null;
   newReactivatePassword = '';
+
+  searchAvailableTerm: string = '';
+  availableUsers: any[] = [];
+  selectedAccount: any;
 
   @ViewChild('assignTrigger', { read: MatMenuTrigger }) assignTrigger!: MatMenuTrigger;
   @ViewChild('jumpTrigger', { read: MatMenuTrigger }) jumpTrigger!: MatMenuTrigger;
@@ -92,16 +100,12 @@ export class UserListComponent implements OnInit {
         this.fieldStatus[data.field].checking = true;
         this.updateFormValidity();
         this.cdr.detectChanges();
-
         let queryParams: any = { field: data.field, value: data.value };
         if (this.selectedUser?.id) queryParams.excludeId = this.selectedUser.id;
-
         return this.http.get<any>(`https://localhost:7272/api/users/validate-field`, { params: queryParams })
           .pipe(
             map((res: any) => ({ ...res, field: data.field })),
-            catchError(() => {
-              return of({ isValid: false, message: 'Validation service error', field: data.field, hasError: true });
-            })
+            catchError(() => of({ isValid: false, message: 'Validation service error', field: data.field, hasError: true }))
           );
       })
     ).subscribe({
@@ -123,16 +127,34 @@ export class UserListComponent implements OnInit {
   initAccountSearch() {
     this.accountSearchSubject.pipe(
       debounceTime(300),
-      distinctUntilChanged(),
-      switchMap(term => {
-        this.loadingAvailable = true;
-        this.cdr.detectChanges();
-        const params = new HttpParams().set('Page', '1').set('PageSize', '20').set('SearchTerm', term);
-        return this.http.get<any>('https://localhost:7272/api/accounts', { params });
-      })
-    ).subscribe({
+      distinctUntilChanged()
+    ).subscribe(term => {
+      this.searchAccountTerm = term;
+      this.fetchAvailableAccounts(true);
+    });
+  }
+
+  fetchAvailableAccounts(reset: boolean = false) {
+    if (reset) {
+      this.availablePage = 1;
+      this.availableAccounts = [];
+      this.hasMoreAvailable = true;
+    }
+    if (this.loadingAvailable || !this.hasMoreAvailable) return;
+
+    this.loadingAvailable = true;
+    this.cdr.detectChanges();
+
+    const params = new HttpParams()
+      .set('Page', this.availablePage.toString())
+      .set('PageSize', '20')
+      .set('SearchTerm', this.searchAccountTerm);
+
+    this.http.get<any>('https://localhost:7272/api/accounts', { params }).subscribe({
       next: (res) => {
-        this.availableAccounts = res.items || [];
+        const newItems = res.items || [];
+        this.availableAccounts = reset ? newItems : [...this.availableAccounts, ...newItems];
+        this.hasMoreAvailable = newItems.length === 20;
         this.loadingAvailable = false;
         this.cdr.detectChanges();
       },
@@ -141,6 +163,16 @@ export class UserListComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  onScrollAvailableAccounts(event: any) {
+    const element = event.target;
+    if (element.scrollHeight - element.scrollTop <= element.clientHeight + 20) {
+      if (!this.loadingAvailable && this.hasMoreAvailable) {
+        this.availablePage++;
+        this.fetchAvailableAccounts(false);
+      }
+    }
   }
 
   highlight(text: string, term: string): string {
@@ -171,7 +203,6 @@ export class UserListComponent implements OnInit {
       ? (!!this.newUser.email && !!this.newUser.phone)
       : (!!this.newUser.username && !!this.newUser.password && !!this.newUser.email && !!this.newUser.phone);
     const hasChange = this.selectedUser ? this.isDataChanged() : true;
-
     this.formIsValid = isAllValid && !isChecking && hasRequired && hasChange && !this.isSubmitting;
   }
 
@@ -329,7 +360,6 @@ export class UserListComponent implements OnInit {
       .set('pageSize', this.pageSize.toString())
       .set('searchTerm', this.userSearchTerm.trim())
       .set('statusFilter', this.userStatusFilter);
-
     this.http.get<any>('https://localhost:7272/api/users', { params }).subscribe({
       next: (res) => {
         this.users = res.items || [];
@@ -340,31 +370,9 @@ export class UserListComponent implements OnInit {
   }
 
   fetchUserAccounts(userId: string) {
-    this.loadingAccounts = true;
     this.http.get<any[]>(`https://localhost:7272/api/users/${userId}/accounts`).subscribe({
       next: (res) => {
         this.userAccounts = res || [];
-        this.loadingAccounts = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.loadingAccounts = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  fetchAvailableAccounts(term: string = '') {
-    this.loadingAvailable = true;
-    const params = new HttpParams().set('Page', '1').set('PageSize', '20').set('SearchTerm', term);
-    this.http.get<any>('https://localhost:7272/api/accounts', { params }).subscribe({
-      next: (res) => {
-        this.availableAccounts = res.items || [];
-        this.loadingAvailable = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.loadingAvailable = false;
         this.cdr.detectChanges();
       }
     });
@@ -385,16 +393,12 @@ export class UserListComponent implements OnInit {
   }
 
   private scrollToTop() {
-    if (this.tableContainer) {
-      this.tableContainer.nativeElement.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    if (this.tableContainer) this.tableContainer.nativeElement.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   setTab(tab: 'info' | 'accounts') {
     this.activeTab = tab;
-    if (tab === 'accounts' && this.selectedUser) {
-      this.fetchUserAccounts(this.selectedUser.id);
-    }
+    if (tab === 'accounts' && this.selectedUser) this.fetchUserAccounts(this.selectedUser.id);
   }
 
   openDetailsModal(user: any) {
@@ -440,7 +444,7 @@ export class UserListComponent implements OnInit {
 
   openAssignSection() {
     this.searchAccountTerm = '';
-    this.fetchAvailableAccounts();
+    this.fetchAvailableAccounts(true);
   }
 
   closeModal(): void {
@@ -463,9 +467,7 @@ export class UserListComponent implements OnInit {
     }
   }
 
-  get totalPages(): number {
-    return Math.ceil(this.totalCount / this.pageSize);
-  }
+  get totalPages(): number { return Math.ceil(this.totalCount / this.pageSize); }
 
   get visiblePages(): (number | string)[] {
     const total = this.totalPages;
@@ -484,4 +486,4 @@ export class UserListComponent implements OnInit {
     if (total > 1) pages.push(total);
     return pages;
   }
-}
+} 

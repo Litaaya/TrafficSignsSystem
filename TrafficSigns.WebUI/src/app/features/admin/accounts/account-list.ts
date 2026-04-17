@@ -32,11 +32,13 @@ export class AccountListComponent implements OnInit {
   isRoleDropdownOpen = false;
   activeTab: 'info' | 'users' = 'info';
   accountUsers: any[] = [];
+
   availableUsers: any[] = [];
   loadingAvailable = false;
   searchAvailableTerm = '';
   availablePage = 1;
   hasMoreAvailable = true;
+
   userListSearchTerm = '';
   userListFilter: 'all' | 'owner' = 'all';
   newAccount = { name: '', desc: '', email: '', phone: '', system: false };
@@ -78,16 +80,12 @@ export class AccountListComponent implements OnInit {
       switchMap((data: any) => {
         this.fieldStatus[data.field].checking = true;
         this.cdr.detectChanges();
-
         let queryParams: any = { field: data.field, value: data.value };
         if (this.selectedAccount?.id) queryParams.excludeId = this.selectedAccount.id;
-
         return this.http.get<any>(`https://localhost:7272/api/accounts/validate-field`, { params: queryParams })
           .pipe(
             map((res: any) => ({ ...res, field: data.field })),
-            catchError(() => {
-              return of({ isValid: false, message: 'Validation error', field: data.field, hasError: true });
-            })
+            catchError(() => of({ isValid: false, message: 'Validation error', field: data.field, hasError: true }))
           );
       })
     ).subscribe({
@@ -299,7 +297,6 @@ export class AccountListComponent implements OnInit {
       .set('pageSize', this.pageSize.toString())
       .set('searchTerm', this.accountSearchTerm.trim())
       .set('statusFilter', this.accountStatusFilter);
-
     this.http.get<any>('https://localhost:7272/api/accounts', { params }).subscribe({
       next: (res) => {
         this.accounts = res.items || [];
@@ -324,7 +321,6 @@ export class AccountListComponent implements OnInit {
       const matchesSearch = u.username.toLowerCase().includes(term) || (u.email && u.email.toLowerCase().includes(term));
       const userRole = u.role || u.Role || 'Viewer';
       const matchesFilter = this.userListFilter === 'all' || (this.userListFilter === 'owner' && userRole === 'Owner');
-
       return matchesSearch && matchesFilter;
     });
   }
@@ -344,14 +340,12 @@ export class AccountListComponent implements OnInit {
       this.availableUsers = [];
       this.hasMoreAvailable = true;
     }
-    if (!this.hasMoreAvailable) return;
-
+    if (this.loadingAvailable || !this.hasMoreAvailable) return;
     this.loadingAvailable = true;
     const params = new HttpParams()
       .set('pageNumber', this.availablePage.toString())
       .set('pageSize', '20')
       .set('searchTerm', this.searchAvailableTerm);
-
     this.http.get<any>('https://localhost:7272/api/users', { params }).subscribe({
       next: (res) => {
         const newItems = res.items || [];
@@ -397,9 +391,7 @@ export class AccountListComponent implements OnInit {
 
   setTab(tab: 'info' | 'users') {
     this.activeTab = tab;
-    if (tab === 'users' && this.selectedAccount) {
-      this.fetchAccountUsers(this.selectedAccount.id);
-    }
+    if (tab === 'users' && this.selectedAccount) this.fetchAccountUsers(this.selectedAccount.id);
   }
 
   openDetailsModal(acc: any) {
@@ -448,4 +440,4 @@ export class AccountListComponent implements OnInit {
     if (total > 1) pages.push(total);
     return pages;
   }
-}
+} 

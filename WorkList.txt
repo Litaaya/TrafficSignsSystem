@@ -5,11 +5,14 @@ Chưa check đã tick (field account)
 Reset khi reactivate chưa set rule mật khẩu
 
 # Hôm qua
-- Fix bug keycloak không nhận token của be          [v] Lý do: cacheKey giữ Token của bot và sử dụng nó để truy cập vào keycloak thực hiện quyền của api
-- openWorkspaceUserManager                          []
-- Thiết kế UI cho owner quản lý user của account    []
-- Thiết kế UI cho user quản lý bản thân				[]
-- Fix lỗi không check khoảng trắng trong field      []
+- Fix bug keycloak không nhận token của be [v] Lý do: cacheKey giữ Token của bot và sử dụng nó để truy cập vào keycloak thực hiện quyền của api
+- Viết lại ui gán user vào account [v]
+- filter all roles trong workspace list và user list trong view, điều chỉnh modal []
+- Loading cho thanh scrollbar trong danh sách user trong wp list            []
+- Thiết kế UI cho owner quản lý user của account []
+- Thiết kế UI cho user quản lý bản thân []
+- Fix lỗi không check khoảng trắng trong field []
+- Fix lỗi tự tick khi chưa điền gì trong field account []
 
 # In Development:
 UnitTest (chưa hoàn chỉnh)

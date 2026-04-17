@@ -10,11 +10,20 @@ export interface SignTemplate {
 export const SPEED_OPTIONS = [30, 40, 50, 60, 70, 80, 90, 100, 120];
 
 export const VEHICLE_OPTIONS = [
-  { id: 'car', label: 'Car', icon: '🚗' },
-  { id: 'passenger_car', label: 'Passenger', icon: '🚌' },
-  { id: 'truck', label: 'Truck', icon: '🚚' },
-  { id: 'container', label: 'Container', icon: '🚛' },
-  { id: 'motorcycle', label: 'Motorcycle', icon: '🏍️' }
+  { id: 'passenger_car', label: 'Passenger Car', icon: '🚗', description: 'Cars with 4-7 seats' },
+  { id: 'bus_coach', label: 'Bus/Coach', icon: '🚌', description: 'Inter-province buses, contract coaches' },
+  { id: 'city_bus', label: 'City Bus', icon: '🚐', description: 'Urban public transit buses' },
+
+  { id: 'truck_light', label: 'Light Truck', icon: '🛻', description: 'Payload capacity < 3.5 tons' },
+  { id: 'truck_heavy', label: 'Heavy Truck', icon: '🚚', description: 'Payload capacity ≥ 3.5 tons' },
+  { id: 'tractor_trailer', label: 'Tractor-Trailer', icon: '🚛', description: 'Container trucks, semi-trailers' },
+  { id: 'tanker', label: 'Tanker', icon: '⛽', description: 'Liquid cargo, fuel or chemical tankers' },
+  { id: 'special_purpose', label: 'Special Purpose Vehicle', icon: '🚜', description: 'Construction, agricultural, or forestry vehicles' },
+
+  { id: 'motorcycle', label: 'Motorcycle', icon: '🏍️', description: 'Engine capacity ≥ 50cm³' },
+  { id: 'moped', label: 'Moped', icon: '🛵', description: 'Engine capacity < 50cm³, includes electric bikes' },
+  { id: 'motor_tricycle', label: 'Motor Tricycle', icon: '🛺', description: '3-wheeled motorized vehicles' },
+  { id: 'quadricycle', label: 'Motorized Quadricycle', icon: '🔋', description: 'Electric tourist cars, small freight 4-wheelers' }
 ];
 
 export const SIGN_TEMPLATES: SignTemplate[] = [

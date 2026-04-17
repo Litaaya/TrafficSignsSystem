@@ -93,7 +93,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
     return this.currentAccountRole === 'Owner' || this.currentAccountRole === 'Member';
   }
 
-  openWorkspaceUserManager() {
+  openAccountUserManager() {
     console.log("Open User management for Account:", this.selectedAccountId);
   }
 
