@@ -41,17 +41,18 @@ export class UserListComponent implements OnInit {
   accountListSearchTerm = '';
   accountListFilter: 'all' | 'owner' = 'all';
   newUser = { username: '', password: '', email: '', phone: '', firstName: '', lastName: '' };
+  formIsValid = false;
+
   fieldStatus: any = {
     username: { checking: false, valid: false, error: '' },
     email: { checking: false, valid: false, error: '' },
     phone: { checking: false, valid: false, error: '' }
   };
-  isStatusDropdownOpen = false;
 
+  isStatusDropdownOpen = false;
   isRoleModalOpen = false;
   roleActionType: 'ASSIGN' | 'UPDATE' = 'ASSIGN';
   roleTargetAccount: any = null;
-
   isReactivateModalOpen = false;
   reactivateTargetUser: any = null;
   newReactivatePassword = '';
@@ -89,6 +90,7 @@ export class UserListComponent implements OnInit {
       debounceTime(600),
       switchMap(data => {
         this.fieldStatus[data.field].checking = true;
+        this.updateFormValidity();
         this.cdr.detectChanges();
 
         let queryParams: any = { field: data.field, value: data.value };
@@ -97,7 +99,7 @@ export class UserListComponent implements OnInit {
         return this.http.get<any>(`https://localhost:7272/api/users/validate-field`, { params: queryParams })
           .pipe(
             map((res: any) => ({ ...res, field: data.field })),
-            catchError((err: any) => {
+            catchError(() => {
               return of({ isValid: false, message: 'Validation service error', field: data.field, hasError: true });
             })
           );
@@ -105,7 +107,6 @@ export class UserListComponent implements OnInit {
     ).subscribe({
       next: (res: any) => {
         this.fieldStatus[res.field].checking = false;
-
         if (res.hasError) {
           this.fieldStatus[res.field].valid = false;
           this.fieldStatus[res.field].error = res.message;
@@ -113,7 +114,7 @@ export class UserListComponent implements OnInit {
           this.fieldStatus[res.field].valid = res.isValid;
           this.fieldStatus[res.field].error = res.isValid ? '' : res.message;
         }
-
+        this.updateFormValidity();
         this.cdr.detectChanges();
       }
     });
@@ -152,22 +153,26 @@ export class UserListComponent implements OnInit {
   onFieldChange(field: string, value: string) {
     if (!value || value.trim().length < 2) {
       this.fieldStatus[field] = { checking: false, valid: false, error: '' };
+      this.updateFormValidity();
       return;
     }
     this.fieldStatus[field].checking = true;
     this.fieldStatus[field].valid = false;
     this.fieldStatus[field].error = '';
+    this.updateFormValidity();
     this.checkSubject.next({ field, value });
   }
 
-  canSubmit(): boolean {
-    if (this.isSubmitting) return false;
+  updateFormValidity() {
     const fields = this.selectedUser ? ['email', 'phone'] : ['username', 'email', 'phone'];
     const isAllValid = fields.every(f => this.fieldStatus[f].valid);
     const isChecking = fields.some(f => this.fieldStatus[f].checking);
-    const hasRequired = this.selectedUser ? (!!this.newUser.email && !!this.newUser.phone) : (!!this.newUser.username && !!this.newUser.password && !!this.newUser.email && !!this.newUser.phone);
+    const hasRequired = this.selectedUser
+      ? (!!this.newUser.email && !!this.newUser.phone)
+      : (!!this.newUser.username && !!this.newUser.password && !!this.newUser.email && !!this.newUser.phone);
     const hasChange = this.selectedUser ? this.isDataChanged() : true;
-    return isAllValid && !isChecking && hasRequired && hasChange;
+
+    this.formIsValid = isAllValid && !isChecking && hasRequired && hasChange && !this.isSubmitting;
   }
 
   isDataChanged(): boolean {
@@ -183,7 +188,7 @@ export class UserListComponent implements OnInit {
       this.isSubmitting = true;
       this.http.delete(`https://localhost:7272/api/users/${user.id}`).subscribe({
         next: () => this.onSuccessCleanup(),
-        error: () => this.isSubmitting = false
+        error: () => { this.isSubmitting = false; this.updateFormValidity(); }
       });
     }
   }
@@ -196,8 +201,9 @@ export class UserListComponent implements OnInit {
         next: () => {
           this.fetchUserAccounts(user.id);
           this.isSubmitting = false;
+          this.updateFormValidity();
         },
-        error: () => this.isSubmitting = false
+        error: () => { this.isSubmitting = false; this.updateFormValidity(); }
       });
     }
   }
@@ -206,7 +212,7 @@ export class UserListComponent implements OnInit {
     this.roleActionType = type;
     this.selectedUser = user;
     this.roleTargetAccount = acc;
-    this.selectedRole = type === 'UPDATE' ? (acc.role || (acc.isOwner ? 'Owner' : 'Viewer')) : 'Viewer';
+    this.selectedRole = type === 'UPDATE' ? (acc.role || acc.Role || 'Viewer') : 'Viewer';
     this.isRoleModalOpen = true;
     if (type === 'ASSIGN' && this.assignTrigger) this.assignTrigger.closeMenu();
     this.cdr.detectChanges();
@@ -280,19 +286,21 @@ export class UserListComponent implements OnInit {
 
   runCreateUser() {
     this.isSubmitting = true;
+    this.updateFormValidity();
     const headers = new HttpHeaders({ 'X-Actor-Id': this.authService.getUserId() || '' });
     this.http.post('https://localhost:7272/api/users', this.newUser, { headers }).subscribe({
       next: () => this.onSuccessCleanup(),
-      error: () => this.isSubmitting = false
+      error: () => { this.isSubmitting = false; this.updateFormValidity(); this.cdr.detectChanges(); }
     });
   }
 
   runUpdateUser() {
     this.isSubmitting = true;
+    this.updateFormValidity();
     const payload = { ...this.newUser, id: this.selectedUser.id };
     this.http.put(`https://localhost:7272/api/users/${this.selectedUser.id}`, payload).subscribe({
       next: () => this.onSuccessCleanup(),
-      error: () => this.isSubmitting = false
+      error: () => { this.isSubmitting = false; this.updateFormValidity(); this.cdr.detectChanges(); }
     });
   }
 
@@ -301,6 +309,7 @@ export class UserListComponent implements OnInit {
     this.closeModal();
     this.isSubmitting = false;
     this.selectedUser = null;
+    this.updateFormValidity();
     this.cdr.markForCheck();
     this.cdr.detectChanges();
   }
@@ -308,7 +317,8 @@ export class UserListComponent implements OnInit {
   get filteredUserAccounts() {
     return this.userAccounts.filter(acc => {
       const matchesSearch = acc.accountName.toLowerCase().includes(this.accountListSearchTerm.toLowerCase());
-      const matchesFilter = this.accountListFilter === 'all' || (this.accountListFilter === 'owner' && acc.isOwner);
+      const currentRole = acc.role || acc.Role || 'Viewer';
+      const matchesFilter = this.accountListFilter === 'all' || (this.accountListFilter === 'owner' && currentRole === 'Owner');
       return matchesSearch && matchesFilter;
     });
   }
@@ -402,9 +412,10 @@ export class UserListComponent implements OnInit {
     this.fieldStatus = {
       username: { checking: false, valid: false, error: '' },
       email: { checking: false, valid: false, error: '' },
-      phone: { checking: false, valid: false, error: '' },
-      password: { checking: false, valid: false, error: '' }
+      phone: { checking: false, valid: false, error: '' }
     };
+    this.updateFormValidity();
+    this.cdr.detectChanges();
   }
 
   openEditModal(user: any) {
@@ -419,6 +430,8 @@ export class UserListComponent implements OnInit {
     };
     this.fieldStatus = { username: { valid: true }, email: { valid: true }, phone: { valid: true } };
     this.showModal = true;
+    this.updateFormValidity();
+    this.cdr.detectChanges();
   }
 
   onAccountSearch(term: string) {
@@ -437,6 +450,7 @@ export class UserListComponent implements OnInit {
 
   resetForm(): void {
     this.newUser = { username: '', password: '', email: '', phone: '', firstName: '', lastName: '' };
+    this.updateFormValidity();
   }
 
   jumpToPage(): void {

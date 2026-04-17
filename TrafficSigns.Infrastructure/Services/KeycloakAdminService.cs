@@ -11,18 +11,21 @@ public class KeycloakAdminService(
     HttpClient httpClient,
     IConfiguration config,
     ICurrentUserService currentUserService,
-    IMemoryCache memoryCache) : IKeycloakAdminService
+    IMemoryCache memoryCache
+    ) : IKeycloakAdminService
 {
     private async Task<string> GetAdminTokenAsync()
     {
-        if (memoryCache.TryGetValue("KeycloakAdminToken", out string? cachedToken))
+        var isBot = currentUserService.GetUsername() == "KEYCLOAK_SYNC_BOT";
+        var cacheKey = isBot ? "KeycloakToken_Worker" : "KeycloakToken_Admin";
+
+        if (memoryCache.TryGetValue(cacheKey, out string? cachedToken))
         {
             return cachedToken!;
         }
 
         var baseUrl = config["Keycloak:AuthServerUrl"]?.TrimEnd('/');
         var realm = config["Keycloak:Realm"];
-        var isBot = currentUserService.GetUsername() == "KEYCLOAK_SYNC_BOT";
 
         var clientId = isBot
             ? (config["Keycloak:SyncClient:ClientId"] ?? "traffic-signs-worker")
@@ -49,10 +52,12 @@ public class KeycloakAdminService(
 
         var data = await response.Content.ReadFromJsonAsync<JsonElement>();
         var token = data.GetProperty("access_token").GetString()!;
+        
+        Console.WriteLine(token);
+        
         var expiresIn = data.GetProperty("expires_in").GetInt32();
 
-        memoryCache.Set("KeycloakAdminToken", token, TimeSpan.FromSeconds(expiresIn - 30));
-
+        memoryCache.Set(cacheKey, token, TimeSpan.FromSeconds(expiresIn - 30));
         return token;
     }
 

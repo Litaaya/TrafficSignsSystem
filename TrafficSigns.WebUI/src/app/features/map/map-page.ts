@@ -80,6 +80,23 @@ export class MapPageComponent implements OnInit, AfterViewInit {
 
   constructor(private osmService: OsmRoadService, private zone: NgZone, private cdr: ChangeDetectorRef, private authService: AuthService) { }
 
+  get currentAccountRole(): string {
+    const currentAcc = this.accounts.find(a => a.accountId === this.selectedAccountId);
+    return currentAcc?.role || 'Viewer';
+  }
+
+  get isOwner(): boolean {
+    return this.currentAccountRole === 'Owner';
+  }
+
+  get canEdit(): boolean {
+    return this.currentAccountRole === 'Owner' || this.currentAccountRole === 'Member';
+  }
+
+  openWorkspaceUserManager() {
+    console.log("Open User management for Account:", this.selectedAccountId);
+  }
+
   ngOnInit(): void {
     this.loadAccounts();
   }
@@ -230,7 +247,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
     }
     this.osmService.getTrafficSigns(this.selectedAccountId).subscribe(signs => {
       this.signLayer.clearLayers();
-      const filteredSigns = signs.filter(s => s.inactive === this.showDeletedMode);
+      const filteredSigns = signs.filter(s => (s.isDeleted || s.IsDeleted || false) === this.showDeletedMode);
 
       filteredSigns.forEach(s => {
         const m = L.circleMarker([s.location.coordinates[1], s.location.coordinates[0]], {

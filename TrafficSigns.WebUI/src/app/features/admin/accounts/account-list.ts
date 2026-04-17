@@ -218,7 +218,7 @@ export class AccountListComponent implements OnInit {
     this.roleActionType = type;
     this.selectedAccount = acc;
     this.roleTargetUser = user;
-    this.selectedRole = type === 'UPDATE' ? (user.role || (user.isOwner ? 'Owner' : 'Viewer')) : 'Viewer';
+    this.selectedRole = type === 'UPDATE' ? (user.role || user.Role || 'Viewer') : 'Viewer';
     this.isRoleModalOpen = true;
     if (type === 'ASSIGN' && this.assignTrigger) this.assignTrigger.closeMenu();
     this.cdr.detectChanges();
@@ -322,7 +322,9 @@ export class AccountListComponent implements OnInit {
     return this.accountUsers.filter(u => {
       const term = this.userListSearchTerm.toLowerCase();
       const matchesSearch = u.username.toLowerCase().includes(term) || (u.email && u.email.toLowerCase().includes(term));
-      const matchesFilter = this.userListFilter === 'all' || (this.userListFilter === 'owner' && u.isOwner);
+      const userRole = u.role || u.Role || 'Viewer';
+      const matchesFilter = this.userListFilter === 'all' || (this.userListFilter === 'owner' && userRole === 'Owner');
+
       return matchesSearch && matchesFilter;
     });
   }

@@ -1,4 +1,3 @@
-using Elastic.Apm.NetCoreAll;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -197,12 +196,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
-app.UseMiddleware<LogUserActivityMiddleware>();
 
 app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<LogUserActivityMiddleware>();
 
 app.UseSerilogRequestLogging(options =>
 {

@@ -44,6 +44,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<AccountUser>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.AccountId, e.UserId }).IsUnique();
             entity.HasOne(e => e.Account).WithMany(a => a.AccountUsers).HasForeignKey(e => e.AccountId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.User).WithMany(u => u.AccountUsers).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });

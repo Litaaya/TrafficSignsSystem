@@ -14,8 +14,12 @@
       </div>
 
       <div class="relative min-w-[140px]">
+        <div *ngIf="isStatusDropdownOpen"
+             (click)="isStatusDropdownOpen = false"
+             class="fixed inset-0 z-30 bg-transparent"></div>
+
         <button (click)="isStatusDropdownOpen = !isStatusDropdownOpen"
-                class="w-full bg-white border border-slate-200 text-slate-500 text-[10px] font-black rounded-2xl px-4 py-2.5 outline-none focus:border-blue-500 shadow-sm uppercase tracking-widest transition-all flex items-center justify-between gap-3 h-[42px]">
+                class="relative z-40 w-full bg-white border border-slate-200 text-slate-500 text-[10px] font-black rounded-2xl px-4 py-2.5 outline-none focus:border-blue-500 shadow-sm uppercase tracking-widest transition-all flex items-center justify-between gap-3 h-[42px]">
           <span>
             {{ userStatusFilter === 'all' ? 'All Status' : (userStatusFilter === 'active' ? '🟢 Active' : '🔴 Inactive') }}
           </span>
@@ -26,7 +30,6 @@
              [class.translate-y-0]="isStatusDropdownOpen"
              [class.pointer-events-auto]="isStatusDropdownOpen"
              class="absolute top-full left-0 mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-xl z-50 opacity-0 -translate-y-2 pointer-events-none transition-all duration-300 ease-out overflow-hidden p-1.5 flex flex-col gap-1">
-
           <button (click)="selectUserStatus('all')" class="text-left px-3 py-2.5 hover:bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest rounded-xl transition-colors">All Status</button>
           <button (click)="selectUserStatus('active')" class="text-left px-3 py-2.5 hover:bg-slate-50 text-[10px] font-black text-green-600 uppercase tracking-widest rounded-xl transition-colors">🟢 Active</button>
           <button (click)="selectUserStatus('inactive')" class="text-left px-3 py-2.5 hover:bg-slate-50 text-[10px] font-black text-red-500 uppercase tracking-widest rounded-xl transition-colors">🔴 Inactive</button>
@@ -131,7 +134,6 @@
 
   <div *ngIf="showDetailsModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
     <div class="bg-white w-full max-w-4xl h-[650px] rounded-[32px] shadow-2xl overflow-hidden animate-fadeIn flex flex-col">
-
       <div class="flex justify-between items-center px-8 border-b border-slate-100 bg-white flex-shrink-0">
         <div class="flex gap-2">
           <button (click)="setTab('info')"
@@ -149,7 +151,6 @@
       </div>
 
       <div class="flex-1 relative overflow-hidden bg-slate-50/30">
-
         <div [class.opacity-100]="activeTab === 'info'"
              [class.translate-x-0]="activeTab === 'info'"
              [class.opacity-0]="activeTab !== 'info'"
@@ -211,9 +212,13 @@
                   <tr *ngFor="let acc of filteredUserAccounts" class="hover:bg-slate-50/50 transition-colors">
                     <td class="p-4 font-bold text-slate-700" [innerHTML]="highlight(acc.accountName, accountListSearchTerm)"></td>
                     <td class="p-4">
-                      <span [class]="(acc.role === 'Owner' || acc.Role === 'Owner' || acc.isOwner) ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-slate-50 text-slate-400 border-slate-100'"
+                      <span [ngClass]="{
+                              'bg-amber-50 text-amber-600 border-amber-100': acc.role === 'Owner' || acc.Role === 'Owner',
+                              'bg-blue-50 text-blue-600 border-blue-100': acc.role === 'Member' || acc.Role === 'Member',
+                              'bg-slate-50 text-slate-400 border-slate-100': acc.role === 'Viewer' || acc.Role === 'Viewer' || (!acc.role && !acc.Role)
+                            }"
                             class="px-2 py-1 rounded-md font-black text-[8px] border uppercase">
-                        {{ acc.role || acc.Role || (acc.isOwner ? 'OWNER' : 'VIEWER') }}
+                        {{ acc.role || acc.Role || 'VIEWER' }}
                       </span>
                     </td>
                     <td class="p-4 flex justify-center gap-3">
@@ -270,7 +275,11 @@
       <div class="mb-6">
         <label class="block text-[10px] font-black uppercase text-blue-500 mb-2 italic">Select Role for User:</label>
         <div class="relative">
-          <button (click)="toggleRoleDropdown()" type="button" class="w-full flex items-center justify-between p-4 bg-blue-50 border border-blue-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-700 transition-all shadow-inner">
+          <div *ngIf="isRoleDropdownOpen"
+               (click)="isRoleDropdownOpen = false"
+               class="fixed inset-0 z-10 bg-transparent"></div>
+
+          <button (click)="toggleRoleDropdown()" type="button" class="relative z-20 w-full flex items-center justify-between p-4 bg-blue-50 border border-blue-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-700 transition-all shadow-inner">
             <span class="text-xs uppercase tracking-widest">{{ selectedRole }}</span>
             <span [class.rotate-180]="isRoleDropdownOpen" class="text-[10px] transition-transform duration-300">▼</span>
           </button>
@@ -370,23 +379,8 @@
           <div class="relative">
             <input type="password"
                    [(ngModel)]="newUser.password"
-                   (ngModelChange)="onFieldChange('password', $event)"
+                   (ngModelChange)="updateFormValidity()"
                    class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium pr-10">
-
-            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-              <div *ngIf="fieldStatus.password.checking"
-                   class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full">
-              </div>
-              <span *ngIf="!fieldStatus.password.checking && fieldStatus.password.valid"
-                    class="text-green-500 font-bold">✓</span>
-              <div *ngIf="!fieldStatus.password.checking && fieldStatus.password.error"
-                   class="group relative flex items-center">
-                <span class="text-red-500 font-bold cursor-help text-lg">×</span>
-                <div class="absolute bottom-full mb-2 right-0 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl z-50">
-                  {{ fieldStatus.password.error }}
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -444,6 +438,7 @@
           <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">First Name</label>
           <input type="text"
                  [(ngModel)]="newUser.firstName"
+                 (ngModelChange)="updateFormValidity()"
                  class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium">
         </div>
 
@@ -451,24 +446,19 @@
           <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Last Name</label>
           <input type="text"
                  [(ngModel)]="newUser.lastName"
+                 (ngModelChange)="updateFormValidity()"
                  class="w-full p-3 bg-slate-50 border rounded-xl outline-none font-medium">
         </div>
 
       </div>
       <div class="p-8 bg-slate-50 flex justify-end gap-3">
         <button (click)="closeModal()" class="px-6 py-3 text-xs font-bold uppercase text-slate-400">Cancel</button>
-        <button (click)="selectedUser ? runUpdateUser() : runCreateUser()" [disabled]="!canSubmit()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-xs uppercase shadow-lg disabled:bg-slate-200 disabled:text-slate-400 transition-all">Confirm</button>
+        <button (click)="selectedUser ? runUpdateUser() : runCreateUser()"
+                [disabled]="!formIsValid"
+                class="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-xs uppercase shadow-lg disabled:bg-slate-200 disabled:text-slate-400 transition-all">
+          Confirm
+        </button>
       </div>
     </div>
   </div>
-</div>
-
-<div *ngIf="isRoleDropdownOpen"
-     (click)="isRoleDropdownOpen = false"
-     class="fixed inset-0 z-[105] bg-transparent">
-</div>
-
-<div *ngIf="isStatusDropdownOpen"
-     (click)="isStatusDropdownOpen = false"
-     class="fixed inset-0 z-40 bg-transparent">
 </div>

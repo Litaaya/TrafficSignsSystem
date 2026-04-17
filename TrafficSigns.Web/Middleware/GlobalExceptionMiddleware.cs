@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace TrafficSigns.Web.Middleware;
 
@@ -29,6 +30,8 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
             ArgumentException => (StatusCodes.Status400BadRequest, "Invalid Argument"),
             UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource Not Found"),
+            DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "Database Concurrency Conflict"),
+            DbUpdateException => (StatusCodes.Status409Conflict, "Database Update Error"),
             _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
         };
 
@@ -36,7 +39,7 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
         {
             Status = statusCode,
             Title = title,
-            Detail = exception.Message,
+            Detail = exception.InnerException?.Message ?? exception.Message,
             Instance = context.Request.Path,
             Extensions = { ["traceId"] = traceId }
         };

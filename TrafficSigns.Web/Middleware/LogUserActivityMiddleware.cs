@@ -1,19 +1,14 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.EntityFrameworkCore;
 using TrafficSigns.Application.Common.Interfaces;
 
 namespace TrafficSigns.Web.Middleware;
 
-public class LogUserActivityMiddleware
+public class LogUserActivityMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate _next;
-
-    public LogUserActivityMiddleware(RequestDelegate next)
+    public async Task InvokeAsync(HttpContext context, IMemoryCache cache, IServiceProvider serviceProvider)
     {
-        _next = next;
-    }
-
-    public async Task InvokeAsync(HttpContext context, IMemoryCache cache, ICurrentUserService currentUserService, IApplicationDbContext dbContext)
-    {
+        var currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
         var userId = currentUserService.GetUserId();
 
         if (userId != null && userId != Guid.Empty)
@@ -22,17 +17,19 @@ public class LogUserActivityMiddleware
 
             if (!cache.TryGetValue(cacheKey, out _))
             {
-                var user = await dbContext.Users.FindAsync(new object[] { userId.Value }, context.RequestAborted);
+                using var scope = serviceProvider.CreateScope();
+                var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
 
-                if (user != null)
-                {
-                    user.LastActiveDt = DateTime.UtcNow;
-                    await dbContext.SaveChangesAsync(context.RequestAborted);
-                    cache.Set(cacheKey, true, TimeSpan.FromMinutes(30));
-                }
+                await dbContext.Users
+                    .Where(u => u.Id == userId)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(u => u.LastActiveDt, DateTime.UtcNow),
+                        context.RequestAborted);
+
+                cache.Set(cacheKey, true, TimeSpan.FromMinutes(30));
             }
         }
 
-        await _next(context);
+        await next(context);
     }
 }

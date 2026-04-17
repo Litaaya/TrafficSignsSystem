@@ -2,13 +2,14 @@
 Giới hạn để xóa đi một data sau khi bị inactive là bao lâu ?
 Bug set time traffic sign speed limit
 Chưa check đã tick (field account)
+Reset khi reactivate chưa set rule mật khẩu
 
 # Hôm qua
-- Fix bug check validate user bên frontend			[v]
-- Chỉnh sửa và bổ sung code frontend cũ				[v]
-- Bổ sung thêm ui/ux cho phần quản lý account       [v]
+- Fix bug keycloak không nhận token của be          [v] Lý do: cacheKey giữ Token của bot và sử dụng nó để truy cập vào keycloak thực hiện quyền của api
+- openWorkspaceUserManager                          []
 - Thiết kế UI cho owner quản lý user của account    []
 - Thiết kế UI cho user quản lý bản thân				[]
+- Fix lỗi không check khoảng trắng trong field      []
 
 # In Development:
 UnitTest (chưa hoàn chỉnh)
@@ -16,6 +17,7 @@ Hình ảnh icon cho biển báo ?
 Search cho name đường
 Viết tool bổ sung db
 Bổ sung validate rule email cho account
+Giảm bớt quyền admin lên admin
 
 # Low priority:
 Cấu hình lại cho keycloak khi user đặt lại mật khẩu lần đầu đăng nhập

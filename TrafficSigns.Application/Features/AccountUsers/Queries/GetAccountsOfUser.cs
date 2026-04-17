@@ -6,7 +6,7 @@ namespace TrafficSigns.Application.Features.AccountUsers.Queries;
 public record AccountOfUserDto(
     Guid AccountId,
     string AccountName,
-    bool IsOwner,
+    string Role,
     bool IsSystem,
     DateTime JoinedDt
 );
@@ -40,7 +40,7 @@ public class GetAccountsOfUserHandler(
                 .Select(a => new AccountOfUserDto(
                     a.Id,
                     a.Name,
-                    true,
+                    "Owner",
                     a.System,
                     a.CreatedDt
                 ))
@@ -54,7 +54,7 @@ public class GetAccountsOfUserHandler(
             .Select(au => new AccountOfUserDto(
                 au.AccountId,
                 au.Account.Name,
-                au.Role == "Owner",
+                au.Role,
                 au.Account.System,
                 au.CreatedDt
             ))

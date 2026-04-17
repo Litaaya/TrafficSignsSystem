@@ -14,6 +14,9 @@
       </div>
 
       <div class="relative min-w-[140px]">
+        <div *ngIf="isStatusDropdownOpen"
+             (click)="isStatusDropdownOpen = false"
+             class="fixed inset-0 z-30 bg-transparent"></div>
         <button (click)="isStatusDropdownOpen = !isStatusDropdownOpen"
                 class="w-full bg-white border border-slate-200 text-slate-500 text-[10px] font-black rounded-2xl px-4 py-2.5 outline-none focus:border-blue-500 shadow-sm uppercase tracking-widest transition-all flex items-center justify-between gap-3 h-[42px]">
           <span>
@@ -214,9 +217,13 @@
                     <td class="p-4 font-bold text-slate-700" [innerHTML]="highlight(u.username, userListSearchTerm)"></td>
                     <td class="p-4 text-slate-500" [innerHTML]="highlight(u.email, userListSearchTerm)"></td>
                     <td class="p-4">
-                      <span [class]="(u.role === 'Owner' || u.Role === 'Owner' || u.isOwner) ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-slate-50 text-slate-400 border-slate-100'"
+                      <span [ngClass]="{
+                              'bg-amber-50 text-amber-600 border-amber-100': u.role === 'Owner',
+                              'bg-blue-50 text-blue-600 border-blue-100': u.role === 'Member',
+                              'bg-slate-50 text-slate-400 border-slate-100': u.role === 'Viewer' || !u.role
+                            }"
                             class="px-2 py-1 rounded-md font-black text-[8px] border uppercase">
-                        {{ u.role || u.Role || (u.isOwner ? 'OWNER' : 'VIEWER') }}
+                        {{ u.role || u.Role || 'VIEWER' }}
                       </span>
                     </td>
                     <td class="p-4 flex justify-center gap-3">
@@ -279,6 +286,10 @@
       <div class="mb-6">
         <label class="block text-[10px] font-black uppercase text-blue-500 mb-2 italic">Select Role:</label>
         <div class="relative">
+          <div *ngIf="isRoleDropdownOpen"
+               (click)="isRoleDropdownOpen = false"
+               class="fixed inset-0 z-[10]"></div>
+
           <button (click)="toggleRoleDropdown()" type="button" class="w-full flex items-center justify-between p-4 bg-blue-50 border border-blue-100 rounded-2xl font-bold text-slate-700 outline-none">
             <span class="text-xs uppercase tracking-widest">{{ selectedRole }}</span>
             <span [class.rotate-180]="isRoleDropdownOpen" class="text-[10px] transition-transform duration-300">▼</span>
@@ -398,14 +409,4 @@
       </div>
     </div>
   </div>
-</div>
-
-<div *ngIf="isRoleDropdownOpen"
-     (click)="isRoleDropdownOpen = false"
-     class="fixed inset-0 z-[105] bg-transparent">
-</div>
-
-<div *ngIf="isStatusDropdownOpen"
-     (click)="isStatusDropdownOpen = false"
-     class="fixed inset-0 z-40 bg-transparent">
 </div>

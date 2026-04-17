@@ -21,22 +21,30 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
 {
     public CreateUserCommandValidator()
     {
-        RuleFor(x => x.Username).Must(UserValidationRules.IsValidUsername)
+        RuleFor(x => x.Username)
+            .Must(UserValidationRules.IsValidUsername)
             .WithMessage($"Username invalid (minimum {UserValidationRules.UsernameMin} symbols, maximum {UserValidationRules.UsernameMax} symbols, no space)");
 
-        RuleFor(x => x.Password).Must(UserValidationRules.IsStrongPassword)
+        RuleFor(x => x.Password)
+            .Must(UserValidationRules.IsStrongPassword)
             .WithMessage("Password is too weak");
 
-        RuleFor(x => x.FirstName).Must(UserValidationRules.IsValidName)
-            .WithMessage("Firstname can't be empty or too long");
+        RuleFor(x => x.FirstName)
+            .Must(UserValidationRules.IsValidName)
+            .When(x => !string.IsNullOrWhiteSpace(x.FirstName))
+            .WithMessage("Firstname contains invalid characters or is too long");
 
-        RuleFor(x => x.LastName).Must(UserValidationRules.IsValidName)
-            .WithMessage("Lastname can't be empty or too long");
+        RuleFor(x => x.LastName)
+            .Must(UserValidationRules.IsValidName)
+            .When(x => !string.IsNullOrEmpty(x.LastName))
+            .WithMessage("Lastname contains invalid characters or is too long");
 
-        RuleFor(x => x.Email).Must(UserValidationRules.IsValidEmail)
+        RuleFor(x => x.Email)
+            .Must(UserValidationRules.IsValidEmail)
             .WithMessage("Email format invalid");
 
-        RuleFor(x => x.Phone).Must(UserValidationRules.IsValidPhone)
+        RuleFor(x => x.Phone)
+            .Must(UserValidationRules.IsValidPhone)
             .WithMessage("Phone format invalid");
     }
 }

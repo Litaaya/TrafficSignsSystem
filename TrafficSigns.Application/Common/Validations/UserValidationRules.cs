@@ -19,7 +19,7 @@ namespace TrafficSigns.Application.Common.Validations
         private static readonly Regex NameRegex = new(@"^[\p{L}\s'-]+$", RegexOptions.Compiled);
         public static bool IsValidName(string? name)
         {
-            if (string.IsNullOrWhiteSpace(name)) return false;
+            if (string.IsNullOrWhiteSpace(name)) return true;
             if (name.Length > NameMax) return false;
             return NameRegex.IsMatch(name);
         }

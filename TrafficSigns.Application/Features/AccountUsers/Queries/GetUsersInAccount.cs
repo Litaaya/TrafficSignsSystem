@@ -8,7 +8,7 @@ public record UserInAccountDto(
     Guid UserId,
     string Username,
     string Email,
-    bool IsOwner,
+    string Role,
     DateTime JoinedDt,
     Dictionary<string, string>? Metadata
 );
@@ -39,7 +39,7 @@ public class GetUsersInAccountHandler(
                 au.UserId,
                 au.User.Username,
                 au.User.Email ?? string.Empty,
-                au.Role == "Owner",
+                au.Role,
                 au.CreatedDt,
                 au.Metadata
             ))

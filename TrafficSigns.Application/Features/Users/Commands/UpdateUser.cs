@@ -19,11 +19,15 @@ public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
 {
     public UpdateUserCommandValidator()
     {
-        RuleFor(x => x.FirstName).Must(UserValidationRules.IsValidName)
-            .WithMessage("Firstname can't be empty or too long");
+        RuleFor(x => x.FirstName)
+            .Must(UserValidationRules.IsValidName)
+            .When(x => !string.IsNullOrWhiteSpace(x.FirstName))
+            .WithMessage("Firstname contains invalid characters or is too long");
 
-        RuleFor(x => x.LastName).Must(UserValidationRules.IsValidName)
-            .WithMessage("Lastname can't be empty or too long");
+        RuleFor(x => x.LastName)
+            .Must(UserValidationRules.IsValidName)
+            .When(x => !string.IsNullOrEmpty(x.LastName))
+            .WithMessage("Lastname contains invalid characters or is too long");
 
         RuleFor(x => x.Email).Must(UserValidationRules.IsValidEmail)
             .WithMessage("Email format invalid");
