@@ -13,7 +13,7 @@ Nút workspace cancel
 - Fix bug keycloak không nhận token của be [v] Lý do: cacheKey giữ Token của bot và sử dụng nó để truy cập vào keycloak thực hiện quyền của api
 - Viết lại modal ui gán user vào account [v]
 - fix ui frontend và viết thêm ux [v]
-- Thiết kế UI modal cho owner quản lý user của account [v]
+- Thiết kế UI modal cho owner quản lý user của account [...]
 - Thiết kế UI cho user quản lý bản thân []
 - Fix lỗi không check khoảng trắng trong field []
 - Fix lỗi tự tick khi chưa điền gì trong field account []
