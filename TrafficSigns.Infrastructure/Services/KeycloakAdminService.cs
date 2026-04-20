@@ -53,8 +53,6 @@ public class KeycloakAdminService(
         var data = await response.Content.ReadFromJsonAsync<JsonElement>();
         var token = data.GetProperty("access_token").GetString()!;
         
-        Console.WriteLine(token);
-        
         var expiresIn = data.GetProperty("expires_in").GetInt32();
 
         memoryCache.Set(cacheKey, token, TimeSpan.FromSeconds(expiresIn - 30));
