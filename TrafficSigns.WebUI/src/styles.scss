@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+$slate-200: #e2e8f0;
+$slate-300: #cbd5e1;
+$shadow-xl: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+$shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+
+.custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 5px;
+
+    &-track {
+      background: transparent;
+    }
+
+    &-thumb {
+      background: $slate-200;
+      border-radius: 10px;
+
+      &:hover {
+        background: $slate-300;
+      }
+    }
+  }
+}
+
+.jump-page-popover {
+  border-radius: 16px !important;
+  box-shadow: $shadow-xl !important;
+}
+
+body .cdk-overlay-container {
+  .mat-mdc-menu-panel.modern-menu {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin-top: 10px !important;
+    overflow: visible !important;
+
+    .mat-mdc-menu-content {
+      padding: 0 !important;
+      background: transparent !important;
+      overflow: visible !important;
+
+      & > div {
+        margin: 0 !important;
+        border: 1px solid $slate-200 !important;
+        box-shadow: $shadow-2xl !important;
+        user-select: none;
+        animation: menuIn 0.2s ease-out;
+      }
+    }
+  }
+}
+
+.animate-backdrop {
+  animation: backdropFade 0.2s ease-out forwards;
+
+  &-out {
+    animation: backdropFade 0.65s ease-in reverse forwards;
+  }
+}
+
+.animate-modal-pop {
+  animation: modalPop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-modal-out {
+  animation: popThenShrink 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes backdropFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes popThenShrink {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}

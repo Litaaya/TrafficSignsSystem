@@ -68,6 +68,8 @@ export class MapPageComponent implements OnInit, AfterViewInit {
   associatedRoadData: any = null;
   isViewingRoadFromSign: boolean = false;
 
+  mouseLatLng: string = '0.000000, 0.000000';
+
   readonly ROAD_LABELS: { [key: string]: string } = {
     name: 'Road',
     segmentId: 'Road Id',
@@ -185,6 +187,12 @@ export class MapPageComponent implements OnInit, AfterViewInit {
       doubleClickZoom: false, zoomControl: true,
       maxBounds: vietnamBounds, maxBoundsViscosity: 1.0, minZoom: 5
     }).setView([parseFloat(savedLat), parseFloat(savedLng)], parseInt(savedZoom));
+
+    this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
+      this.zone.run(() => {
+        this.mouseLatLng = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
+      });
+    });
 
     this.map.createPane('glowPane');
     this.map.getPane('glowPane')!.style.zIndex = '350';
