@@ -9,7 +9,6 @@ public interface IApplicationDbContext
     DbSet<Account> Accounts { get; }
     DbSet<User> Users { get; }
     DbSet<AccountUser> AccountUsers { get; }
-    DbSet<OsmRoadSegment> OsmRoadSegments { get; }
     DatabaseFacade Database { get; }
     DbSet<AuditLog> AuditLogs { get; }
 

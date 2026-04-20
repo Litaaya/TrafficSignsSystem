@@ -7,8 +7,6 @@ public record TrafficSignCreated(
     string Code,
     string Name,
     Point Location,
-    long RoadSegmentId,
-    bool IsForwardDirection,
     Guid AccountId,
     Dictionary<string, object>? Metadata
 );
@@ -22,7 +20,5 @@ public record TrafficSignUpdated(
     string Code,
     string Name,
     Point Location,
-    long RoadSegmentId,
-    bool IsForwardDirection,
     Dictionary<string, object> Metadata
 );

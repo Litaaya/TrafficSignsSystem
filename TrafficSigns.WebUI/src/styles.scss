@@ -71,6 +71,20 @@ body .cdk-overlay-container {
   animation: popThenShrink 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
+.mat-mdc-tooltip.custom-slate-tooltip {
+  .mdc-tooltip__surface {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-size: 10px !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+  }
+}
+
 @keyframes menuIn {
   from {
     opacity: 0;

@@ -40,9 +40,7 @@ public class ReactivateTrafficSignHandler(
             .Where(s => s.IsDeleted == false
                      && s.Id != sign.Id
                      && s.AccountId == sign.AccountId
-                     && s.RoadSegmentId == sign.RoadSegmentId
                      && s.Code == sign.Code
-                     && s.IsForwardDirection == sign.IsForwardDirection
                      && s.MatchesSql(@"ST_DWithin(
                                        ST_GeomFromGeoJSON((data -> 'location')::text), 
                                        ST_SetSRID(ST_MakePoint(?, ?), 4326), 

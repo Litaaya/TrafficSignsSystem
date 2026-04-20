@@ -38,17 +38,6 @@ public class CreateTrafficSignHandler(
 
         if (!accountExists)
             throw new KeyNotFoundException($"Account {request.AccountId} does not exist");
-        
-
-        var roadQuery = db.Database.SqlQueryRaw<int>("SELECT 1 FROM traffic_signs_map WHERE segment_id = {0} LIMIT 1", request.RoadSegmentId);
-        var roadExists = await EntityFrameworkQueryableExtensions
-            .AnyAsync(roadQuery, cancellationToken);
-
-        if (!roadExists)
-        {
-            var failure = new ValidationFailure(nameof(request.RoadSegmentId), $"Road Segment ID {request.RoadSegmentId} is invalid");
-            throw new ValidationException(new[] { failure });
-        }
 
         var location = new Point(request.Longitude, request.Latitude) { SRID = 4326 };
 
@@ -56,8 +45,6 @@ public class CreateTrafficSignHandler(
             .Where(s => s.IsDeleted == false
                      && s.AccountId == request.AccountId
                      && s.Code == request.Code.Trim()
-                     && s.IsForwardDirection == request.IsForwardDirection
-                     && s.RoadSegmentId == request.RoadSegmentId
                      && s.MatchesSql(@"ST_DWithin(
                                     ST_GeomFromGeoJSON((data -> 'location')::text), 
                                     ST_SetSRID(ST_MakePoint(?, ?), 4326), 
@@ -83,8 +70,6 @@ public class CreateTrafficSignHandler(
             request.Code.Trim().ToUpper(),
             request.Name.Trim(),
             location,
-            request.RoadSegmentId,
-            request.IsForwardDirection,
             request.AccountId,
             metadata
         );

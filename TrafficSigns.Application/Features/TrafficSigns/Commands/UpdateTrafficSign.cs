@@ -23,7 +23,6 @@ public record UpdateTrafficSignCommand(
 
 public class UpdateTrafficSignHandler(
     IDocumentSession session,
-    IApplicationDbContext db,
     ICurrentUserService currentUser,
     IPermissionService permissionService) : IRequestHandler<UpdateTrafficSignCommand, bool>
 {
@@ -46,15 +45,6 @@ public class UpdateTrafficSignHandler(
             throw new ValidationException(new[] { failure });
         }
 
-        var roadQuery = db.Database.SqlQueryRaw<int>("SELECT 1 FROM traffic_signs_map WHERE segment_id = {0} LIMIT 1", request.RoadSegmentId);
-        var roadExists = await EntityFrameworkQueryableExtensions.AnyAsync(roadQuery, cancellationToken);
-
-        if (!roadExists)
-        {
-            var failure = new ValidationFailure(nameof(request.RoadSegmentId), $"Road Segment ID {request.RoadSegmentId} is invalid");
-            throw new ValidationException(new[] { failure });
-        }
-
         string actor = currentUser.GetUsername() ?? "Unknown";
         var actorId = currentUser.GetUserId();
 
@@ -65,8 +55,6 @@ public class UpdateTrafficSignHandler(
             request.Code.Trim().ToUpper(),
             request.Name.Trim(),
             location,
-            request.RoadSegmentId,
-            request.IsForwardDirection,
             request.Metadata ?? new Dictionary<string, object>()
         );
 

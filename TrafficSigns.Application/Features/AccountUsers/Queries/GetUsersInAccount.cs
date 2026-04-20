@@ -8,6 +8,7 @@ public record UserInAccountDto(
     Guid UserId,
     string Username,
     string Email,
+    string Phone,
     string Role,
     DateTime JoinedDt,
     Dictionary<string, string>? Metadata
@@ -39,6 +40,7 @@ public class GetUsersInAccountHandler(
                 au.UserId,
                 au.User.Username,
                 au.User.Email ?? string.Empty,
+                au.User.Phone ?? string.Empty,
                 au.Role,
                 au.CreatedDt,
                 au.Metadata

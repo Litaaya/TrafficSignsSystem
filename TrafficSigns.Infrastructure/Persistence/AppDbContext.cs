@@ -11,7 +11,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<User> Users => Set<User>();
     public DbSet<AccountUser> AccountUsers => Set<AccountUser>();
-    public DbSet<OsmRoadSegment> OsmRoadSegments => Set<OsmRoadSegment>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -70,13 +69,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                   .Metadata.SetValueComparer(objectDictComparer);
 
             entity.HasIndex(e => e.Location).HasMethod("gist");
-            entity.HasIndex(e => e.RoadSegmentId);
-        });
-
-        modelBuilder.Entity<OsmRoadSegment>(entity =>
-        {
-            entity.ToTable("traffic_signs_map", t => t.ExcludeFromMigrations());
-            entity.HasKey(e => e.SegmentId);
         });
 
         modelBuilder.Entity<AuditLog>(entity =>

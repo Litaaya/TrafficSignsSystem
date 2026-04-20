@@ -55,4 +55,16 @@ export class OsmRoadService {
   updateTrafficSign(id: string, payload: any): Observable<any> {
     return this.http.put(`${this.apiUrl}/api/traffic-signs/${id}`, payload);
   }
+
+  getUsersInAccount(accountId: string): Observable<any[]> {
+    return this.http.get<any[]>(`/api/accounts/${accountId}/users`);
+  }
+
+  inviteUserToAccount(payload: { email: string, role: string, accountId: string }): Observable<any> {
+    return this.http.post(`/api/accounts/invite`, payload);
+  }
+
+  removeUserFromAccount(accountId: string, userId: string): Observable<any> {
+    return this.http.delete(`/api/accounts/${accountId}/users/${userId}`);
+  }
 }

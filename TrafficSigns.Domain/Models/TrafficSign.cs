@@ -12,8 +12,6 @@ public class TrafficSign
     public bool IsDeleted { get; set; }
     public Dictionary<string, object> Metadata { get; set; } = new();
     public Guid AccountId { get; set; }
-    public long RoadSegmentId { get; set; }
-    public bool IsForwardDirection { get; set; }
 
     public void Apply(TrafficSignCreated @event)
     {
@@ -22,8 +20,6 @@ public class TrafficSign
         Name = @event.Name;
         Location = @event.Location;
         AccountId = @event.AccountId;
-        RoadSegmentId = @event.RoadSegmentId;
-        IsForwardDirection = @event.IsForwardDirection;
         IsDeleted = false;
         Metadata = @event.Metadata ?? new Dictionary<string, object>();
     }
@@ -33,8 +29,6 @@ public class TrafficSign
         Code = @event.Code;
         Name = @event.Name;
         Location = @event.Location;
-        RoadSegmentId = @event.RoadSegmentId;
-        IsForwardDirection = @event.IsForwardDirection;
         Metadata = @event.Metadata;
     }
 
