@@ -98,22 +98,22 @@
             </td>
             <td class="p-5">
               <div class="flex items-center gap-2">
-                <button (click)="openDetailsModal(user)"
+                <button (click)="openDetailsModal(user)" [disabled]="isSelf(user.id)" [class.opacity-30]="isSelf(user.id)" [class.cursor-not-allowed]="isSelf(user.id)"
                         class="font-black rounded-xl bg-slate-100 px-3 py-1.5 uppercase tracking-wider text-slate-600 text-[10px] transition-all hover:bg-slate-200">
                   View
                 </button>
-                <button (click)="openEditModal(user)"
+                <button (click)="openEditModal(user)" [disabled]="isSelf(user.id)" [class.opacity-30]="isSelf(user.id)" [class.cursor-not-allowed]="isSelf(user.id)"
                         class="font-black rounded-xl border border-blue-100 bg-blue-50 px-3 py-1.5 uppercase tracking-wider text-blue-600 text-[10px] transition-all hover:bg-blue-600 hover:text-white">
                   Edit
                 </button>
 
                 <ng-container>
-                  <button *ngIf="!user.inactive" (click)="openDeleteModal(user)"
+                  <button *ngIf="!user.inactive" (click)="openDeleteModal(user)" [disabled]="isSelf(user.id)" [class.opacity-30]="isSelf(user.id)" [class.cursor-not-allowed]="isSelf(user.id)"
                           class="font-black rounded-xl border border-red-100 bg-red-50 px-3 py-1.5 uppercase tracking-wider text-red-600 text-[10px] transition-all hover:bg-red-600 hover:text-white">
                     Delete
                   </button>
 
-                  <button *ngIf="user.inactive" (click)="openReactivateModal(user)"
+                  <button *ngIf="user.inactive" (click)="openReactivateModal(user)" [disabled]="isSelf(user.id)" [class.opacity-30]="isSelf(user.id)" [class.cursor-not-allowed]="isSelf(user.id)"
                           class="font-black rounded-xl border border-green-100 bg-green-50 px-3 py-1.5 uppercase tracking-wider text-green-600 text-[10px] transition-all hover:bg-green-600 hover:text-white">
                     Reactivate
                   </button>

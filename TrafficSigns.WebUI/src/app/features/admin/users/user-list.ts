@@ -82,11 +82,14 @@ export class UserListComponent implements OnInit {
 
   isPageSizeDropdownOpen = false;
 
+  currentUserId: string | null = null;
+
   @ViewChild('assignTrigger', { read: MatMenuTrigger }) assignTrigger!: MatMenuTrigger;
   @ViewChild('jumpTrigger', { read: MatMenuTrigger }) jumpTrigger!: MatMenuTrigger;
   @ViewChild('tableContainer') tableContainer!: ElementRef;
 
   ngOnInit(): void {
+    this.currentUserId = this.authService.getUserId();
     this.fetchData();
     this.initRealtimeValidation();
     this.initAccountSearch();
@@ -96,6 +99,10 @@ export class UserListComponent implements OnInit {
       this.pageNumber = 1;
       this.fetchData();
     });
+  }
+
+  isSelf(userId: string): boolean {
+    return userId == this.currentUserId;
   }
 
   selectUserStatus(status: 'all' | 'active' | 'inactive') {
@@ -304,6 +311,7 @@ export class UserListComponent implements OnInit {
   }
 
   openDeleteModal(user: any) {
+    if (this.isSelf(user.id)) return;
     this.deleteTargetUser = user;
     this.isDeleteModalOpen = true;
     this.cdr.detectChanges();
@@ -518,6 +526,7 @@ export class UserListComponent implements OnInit {
   }
 
   openEditModal(user: any) {
+    if (this.isSelf(user.id)) return;
     this.selectedUser = user;
     this.newUser = {
       username: user.username,
