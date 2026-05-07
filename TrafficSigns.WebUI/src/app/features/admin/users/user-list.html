@@ -1,4 +1,4 @@
-<div class="flex h-full flex-col px-8 pb-8 pt-0">
+﻿<div class="flex h-full flex-col px-8 pb-8 pt-0">
   <div class="sticky top-0 z-20 flex flex-shrink-0 flex-col bg-[#f8fafc] pb-6 pt-4">
     <h1 class="font-black mb-4 text-3xl uppercase tracking-tighter text-slate-800">User Management</h1>
 
@@ -174,7 +174,12 @@
 
         <ng-container *ngFor="let p of visiblePages">
           <button *ngIf="p !== '...'" (click)="onPageChange(p)" [class]="p === pageNumber ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'" class="font-black h-8 w-8 rounded-xl border text-[11px] transition-all">{{ p }}</button>
-          <span *ngIf="p === '...'" #jumpTrigger="matMenuTrigger" [matMenuTriggerFor]="jumpMenu" class="flex h-8 w-8 cursor-pointer items-center justify-center font-bold text-slate-400 hover:text-blue-600">...</span>
+          <span *ngIf="p === '...'" #jumpTrigger="matMenuTrigger" [matMenuTriggerFor]="jumpMenu"
+                class="flex h-8 w-8 cursor-pointer items-center justify-center text-slate-400 transition-colors hover:text-blue-600">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-4 w-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+            </svg>
+          </span>
         </ng-container>
 
         <button [disabled]="pageNumber === totalPages" (click)="onPageChange(pageNumber + 1)" class="group flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white transition-all hover:bg-slate-100 disabled:opacity-30">
@@ -187,12 +192,25 @@
     </div>
   </div>
 
-  <mat-menu #jumpMenu="matMenu">
-    <div class="flex w-60 flex-col gap-3 p-4" (click)="$event.stopPropagation()">
-      <label class="font-black block uppercase text-[10px] text-slate-400">Page (1 - {{ totalPages }})</label>
+  <mat-menu #jumpMenu="matMenu" xPosition="before" class="modern-menu">
+    <div class="flex w-48 flex-col gap-3 rounded-2xl bg-white p-4 shadow-2xl" (click)="$event.stopPropagation()">
+
+      <div class="flex items-center justify-between">
+        <span class="font-black uppercase tracking-widest text-[10px] text-slate-400">Go to</span>
+        <span class="font-bold text-[10px] text-slate-400">Max: {{ totalPages }}</span>
+      </div>
+
       <div class="flex gap-2">
-        <input type="number" [(ngModel)]="jumpPageInput" (keyup.enter)="jumpToPage()" class="flex-1 rounded-lg border bg-slate-50 p-2 text-xs outline-none">
-        <button (click)="jumpToPage()" class="rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white">Go</button>
+        <input type="number"
+               [(ngModel)]="jumpPageInput"
+               (keyup.enter)="jumpToPage()"
+               placeholder="..."
+               class="font-black w-16 rounded-xl border border-slate-100 bg-slate-50 p-2 text-center text-xs text-slate-700 outline-none focus:border-blue-500 focus:bg-white">
+
+        <button (click)="jumpToPage()"
+                class="font-black flex-1 rounded-xl bg-slate-900 py-2 uppercase tracking-widest text-[10px] text-white transition-all hover:bg-blue-600 active:scale-95">
+          Jump
+        </button>
       </div>
     </div>
   </mat-menu>
@@ -226,7 +244,11 @@
             Workspace List
           </button>
         </div>
-        <button (click)="closeDetails()" class="text-3xl text-slate-300 transition-colors hover:text-slate-600">×</button>
+        <button (click)="closeDetails()" class="group relative flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-slate-100">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-6 w-6 text-slate-300 group-hover:text-slate-600">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       <div class="relative flex-1 overflow-hidden bg-slate-50/30">
@@ -359,7 +381,11 @@
                 <span class="font-bold uppercase tracking-tighter text-[9px] text-slate-400">{{ acc.system ? 'System' : 'Regular' }}</span>
               </div>
             </div>
-            <div class="flex h-6 w-6 flex-shrink-0 scale-90 items-center justify-center rounded-lg bg-blue-100/50 text-blue-600 opacity-0 transition-all group-hover:scale-100 group-hover:opacity-100"><span class="text-sm font-bold">+</span></div>
+            <div class="flex h-6 w-6 flex-shrink-0 scale-90 items-center justify-center rounded-lg bg-blue-100/50 text-blue-600 opacity-0 transition-all group-hover:scale-100 group-hover:opacity-100">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="h-3 w-3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
           </button>
         </div>
         <div *ngIf="loadingAvailable" class="flex justify-center py-6">
@@ -395,9 +421,15 @@
             <input type="text" [(ngModel)]="newUser.username" [disabled]="!!selectedUser" (ngModelChange)="onFieldChange('username', $event)" class="w-full rounded-xl border bg-slate-50 p-3 pr-10 font-medium outline-none disabled:opacity-50">
             <div class="-translate-y-1/2 absolute right-3 top-1/2 flex items-center">
               <div *ngIf="fieldStatus.username.checking" class="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
-              <span *ngIf="!fieldStatus.username.checking && fieldStatus.username.valid" class="font-bold text-green-500">✓</span>
+
+              <svg *ngIf="!fieldStatus.username.checking && fieldStatus.username.valid" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="h-4 w-4 text-green-500">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+
               <div *ngIf="!fieldStatus.username.checking && fieldStatus.username.error" class="group relative flex items-center">
-                <span class="cursor-help text-lg font-bold text-red-500">×</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="h-4 w-4 cursor-help text-red-500">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
                 <div class="absolute bottom-full right-0 z-50 mb-2 hidden w-48 rounded-lg bg-slate-800 p-2 text-white text-[10px] shadow-xl group-hover:block">{{ fieldStatus.username.error }}</div>
               </div>
             </div>
@@ -416,13 +448,15 @@
             <div class="-translate-y-1/2 absolute right-3 top-1/2 flex items-center">
               <div *ngIf="fieldStatus.email.checking" class="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
 
-              <span *ngIf="!fieldStatus.email.checking && fieldStatus.email.valid" class="font-bold text-green-500">✓</span>
+              <svg *ngIf="!fieldStatus.email.checking && fieldStatus.email.valid" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="h-4 w-4 text-green-500">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
 
               <div *ngIf="!fieldStatus.email.checking && fieldStatus.email.error" class="group relative flex items-center">
-                <span class="cursor-help text-lg font-bold text-red-500">×</span>
-                <div class="absolute bottom-full right-0 z-50 mb-2 hidden w-48 rounded-lg bg-slate-800 p-2 text-white text-[10px] shadow-xl group-hover:block">
-                  {{ fieldStatus.email.error }}
-                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="h-4 w-4 cursor-help text-red-500">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+                <div class="absolute bottom-full right-0 z-50 mb-2 hidden w-48 rounded-lg bg-slate-800 p-2 text-white text-[10px] shadow-xl group-hover:block">{{ fieldStatus.email.error }}</div>
               </div>
             </div>
           </div>
@@ -436,13 +470,15 @@
             <div class="-translate-y-1/2 absolute right-3 top-1/2 flex items-center">
               <div *ngIf="fieldStatus.phone.checking" class="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
 
-              <span *ngIf="!fieldStatus.phone.checking && fieldStatus.phone.valid" class="font-bold text-green-500">✓</span>
+              <svg *ngIf="!fieldStatus.phone.checking && fieldStatus.phone.valid" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="h-4 w-4 text-green-500">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
 
               <div *ngIf="!fieldStatus.phone.checking && fieldStatus.phone.error" class="group relative flex items-center">
-                <span class="cursor-help text-lg font-bold text-red-500">×</span>
-                <div class="absolute bottom-full right-0 z-50 mb-2 hidden w-48 rounded-lg bg-slate-800 p-2 text-white text-[10px] shadow-xl group-hover:block">
-                  {{ fieldStatus.phone.error }}
-                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="h-4 w-4 cursor-help text-red-500">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+                <div class="absolute bottom-full right-0 z-50 mb-2 hidden w-48 rounded-lg bg-slate-800 p-2 text-white text-[10px] shadow-xl group-hover:block">{{ fieldStatus.phone.error }}</div>
               </div>
             </div>
           </div>
