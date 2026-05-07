@@ -210,13 +210,20 @@
         <div class="flex gap-2">
           <button (click)="setTab('info')"
                   [class]="activeTab === 'info' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'"
-                  class="font-black border-b-2 px-6 py-5 uppercase tracking-widest text-[11px] transition-all">
-            👤 Information
+                  class="font-black flex items-center gap-2 border-b-2 px-6 py-5 uppercase tracking-widest text-[11px] transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-3.5 w-3.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+            Information
           </button>
+
           <button (click)="setTab('accounts')"
                   [class]="activeTab === 'accounts' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'"
-                  class="font-black border-b-2 px-6 py-5 uppercase tracking-widest text-[11px] transition-all">
-            🏢 Workspace List
+                  class="font-black flex items-center gap-2 border-b-2 px-6 py-5 uppercase tracking-widest text-[11px] transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-3.5 w-3.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+            </svg>
+            Workspace List
           </button>
         </div>
         <button (click)="closeDetails()" class="text-3xl text-slate-300 transition-colors hover:text-slate-600">×</button>
@@ -313,7 +320,10 @@
                 </tbody>
               </table>
               <div *ngIf="userAccounts.length === 0 && !loadingAccounts" class="flex flex-col items-center p-20 text-center">
-                <span class="mb-2 text-2xl opacity-20">🏢</span><p class="font-bold italic text-slate-400 text-[14px]">Not yet assigned to any Workspace.</p>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mb-4 h-12 w-12 text-slate-200">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+                </svg>
+                <p class="font-bold italic text-slate-400 text-[14px]">Not yet assigned to any Workspace.</p>
               </div>
             </div>
           </div>
@@ -339,7 +349,11 @@
         <div *ngIf="availableAccounts.length > 0" class="flex flex-col gap-1">
           <button *ngFor="let acc of availableAccounts" (click)="openRoleModal('ASSIGN', selectedUser, acc)" class="group flex w-full items-center justify-between rounded-xl p-3 text-left transition-all duration-200 hover:bg-blue-50/80">
             <div class="flex min-w-0 items-center gap-3">
-              <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg transition-colors group-hover:bg-blue-100">🏢</div>
+              <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-colors group-hover:bg-blue-100 group-hover:text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+                </svg>
+              </div>
               <div class="flex min-w-0 flex-col">
                 <span class="truncate text-xs font-bold text-slate-700 group-hover:text-blue-700" [innerHTML]="highlight(acc.name, searchAccountTerm)"></span>
                 <span class="font-bold uppercase tracking-tighter text-[9px] text-slate-400">{{ acc.system ? 'System' : 'Regular' }}</span>
@@ -535,7 +549,11 @@
          class="animate-modal-pop w-full max-w-sm rounded-[32px] bg-white p-8 shadow-2xl"
          [class.animate-modal-out]="isClosingDelete">
       <div class="mb-8 text-center">
-        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl text-red-500 shadow-sm">⚠️</div>
+        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-8 w-8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+          </svg>
+        </div>
         <h3 class="font-black text-xl uppercase italic tracking-tighter text-slate-800">Delete User</h3>
 
         <div class="mt-4 px-2">
@@ -561,7 +579,11 @@
          class="animate-modal-pop w-full max-w-sm rounded-[32px] bg-white p-8 shadow-2xl"
          [class.animate-modal-out]="isClosingWithdraw">
       <div class="mb-8 text-center">
-        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 text-2xl text-amber-500 shadow-sm">🏢</div>
+        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 text-amber-500 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-8 w-8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+          </svg>
+        </div>
         <h3 class="font-black text-xl uppercase italic tracking-tighter text-slate-800">Withdraw Account</h3>
 
         <div class="mt-4 px-2">
