@@ -8,7 +8,7 @@ public interface IKeycloakAdminService
     Task UpdateUserAsync(Guid userId, string email, string firstName, string lastName, string phone);
     Task UpdateUserStatusAsync(Guid userId, bool enabled);
     Task DeleteUserAsync(Guid userId);
-    Task ResetPasswordAsync(Guid userId, string newPassword);
+    Task ResetPasswordAsync(Guid userId, string newPassword, bool isTemporary);
 
     Task<JsonElement?> GetUserByIdAsync(Guid userId);
     Task<List<JsonElement>> GetUsersAsync(int first = 0, int max = 100);

@@ -120,7 +120,7 @@ public class KeycloakAdminService(
         }
     }
 
-    public async Task ResetPasswordAsync(Guid userId, string newPassword)
+    public async Task ResetPasswordAsync(Guid userId, string newPassword, bool isTemporary)
     {
         var baseUrl = config["Keycloak:AuthServerUrl"]?.TrimEnd('/');
         var realm = config["Keycloak:Realm"];

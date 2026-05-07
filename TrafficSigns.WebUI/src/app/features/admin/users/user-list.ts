@@ -59,7 +59,6 @@ export class UserListComponent implements OnInit {
   roleTargetAccount: any = null;
   isReactivateModalOpen = false;
   reactivateTargetUser: any = null;
-  newReactivatePassword = '';
 
   searchAvailableTerm: string = '';
   availableUsers: any[] = [];
@@ -372,7 +371,6 @@ export class UserListComponent implements OnInit {
 
   openReactivateModal(user: any) {
     this.reactivateTargetUser = user;
-    this.newReactivatePassword = '';
     this.isReactivateModalOpen = true;
   }
 
@@ -383,14 +381,13 @@ export class UserListComponent implements OnInit {
       this.isReactivateModalOpen = false;
       this.isClosingReactivate = false;
       this.reactivateTargetUser = null;
-      this.newReactivatePassword = '';
       this.cdr.detectChanges();
     }, 350);
   }
 
   runReactivateUser() {
     this.isSubmitting = true;
-    this.http.patch(`https://localhost:7272/api/users/${this.reactivateTargetUser.id}/reactivate`, { newPassword: this.newReactivatePassword }).subscribe({
+    this.http.patch(`https://localhost:7272/api/users/${this.reactivateTargetUser.id}/reactivate`, {}).subscribe({
       next: () => {
         this.closeReactivateModal();
         this.onSuccessCleanup();

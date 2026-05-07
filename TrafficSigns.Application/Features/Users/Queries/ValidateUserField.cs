@@ -11,11 +11,12 @@ public record ValidateUserFieldResult(bool IsValid, string Message);
 
 public class ValidateUserFieldHandler(
     IApplicationDbContext db,
-    IPermissionService permissionService) : IRequestHandler<ValidateUserField, ValidateUserFieldResult>
+    IPermissionService permissionService,
+    ICurrentUserService currentUserService) : IRequestHandler<ValidateUserField, ValidateUserFieldResult>
 {
     public async Task<ValidateUserFieldResult> Handle(ValidateUserField request, CancellationToken cancellationToken)
     {
-        if (!await permissionService.CanManageGlobalUsersAsync())
+        if (request.ExcludeId != currentUserService.GetUserId() && !await permissionService.CanManageGlobalUsersAsync())
         {
             throw new UnauthorizedAccessException("Access denied");
         }

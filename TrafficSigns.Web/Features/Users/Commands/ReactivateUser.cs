@@ -9,7 +9,7 @@ public static class ReactivateUserEndpoint
     {
         app.MapPatch("/api/users/{id:guid}/reactivate", async (Guid id, ReactivateUserRequest body, IMediator mediator) =>
         {
-            var command = new ReactivateUserCommand(id, body.NewPassword);
+            var command = new ReactivateUserCommand(id);
             var userId = await mediator.Send(command);
 
             return Results.Ok(new

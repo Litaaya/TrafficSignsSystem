@@ -86,12 +86,4 @@ public class PermissionService(AppDbContext db, ICurrentUserService currentUserS
         => await HasAccessAsync(accountId);
 
     public async Task<bool> CanManageGlobalUsersAsync() => IsAdmin();
-
-    public async Task<bool> CanChangePasswordAsync(Guid targetUserId)
-    {
-        if (IsAdmin()) return true;
-
-        var currentUserId = currentUserService.GetUserId();
-        return currentUserId == targetUserId;
-    }
 }

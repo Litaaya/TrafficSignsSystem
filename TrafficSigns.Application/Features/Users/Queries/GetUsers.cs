@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using TrafficSigns.Application.Common.Interfaces;
 using TrafficSigns.Domain.Models;
-using System.Collections.Generic;
 
 namespace TrafficSigns.Application.Features.Users.Queries;
 
@@ -94,11 +93,14 @@ public record GetUserByIdQuery(Guid Id) : IRequest<UserDto>;
 
 public class GetUserByIdHandler(
     IApplicationDbContext db,
-    IPermissionService permissionService) : IRequestHandler<GetUserByIdQuery, UserDto>
+    IPermissionService permissionService,
+    ICurrentUserService currentUserService) : IRequestHandler<GetUserByIdQuery, UserDto>
 {
     public async Task<UserDto> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
     {
-        if (!await permissionService.CanManageGlobalUsersAsync())
+        var currentUserId = currentUserService.GetUserId();
+
+        if (currentUserId != request.Id && !await permissionService.CanManageGlobalUsersAsync())
         {
             throw new UnauthorizedAccessException("Access denied");
         }
