@@ -1,4 +1,4 @@
-﻿<div class="flex h-full flex-col px-8 pb-8 pt-0">
+<div class="flex h-full flex-col px-8 pb-8 pt-0">
   <div class="sticky top-0 z-20 flex flex-shrink-0 flex-col bg-[#f8fafc] pb-6 pt-4">
     <h1 class="font-black mb-4 text-3xl uppercase tracking-tighter text-slate-800">Workspace Management</h1>
 
@@ -19,14 +19,18 @@
 
       <div class="relative min-w-[150px]">
         <div *ngIf="isStatusDropdownOpen" (click)="isStatusDropdownOpen = false" class="fixed inset-0 z-30 bg-transparent"></div>
+
         <button (click)="isStatusDropdownOpen = !isStatusDropdownOpen"
                 class="font-black relative z-40 flex h-[42px] w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 uppercase tracking-widest text-slate-500 text-[10px] shadow-sm outline-none transition-all focus:border-blue-500">
+
           <div class="flex items-center gap-2.5">
             <div *ngIf="accountStatusFilter === 'active'" class="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
             <div *ngIf="accountStatusFilter === 'inactive'" class="h-2 w-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]"></div>
-            <div *ngIf="accountStatusFilter === 'all'" class="h-2 w-2 rounded-full bg-slate-300"></div>
+            <div *ngIf="accountStatusFilter === 'all'" class="h-2 w-2 rounded-full bg-slate-400"></div>
+
             <span>{{ accountStatusFilter === 'all' ? 'All Status' : accountStatusFilter }}</span>
           </div>
+
           <svg xmlns="http://www.w3.org/2000/svg" [class.rotate-180]="isStatusDropdownOpen" class="h-3.5 w-3.5 text-slate-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
           </svg>
@@ -34,9 +38,24 @@
 
         <div [class.opacity-100]="isStatusDropdownOpen" [class.translate-y-0]="isStatusDropdownOpen" [class.pointer-events-auto]="isStatusDropdownOpen"
              class="-translate-y-2 pointer-events-none absolute left-0 top-full z-50 mt-2 flex w-full flex-col gap-1 rounded-2xl border border-slate-100 bg-white p-1.5 opacity-0 shadow-xl transition-all duration-300 ease-out">
-          <button (click)="selectAccountStatus('all')" class="font-black rounded-xl px-3 py-2.5 text-left uppercase text-[10px] text-slate-500 transition-colors hover:bg-slate-50">All Status</button>
-          <button (click)="selectAccountStatus('active')" class="font-black rounded-xl px-3 py-2.5 text-left uppercase text-[10px] text-green-600 transition-colors hover:bg-green-50">Active</button>
-          <button (click)="selectAccountStatus('inactive')" class="font-black rounded-xl px-3 py-2.5 text-left uppercase text-[10px] text-red-500 transition-colors hover:bg-red-50">Inactive</button>
+
+          <button (click)="selectAccountStatus('all')"
+                  class="font-black flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left uppercase text-[10px] text-slate-500 transition-colors hover:bg-slate-50">
+            <div class="h-2 w-2 rounded-full bg-slate-300"></div>
+            All Status
+          </button>
+
+          <button (click)="selectAccountStatus('active')"
+                  class="font-black flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left uppercase text-[10px] text-green-600 transition-colors hover:bg-green-50">
+            <div class="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
+            Active
+          </button>
+
+          <button (click)="selectAccountStatus('inactive')"
+                  class="font-black flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left uppercase text-[10px] text-red-500 transition-colors hover:bg-red-50">
+            <div class="h-2 w-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]"></div>
+            Inactive
+          </button>
         </div>
       </div>
 
@@ -400,75 +419,64 @@
   <div *ngIf="isRoleModalOpen" (click)="closeRoleModal()"
        class="z-[100] animate-backdrop fixed inset-0 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
        [class.animate-backdrop-out]="isClosingRole">
+
     <div (click)="$event.stopPropagation()"
          class="animate-modal-pop w-full max-w-sm rounded-[32px] bg-white p-8 shadow-2xl"
          [class.animate-modal-out]="isClosingRole">
+
       <div class="mb-6 text-center">
         <h3 class="font-black text-lg uppercase italic tracking-tight text-slate-800">Confirm Member Role</h3>
         <p class="mt-1 text-[10px] text-slate-500">User: <b class="text-blue-600">{{ roleTargetUser?.username }}</b></p>
       </div>
+
       <div class="mb-6">
         <label class="font-black mb-2 block uppercase italic text-[10px] text-blue-500">Select Role:</label>
         <div class="relative">
-          <div *ngIf="isRoleModalOpen" (click)="closeRoleModal()"
-               class="z-[100] animate-backdrop fixed inset-0 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
-               [class.animate-backdrop-out]="isClosingRole">
-            <div (click)="$event.stopPropagation()"
-                 class="animate-modal-pop w-full max-w-sm rounded-[32px] bg-white p-8 shadow-2xl"
-                 [class.animate-modal-out]="isClosingRole">
-              <div class="mb-6 text-center">
-                <h3 class="font-black text-lg uppercase italic tracking-tight text-slate-800">Confirm Member Role</h3>
-                <p class="mt-1 text-[10px] text-slate-500">User: <b class="text-blue-600">{{ roleTargetUser?.username }}</b></p>
-              </div>
-              <div class="mb-6">
-                <label class="font-black mb-2 block uppercase italic text-[10px] text-blue-500">Select Role:</label>
-                <div class="relative">
-                  <div *ngIf="isRoleDropdownOpen" (click)="isRoleDropdownOpen = false" class="fixed inset-0 z-10 bg-transparent"></div>
-                  <button (click)="toggleRoleDropdown()" type="button" class="relative z-20 flex w-full items-center justify-between rounded-2xl border border-blue-100 bg-blue-50 p-4 font-bold text-slate-700 outline-none">
-                    <span class="text-xs uppercase tracking-widest">{{ selectedRole }}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" [class.rotate-180]="isRoleDropdownOpen" class="h-3.5 w-3.5 text-slate-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                    </svg>
-                  </button>
-                  <div [class.opacity-100]="isRoleDropdownOpen" [class.translate-y-0]="isRoleDropdownOpen" [class.pointer-events-auto]="isRoleDropdownOpen"
-                       class="z-[110] -translate-y-2 pointer-events-none absolute left-0 right-0 mt-2 rounded-2xl border border-slate-100 bg-white p-2 opacity-0 shadow-2xl transition-all duration-300 ease-out">
-                    <div (click)="selectRole('Viewer')" class="flex cursor-pointer flex-col rounded-xl p-3 transition-colors hover:bg-blue-50"><span class="font-black text-xs text-slate-700">VIEWER</span><span class="italic text-[9px] text-slate-400">Read-only.</span></div>
-                    <div (click)="selectRole('Member')" class="flex cursor-pointer flex-col rounded-xl p-3 transition-colors hover:bg-blue-50"><span class="font-black text-xs text-slate-700">MEMBER</span><span class="italic text-[9px] text-slate-400">Full access.</span></div>
-                    <div (click)="selectRole('Owner')" class="mt-1 flex cursor-pointer flex-col rounded-xl border-t border-slate-50 p-3 transition-colors hover:bg-blue-50"><span class="font-black text-xs text-blue-600">OWNER</span><span class="italic text-[9px] text-slate-400">Admin access.</span></div>
-                  </div>
-                </div>
-              </div>
-              <div class="flex gap-3">
-                <button (click)="closeRoleModal()" class="font-black flex-1 rounded-2xl bg-slate-100 py-3 text-xs uppercase text-slate-600 transition-all hover:bg-slate-200">Cancel</button>
-                <button (click)="roleActionType === 'ASSIGN' ? runAssignUserToAccount() : runUpdateUserRole()" [disabled]="isSubmitting"
-                        class="font-black flex-1 rounded-2xl bg-slate-900 py-3 text-xs uppercase text-white shadow-lg transition-all hover:bg-blue-600">
-                  {{ isSubmitting ? 'PROCESSING...' : 'CONFIRM' }}
-                </button>
-              </div>
-            </div>
-          </div>
           <div *ngIf="isRoleDropdownOpen" (click)="isRoleDropdownOpen = false" class="fixed inset-0 z-10 bg-transparent"></div>
-          <button (click)="toggleRoleDropdown()" type="button" class="relative z-20 flex w-full items-center justify-between rounded-2xl border border-blue-100 bg-blue-50 p-4 font-bold text-slate-700 outline-none">
+
+          <button (click)="toggleRoleDropdown()" type="button"
+                  class="relative z-20 flex w-full items-center justify-between rounded-2xl border border-blue-100 bg-blue-50 p-4 font-bold text-slate-700 outline-none transition-all focus:border-blue-500">
             <span class="text-xs uppercase tracking-widest">{{ selectedRole }}</span>
             <svg xmlns="http://www.w3.org/2000/svg" [class.rotate-180]="isRoleDropdownOpen" class="h-3.5 w-3.5 text-slate-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
             </svg>
           </button>
+
           <div [class.opacity-100]="isRoleDropdownOpen" [class.translate-y-0]="isRoleDropdownOpen" [class.pointer-events-auto]="isRoleDropdownOpen"
                class="z-[110] -translate-y-2 pointer-events-none absolute left-0 right-0 mt-2 rounded-2xl border border-slate-100 bg-white p-2 opacity-0 shadow-2xl transition-all duration-300 ease-out">
-            <div (click)="selectRole('Viewer')" class="flex cursor-pointer flex-col rounded-xl p-3 transition-colors hover:bg-blue-50"><span class="font-black text-xs text-slate-700">VIEWER</span><span class="italic text-[9px] text-slate-400">Read-only.</span></div>
-            <div (click)="selectRole('Member')" class="flex cursor-pointer flex-col rounded-xl p-3 transition-colors hover:bg-blue-50"><span class="font-black text-xs text-slate-700">MEMBER</span><span class="italic text-[9px] text-slate-400">Full access.</span></div>
-            <div (click)="selectRole('Owner')" class="mt-1 flex cursor-pointer flex-col rounded-xl border-t border-slate-50 p-3 transition-colors hover:bg-blue-50"><span class="font-black text-xs text-blue-600">OWNER</span><span class="italic text-[9px] text-slate-400">Admin access.</span></div>
+
+            <div (click)="selectRole('Viewer')" class="flex cursor-pointer flex-col rounded-xl p-3 transition-colors hover:bg-blue-50">
+              <span class="font-black text-xs text-slate-700">VIEWER</span>
+              <span class="italic text-[9px] text-slate-400">Read-only access.</span>
+            </div>
+
+            <div (click)="selectRole('Member')" class="flex cursor-pointer flex-col rounded-xl p-3 transition-colors hover:bg-blue-50">
+              <span class="font-black text-xs text-slate-700">MEMBER</span>
+              <span class="italic text-[9px] text-slate-400">Standard access.</span>
+            </div>
+
+            <div (click)="selectRole('Owner')" class="mt-1 flex cursor-pointer flex-col rounded-xl border-t border-slate-50 p-3 transition-colors hover:bg-blue-50">
+              <span class="font-black text-xs text-blue-600">OWNER</span>
+              <span class="italic text-[9px] text-slate-400">Full admin control.</span>
+            </div>
+
           </div>
         </div>
       </div>
+
       <div class="flex gap-3">
-        <button (click)="closeRoleModal()" class="font-black flex-1 rounded-2xl bg-slate-100 py-3 text-xs uppercase text-slate-600 transition-all hover:bg-slate-200">Cancel</button>
-        <button (click)="roleActionType === 'ASSIGN' ? runAssignUserToAccount() : runUpdateUserRole()" [disabled]="isSubmitting"
-                class="font-black flex-1 rounded-2xl bg-slate-900 py-3 text-xs uppercase text-white shadow-lg transition-all hover:bg-blue-600">
+        <button (click)="closeRoleModal()"
+                class="font-black flex-1 rounded-2xl bg-slate-100 py-3 text-xs uppercase text-slate-600 transition-all hover:bg-slate-200">
+          Cancel
+        </button>
+
+        <button (click)="roleActionType === 'ASSIGN' ? runAssignUserToAccount() : runUpdateUserRole()"
+                [disabled]="isSubmitting"
+                class="font-black flex-1 rounded-2xl bg-slate-900 py-3 text-xs uppercase text-white shadow-lg transition-all hover:bg-blue-600 disabled:bg-slate-300">
           {{ isSubmitting ? 'PROCESSING...' : 'CONFIRM' }}
         </button>
       </div>
+
     </div>
   </div>
 

@@ -58,4 +58,19 @@ export class AuthService {
     const claims = this.oauthService.getIdentityClaims() as any;
     return claims ? claims['sub'] : null;
   }
+
+  public getUsername(): string | null {
+    const claims = this.oauthService.getIdentityClaims() as any;
+    return claims ? (claims['preferred_username'] || claims['name'] || claims['sub']) : null;
+  }
+
+  public getFirstName(): string | null {
+    const claims = this.oauthService.getIdentityClaims() as any;
+    return claims ? claims['given_name'] : null;
+  }
+
+  public getLastName(): string | null {
+    const claims = this.oauthService.getIdentityClaims() as any;
+    return claims ? claims['family_name'] : null;
+  }
 }

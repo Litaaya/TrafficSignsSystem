@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
-import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth-service';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { Subject, debounceTime, switchMap, map, distinctUntilChanged, of } from 'rxjs';
@@ -119,7 +119,7 @@ export class AccountListComponent implements OnInit {
         return this.http.get<any>(`https://localhost:7272/api/accounts/validate-field`, { params: queryParams })
           .pipe(
             map((res: any) => ({ ...res, field: data.field })),
-            catchError(() => of({ isValid: false, message: 'Validation service error', field: data.field, hasError: true }))
+            catchError(() => of({ isValid: false, message: 'Service error', field: data.field, hasError: true }))
           );
       })
     ).subscribe({
@@ -152,7 +152,6 @@ export class AccountListComponent implements OnInit {
       this.hasMoreAvailable = true;
     }
     if (this.loadingAvailable || !this.hasMoreAvailable) return;
-
     this.loadingAvailable = true;
     this.cdr.detectChanges();
 

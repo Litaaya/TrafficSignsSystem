@@ -78,6 +78,9 @@ export class MapPageComponent implements OnInit, AfterViewInit {
   withdrawTargetUser: any = null;
   isSubmitting = false;
 
+  displayUsername: string = " ";
+  userInitials: string = " ";
+
   readonly speedOptions = SPEED_OPTIONS;
   readonly vehicleOptions = VEHICLE_OPTIONS;
   readonly signTemplates = SIGN_TEMPLATES;
@@ -103,6 +106,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.loadAccounts();
+    this.initUserData();
   }
 
   ngAfterViewInit(): void { }
@@ -136,6 +140,24 @@ export class MapPageComponent implements OnInit, AfterViewInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private initUserData() {
+    const username = this.authService.getUsername() || 'User';
+    const firstName = this.authService.getFirstName() || '';
+    const lastName = this.authService.getLastName() || '';
+
+    this.displayUsername = username;
+
+    if (firstName && lastName) {
+      this.userInitials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+    } else if (username) {
+      this.userInitials = username.substring(0, 2).toUpperCase();
+    } else {
+      this.userInitials = 'U';
+    }
+
+    this.cdr.detectChanges();
   }
 
   get filteredAccounts() {

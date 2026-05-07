@@ -55,12 +55,21 @@
           </div>
         </div>
       </div>
-      <div class="flex items-center gap-4 border-l border-slate-200 pl-4">
+      <div class="flex shrink-0 items-center gap-4 border-l border-slate-200 pl-6">
+
         <div class="flex flex-col items-end">
-          <span class="font-black uppercase leading-none text-[10px] text-slate-800">Admin User</span>
-          <span class="font-bold uppercase tracking-tighter text-[8px] text-blue-500">System Manager</span>
+          <span class="font-black tracking-[0.15em] uppercase leading-none text-[11px] text-slate-800">
+            {{ displayUsername }}
+          </span>
+
+          <span class="mt-1.5 font-bold uppercase tracking-wider text-[9px] text-blue-500/80">
+            {{ currentAccountRole }}
+          </span>
         </div>
-        <div class="font-black flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-slate-900 text-[11px] text-white shadow-md transition-all hover:bg-blue-600">AD</div>
+
+        <div class="font-black relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-slate-900 text-[13px] text-white shadow-sm ring-2 ring-white transition-all duration-300 hover:ring-4 hover:ring-blue-400/30">
+          {{ userInitials }}
+        </div>
       </div>
     </header>
 
