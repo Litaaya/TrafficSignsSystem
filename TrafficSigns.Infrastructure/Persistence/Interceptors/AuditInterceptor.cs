@@ -7,7 +7,9 @@ using System.Diagnostics;
 
 namespace TrafficSigns.Infrastructure.Persistence.Interceptors;
 
-public class AuditInterceptor(ICurrentUserService currentUser) : SaveChangesInterceptor
+public class AuditInterceptor(
+    ICurrentUserService currentUser,
+    IAuditActorProvider actorProvider) : SaveChangesInterceptor
 {
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
@@ -46,27 +48,40 @@ public class AuditInterceptor(ICurrentUserService currentUser) : SaveChangesInte
                       ?? Activity.Current?.RootId
                       ?? Guid.NewGuid().ToString();
 
-        var userIdRaw = currentUser.GetUserId();
-        Guid? userId = null;
-        if (userIdRaw != null)
+        Guid? userId = actorProvider.ActorId;
+        var userName = actorProvider.ActorName;
+
+        if (userId == null)
         {
-            if (userIdRaw is Guid g) userId = g;
-            else if (Guid.TryParse(userIdRaw.ToString(), out var parsedGuid)) userId = parsedGuid;
+            var userIdRaw = currentUser.GetUserId();
+            if (userIdRaw != null)
+            {
+                if (userIdRaw is Guid g) userId = g;
+                else if (Guid.TryParse(userIdRaw.ToString(), out var parsedGuid)) userId = parsedGuid;
+            }
         }
 
-        var userName = currentUser.GetUsername();
+        if (string.IsNullOrEmpty(userName))
+        {
+            userName = currentUser.GetUsername();
+        }
 
         foreach (var entry in context.ChangeTracker.Entries().ToList())
         {
             if (entry.Entity is AuditLog || entry.State == EntityState.Detached || entry.State == EntityState.Unchanged)
                 continue;
 
+            var baseAction = entry.State.ToString().ToUpper();
+            var finalAction = !string.IsNullOrEmpty(actorProvider.OverrideAction)
+                ? $"{baseAction} ({actorProvider.OverrideAction})"
+                : baseAction;
+
             var auditLog = new AuditLog
             {
                 Id = Guid.NewGuid(),
                 EntityName = entry.Metadata.ClrType.Name,
                 EntityId = GetEntityId(entry),
-                Action = entry.State.ToString().ToUpper(),
+                Action = finalAction,
                 UserId = userId,
                 UserName = userName,
                 Timestamp = DateTime.UtcNow,
@@ -115,7 +130,7 @@ public class AuditInterceptor(ICurrentUserService currentUser) : SaveChangesInte
                                 changedColumns.Add(propertyName);
                             }
                         }
-                    break;
+                        break;
                 }
             }
 

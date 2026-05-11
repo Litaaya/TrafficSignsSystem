@@ -239,6 +239,27 @@ public class KeycloakAdminService(
         return await response.Content.ReadFromJsonAsync<List<JsonElement>>() ?? [];
     }
 
+    public async Task<List<JsonElement>> GetUserEventsAsync(DateTime? dateFrom)
+    {
+        var baseUrl = config["Keycloak:AuthServerUrl"]?.TrimEnd('/');
+        var realm = config["Keycloak:Realm"];
+        var accessToken = await GetAdminTokenAsync();
+
+        var dateFromStr = dateFrom?.ToString("yyyy-MM-dd") ?? DateTime.UtcNow.ToString("yyyy-MM-dd");
+        var url = $"{baseUrl}/admin/realms/{realm}/events?dateFrom={dateFromStr}&type=UPDATE_PROFILE";
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"Failed to fetch user events. Status: {response.StatusCode}");
+        }
+
+        return await response.Content.ReadFromJsonAsync<List<JsonElement>>() ?? [];
+    }
+
     public async Task<JsonElement?> GetUserByIdAsync(Guid userId)
     {
         var baseUrl = config["Keycloak:AuthServerUrl"]?.TrimEnd('/');

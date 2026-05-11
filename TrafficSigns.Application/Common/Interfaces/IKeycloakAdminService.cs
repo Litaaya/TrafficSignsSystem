@@ -13,6 +13,7 @@ public interface IKeycloakAdminService
     Task<JsonElement?> GetUserByIdAsync(Guid userId);
     Task<List<JsonElement>> GetUsersAsync(int first = 0, int max = 100);
     Task<List<JsonElement>> GetAdminEventsAsync(DateTime? dateFrom);
+    Task<List<JsonElement>> GetUserEventsAsync(DateTime? dateFrom);
 
     Task<bool> VerifyUserPasswordAsync(string username, string password);
     Task<List<string>> GetUserRolesAsync(Guid userId);

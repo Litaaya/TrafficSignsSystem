@@ -154,13 +154,6 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddHttpClient<IKeycloakAdminService, KeycloakAdminService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["Keycloak:AuthServerUrl"] ?? "http://localhost:8181");
-});
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-builder.Services.AddScoped<IPermissionService, PermissionService>();
-
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -222,7 +215,6 @@ app.MapCreateUser();
 app.MapDeleteUser();
 app.MapReactivateUser();
 app.MapUpdateUser();
-app.MapUpdateProfile();
 
 app.MapGetUsers();
 app.MapValidateUserField();

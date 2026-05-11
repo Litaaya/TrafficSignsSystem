@@ -110,7 +110,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
   constructor() { }
 
   goToSecuritySettings() {
-    const securityUrl = `${this.KEYCLOAK_URL}/realms/${this.REALM_NAME}/account/password`;
+    const securityUrl = `${this.KEYCLOAK_URL}/realms/${this.REALM_NAME}/account/`;
     window.open(securityUrl, '_blank');
   }
 

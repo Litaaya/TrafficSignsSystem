@@ -1,4 +1,5 @@
-﻿using JasperFx;
+﻿using System.Text.Json.Serialization;
+using JasperFx;
 using Marten;
 using Marten.Events.Projections;
 using Microsoft.EntityFrameworkCore;
@@ -6,13 +7,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NetTopologySuite.IO.Converters;
 using Npgsql;
-using System.Text.Json.Serialization;
+using Weasel.Core;
 using TrafficSigns.Application.Common.Interfaces;
 using TrafficSigns.Domain.Models;
 using TrafficSigns.Infrastructure.BackgroundServices;
 using TrafficSigns.Infrastructure.Persistence;
 using TrafficSigns.Infrastructure.Persistence.Interceptors;
-using Weasel.Core;
+using TrafficSigns.Infrastructure.Services;
 
 namespace TrafficSigns.Infrastructure;
 
@@ -29,6 +30,7 @@ public static class DependencyInjection
             builder.EnableDynamicJson();
         });
 
+        services.AddScoped<IAuditActorProvider, AuditActorProvider>();
         services.AddScoped<AuditInterceptor>();
 
         services.AddDbContext<AppDbContext>((sp, options) =>
@@ -42,6 +44,14 @@ public static class DependencyInjection
 
         services.AddScoped<IApplicationDbContext>(provider =>
             provider.GetRequiredService<AppDbContext>());
+
+        services.AddHttpClient<IKeycloakAdminService, KeycloakAdminService>(client =>
+        {
+            client.BaseAddress = new Uri(configuration["Keycloak:AuthServerUrl"] ?? "http://localhost:8181");
+        });
+
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IPermissionService, PermissionService>();
 
         services.AddMarten(opts =>
         {
