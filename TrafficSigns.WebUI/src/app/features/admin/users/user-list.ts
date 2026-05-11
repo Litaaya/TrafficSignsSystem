@@ -497,6 +497,7 @@ export class UserListComponent implements OnInit {
   }
 
   setTab(tab: 'info' | 'accounts') {
+    if (this.activeTab === tab) return;
     this.activeTab = tab;
     if (tab === 'accounts' && this.selectedUser) this.fetchUserAccounts(this.selectedUser.id);
   }
