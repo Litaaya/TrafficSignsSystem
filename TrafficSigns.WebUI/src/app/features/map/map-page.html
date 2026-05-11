@@ -1,4 +1,4 @@
-﻿<div *ngIf="hasNoAccounts" class="flex h-screen w-full flex-col items-center justify-center bg-slate-100 p-6">
+<div *ngIf="hasNoAccounts" class="flex h-screen w-full flex-col items-center justify-center bg-slate-100 p-6">
   <div class="flex max-w-md flex-col items-center rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-xl">
     <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-rose-100 text-rose-500">
       <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -18,102 +18,48 @@
 <ng-container *ngIf="!hasNoAccounts">
   <div class="flex h-screen w-full flex-col overflow-hidden bg-slate-100">
 
-    <header class="z-[1100] flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
-      <div class="flex items-center gap-6">
-        <div class="account-dropdown-container relative flex items-center">
-          <label class="font-black mr-3 uppercase tracking-widest text-[12px] text-slate-400">Workspace</label>
-          <div class="relative min-w-[220px]">
-            <button (click)="isAccountDropdownOpen = !isAccountDropdownOpen"
-                    class="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-bold text-slate-700 transition-all hover:bg-slate-100">
-              <span class="truncate">{{ accounts.find(a => a.accountId === selectedAccountId)?.accountName || 'Select Account' }}</span>
-              <svg class="h-4 w-4 text-slate-400 transition-transform" [class.rotate-180]="isAccountDropdownOpen" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path d="M19 9l-7 7-7-7" stroke-width="3" />
-              </svg>
-            </button>
+    <div class="relative flex min-h-0 flex-1 overflow-hidden">
+      <div class="relative h-full flex-1">
+        <div id="map" class="absolute inset-0 z-0"></div>
 
-            <div *ngIf="isAccountDropdownOpen"
-                 class="z-[2000] absolute left-0 right-0 top-full mt-2 flex max-h-[300px] flex-col overflow-visible rounded-xl border border-slate-200 bg-white shadow-2xl">
-              <div class="rounded-t-xl border-b border-slate-100 bg-slate-50 p-2">
-                <div class="relative">
-                  <div class="-translate-y-1/2 absolute left-3 top-1/2 text-slate-400">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                    </svg>
+        <div class="z-[500] absolute left-4 top-4 flex flex-col gap-2">
+          <div class="account-dropdown-container relative flex flex-col items-start rounded-2xl border border-white bg-white/80 p-3 shadow-2xl backdrop-blur-md">
+            <label class="font-black mb-2 uppercase tracking-widest text-[10px] text-slate-400">Current Workspace</label>
+            <div class="relative min-w-[240px]">
+              <button (click)="isAccountDropdownOpen = !isAccountDropdownOpen"
+                                 class="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 transition-all hover:bg-slate-50">
+                <span class="truncate">{{ accounts.find(a => a.accountId === selectedAccountId)?.accountName || 'Select Account' }}</span>
+                <svg class="h-4 w-4 text-slate-400 transition-transform" [class.rotate-180]="isAccountDropdownOpen" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M19 9l-7 7-7-7" stroke-width="3" />
+                </svg>
+              </button>
+
+              <div *ngIf="isAccountDropdownOpen"
+                             class="z-[2000] absolute left-0 right-0 top-full mt-2 flex max-h-[350px] flex-col overflow-visible rounded-2xl border border-slate-100 bg-white shadow-2xl">
+                <div class="rounded-t-2xl border-b border-slate-100 bg-slate-50/50 p-2">
+                  <div class="relative">
+                    <div class="-translate-y-1/2 absolute left-3 top-1/2 text-slate-400">
+                      <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                      </svg>
+                    </div>
+                    <input type="text" [(ngModel)]="accountSearchTerm" placeholder="Search workspace..."
+                                         class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 font-bold text-[13px] outline-none focus:border-blue-500"
+                                         (click)="$event.stopPropagation()">
                   </div>
-                  <input type="text" [(ngModel)]="accountSearchTerm" placeholder="Search account..."
-                         class="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 font-bold text-[13px] outline-none focus:border-blue-500"
-                         (click)="$event.stopPropagation()">
                 </div>
-              </div>
-              <div class="custom-scrollbar max-h-[250px] overflow-y-auto overflow-x-visible rounded-b-xl">
-                <button *ngFor="let acc of filteredAccounts" (click)="selectAccount(acc)"
-                        [class.bg-blue-50]="acc.accountId === selectedAccountId"
-                        class="group flex w-full items-center justify-between gap-3 border-b border-slate-50 px-4 py-2.5 text-left text-xs font-bold text-slate-700 transition-all last:border-0 hover:bg-slate-50">
-                  <span class="min-w-0 flex-1 truncate" [matTooltip]="acc.accountName" [class.text-blue-600]="acc.accountId === selectedAccountId" [innerHTML]="highlight(acc.accountName, accountSearchTerm)"></span>
-                  <svg *ngIf="acc.accountId === selectedAccountId" class="h-4 w-4 shrink-0 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
-                </button>
+                <div class="custom-scrollbar max-h-[280px] overflow-y-auto overflow-x-visible rounded-b-2xl">
+                  <button *ngFor="let acc of filteredAccounts" (click)="selectAccount(acc)"
+                                       [class.bg-blue-50]="acc.accountId === selectedAccountId"
+                                       class="group flex w-full items-center justify-between gap-3 border-b border-slate-50 px-4 py-3 text-left text-xs font-bold text-slate-700 transition-all last:border-0 hover:bg-slate-50">
+                    <span class="min-w-0 flex-1 truncate" [matTooltip]="acc.accountName" [class.text-blue-600]="acc.accountId === selectedAccountId" [innerHTML]="highlight(acc.accountName, accountSearchTerm)"></span>
+                    <svg *ngIf="acc.accountId === selectedAccountId" class="h-4 w-4 shrink-0 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="user-dropdown-container relative flex shrink-0 items-center gap-4 border-l border-slate-200 pl-6">
-        <div (click)="toggleUserDropdown()" class="group flex cursor-pointer items-center gap-4">
-          <div class="flex flex-col items-end">
-            <span class="font-black tracking-[0.15em] uppercase leading-none text-[11px] text-slate-800 transition-colors group-hover:text-blue-600">
-              {{ displayUsername }}
-            </span>
-            <span class="mt-1.5 font-bold uppercase tracking-wider text-[9px] text-blue-500/80">
-              {{ currentAccountRole }}
-            </span>
-          </div>
-          <div class="font-black relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[13px] text-white shadow-sm ring-2 ring-white transition-all duration-300 group-hover:ring-4 group-hover:ring-blue-400/30">
-            {{ userInitials }}
-          </div>
-        </div>
-
-        <div *ngIf="isUserDropdownOpen"
-             class="z-[2000] animate-modal-pop absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl">
-          <div class="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
-            <p class="font-black leading-tight text-slate-800 text-[13px]">Identity Profile</p>
-            <p class="mt-1 font-bold uppercase tracking-widest text-[10px] text-slate-400">Status: Active</p>
-          </div>
-          <div class="p-2">
-            <button (click)="openMyInfo()" class="group flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-left transition-all hover:bg-blue-50">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-4 w-4 text-slate-400 group-hover:text-blue-600">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-              </svg>
-              <span class="font-black uppercase tracking-widest text-[12px] text-slate-600 group-hover:text-blue-700">Information</span>
-            </button>
-            <button (click)="toggleDarkMode()" class="group flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-left transition-all hover:bg-amber-50">
-              <div class="flex items-center gap-3">
-                <svg *ngIf="!isDarkMode" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-4 w-4 text-amber-500">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
-                </svg>
-                <svg *ngIf="isDarkMode" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-4 w-4 text-indigo-500">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-                </svg>
-                <span class="font-black uppercase tracking-widest text-[12px] text-slate-600">{{ isDarkMode ? 'Dark' : 'Light' }} Mode</span>
-              </div>
-              <div [class.bg-emerald-500]="isDarkMode" class="h-2 w-2 rounded-full bg-slate-300 transition-colors"></div>
-            </button>
-          </div>
-          <div class="border-t border-slate-100 bg-slate-50/30 p-2">
-            <button (click)="logout()" class="group flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-left transition-all hover:bg-rose-50">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-4 w-4 text-rose-400 group-hover:text-rose-600">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
-              </svg>
-              <span class="font-black tracking-[0.2em] uppercase text-[11px] text-rose-500">Logout</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <div class="relative flex min-h-0 flex-1 overflow-hidden">
-      <div class="relative h-full flex-1">
-        <div id="map" class="absolute inset-0 z-0"></div>
 
         <div class="z-[500] absolute right-4 top-4 flex flex-col items-end gap-2">
           <div class="flex gap-2">
@@ -268,7 +214,7 @@
         </div>
 
         <div class="shadow-[0_-10px_20px_rgba(0,0,0,0.05)] relative z-10 shrink-0 border-t border-slate-100 bg-white p-6">
-          <button *ngIf="sidebarState === 'SIGN_INFO' && !selectedSignId && canEdit" (click)="startWizard()" class="font-black py-4.5 w-full rounded-2xl bg-blue-600 uppercase tracking-widest text-[13px] text-white shadow-xl transition-all hover:bg-blue-700">Create Sign</button>
+          <button *ngIf="sidebarState === 'SIGN_INFO'" (click)="startWizard()" class="font-black py-4.5 w-full rounded-2xl bg-blue-600 uppercase tracking-widest text-[13px] text-white shadow-xl transition-all hover:bg-blue-700">Create Sign</button>
           <button *ngIf="sidebarState === 'WIZARD' && wizardStep === 'FORM'" (click)="goToReview()" [disabled]="!isFormValid" [class]="isFormValid ? 'bg-slate-900 text-white shadow-lg hover:bg-slate-800' : 'bg-slate-200 text-slate-400 cursor-not-allowed'" class="font-black py-4.5 w-full rounded-3xl uppercase tracking-widest text-[13px] transition-all">Review & Save</button>
           <button *ngIf="sidebarState === 'WIZARD' && wizardStep === 'REVIEW'" (click)="saveSign()" class="font-black py-4.5 flex w-full justify-center gap-2 rounded-3xl bg-emerald-600 uppercase tracking-widest text-[13px] text-white shadow-2xl transition-all hover:bg-emerald-700">
             <svg *ngIf="isSaving" class="h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -315,14 +261,14 @@
             <div class="relative min-w-[180px]">
               <div *ngIf="isInviteRoleDropdownOpen" (click)="isInviteRoleDropdownOpen = false" class="fixed inset-0 z-10 bg-transparent"></div>
               <button (click)="isInviteRoleDropdownOpen = !isInviteRoleDropdownOpen" type="button"
-                      class="font-black relative z-20 flex h-[46px] w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 uppercase tracking-widest text-[11px] text-slate-600 outline-none transition-all hover:border-blue-500 focus:border-blue-500">
+                                 class="font-black relative z-20 flex h-[46px] w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 uppercase tracking-widest text-[11px] text-slate-600 outline-none transition-all hover:border-blue-500 focus:border-blue-500">
                 <span>{{ inviteRole }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" [class.rotate-180]="isInviteRoleDropdownOpen" class="h-4 w-4 text-blue-500 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                 </svg>
               </button>
               <div [class.opacity-100]="isInviteRoleDropdownOpen" [class.translate-y-0]="isInviteRoleDropdownOpen" [class.pointer-events-auto]="isInviteRoleDropdownOpen"
-                   class="z-[110] -translate-y-2 pointer-events-none absolute left-0 right-0 mt-2 rounded-2xl border border-slate-100 bg-white p-2 opacity-0 shadow-2xl transition-all duration-300 ease-out">
+                             class="z-[110] -translate-y-2 pointer-events-none absolute left-0 right-0 mt-2 rounded-2xl border border-slate-100 bg-white p-2 opacity-0 shadow-2xl transition-all duration-300 ease-out">
                 <div (click)="selectInviteRole('Viewer')" class="flex cursor-pointer flex-col rounded-xl p-3 transition-colors hover:bg-blue-50">
                   <span class="font-black uppercase tracking-widest text-[11px] text-slate-700">VIEWER</span>
                   <span class="mt-1 font-bold italic text-[10px] text-slate-400">Read-only access.</span>
@@ -348,14 +294,14 @@
                   </svg>
                 </div>
                 <input type="text" [(ngModel)]="memberListSearchTerm" (ngModelChange)="onSearchTermChange()"
-                       placeholder="Search members by name or email..."
-                       class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 font-bold text-[13px] shadow-sm outline-none transition-all focus:border-blue-500">
+                                   placeholder="Search members by name or email..."
+                                   class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 font-bold text-[13px] shadow-sm outline-none transition-all focus:border-blue-500">
               </div>
 
               <div class="relative min-w-[160px]">
                 <div *ngIf="isListRoleFilterOpen" (click)="isListRoleFilterOpen = false" class="fixed inset-0 z-10 bg-transparent"></div>
                 <button (click)="isListRoleFilterOpen = !isListRoleFilterOpen" type="button"
-                        class="font-black relative z-20 flex h-[46px] w-full items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 uppercase tracking-widest text-[10px] text-slate-500 shadow-sm outline-none transition-all hover:border-blue-500">
+                                    class="font-black relative z-20 flex h-[46px] w-full items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 uppercase tracking-widest text-[10px] text-slate-500 shadow-sm outline-none transition-all hover:border-blue-500">
                   <span class="flex items-center gap-2">
                     <span class="h-1.5 w-1.5 rounded-full" [ngClass]="memberListFilter === 'all' ? 'bg-slate-300' : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]'"></span>
                     {{ memberListFilter === 'all' ? 'All Roles' : memberListFilter }}
@@ -365,7 +311,7 @@
                   </svg>
                 </button>
                 <div [class.opacity-100]="isListRoleFilterOpen" [class.translate-y-0]="isListRoleFilterOpen" [class.pointer-events-auto]="isListRoleFilterOpen"
-                     class="z-[110] -translate-y-2 pointer-events-none absolute left-0 right-0 mt-2 rounded-2xl border border-slate-100 bg-white p-1.5 opacity-0 shadow-2xl transition-all duration-300 ease-out">
+                                class="z-[110] -translate-y-2 pointer-events-none absolute left-0 right-0 mt-2 rounded-2xl border border-slate-100 bg-white p-1.5 opacity-0 shadow-2xl transition-all duration-300 ease-out">
                   <button (click)="selectListFilter('all')" class="font-black w-full rounded-xl px-3 py-2.5 text-left uppercase text-[10px] text-slate-500 hover:bg-slate-50">All Roles</button>
                   <button (click)="selectListFilter('Owner')" class="font-black w-full rounded-xl px-3 py-2.5 text-left uppercase text-[10px] text-amber-600 hover:bg-amber-50">Owner</button>
                   <button (click)="selectListFilter('Member')" class="font-black w-full rounded-xl px-3 py-2.5 text-left uppercase text-[10px] text-blue-600 hover:bg-blue-50">Member</button>
@@ -400,7 +346,7 @@
                     </td>
                     <td class="p-5">
                       <span [ngClass]="{'bg-amber-50 text-amber-600 border-amber-100': user.role === 'Owner', 'bg-blue-50 text-blue-600 border-blue-100': user.role === 'Member', 'bg-slate-50 text-slate-500 border-slate-200': user.role === 'Viewer' || !user.role}"
-                            class="font-black rounded-lg border px-2.5 py-1.5 uppercase tracking-widest text-[10px]">{{ user.role || 'Viewer' }}</span>
+                                          class="font-black rounded-lg border px-2.5 py-1.5 uppercase tracking-widest text-[10px]">{{ user.role || 'Viewer' }}</span>
                     </td>
                     <td class="p-5 text-center">
                       <div class="flex justify-center gap-2" *ngIf="user.role !== 'Owner'">
@@ -438,7 +384,7 @@
               </svg>
             </button>
             <div [class.opacity-100]="isRoleDropdownOpen" [class.translate-y-0]="isRoleDropdownOpen" [class.pointer-events-auto]="isRoleDropdownOpen"
-                 class="z-[110] -translate-y-2 pointer-events-none absolute left-0 right-0 mt-2 rounded-2xl border border-slate-100 bg-white p-2 opacity-0 shadow-2xl transition-all duration-300 ease-out">
+                          class="z-[110] -translate-y-2 pointer-events-none absolute left-0 right-0 mt-2 rounded-2xl border border-slate-100 bg-white p-2 opacity-0 shadow-2xl transition-all duration-300 ease-out">
               <div (click)="selectRole('Viewer')" class="flex cursor-pointer flex-col rounded-xl p-3 transition-colors hover:bg-blue-50">
                 <span class="font-black text-xs text-slate-700">VIEWER</span>
                 <span class="italic text-[9px] text-slate-400">Read-only.</span>
@@ -457,7 +403,7 @@
         <div class="flex gap-3">
           <button (click)="closeRoleModal()" class="font-black flex-1 rounded-2xl bg-slate-100 py-3 text-xs uppercase text-slate-600 transition-all hover:bg-slate-200">Cancel</button>
           <button (click)="runUpdateUserRole()" [disabled]="isSubmitting"
-                  class="font-black flex-1 rounded-2xl bg-slate-900 py-3 text-xs uppercase text-white shadow-lg transition-all hover:bg-blue-600 disabled:opacity-50">
+                           class="font-black flex-1 rounded-2xl bg-slate-900 py-3 text-xs uppercase text-white shadow-lg transition-all hover:bg-blue-600 disabled:opacity-50">
             {{ isSubmitting ? 'PROCESSING...' : 'CONFIRM' }}
           </button>
         </div>
@@ -472,109 +418,6 @@
         <div class="mt-8 flex gap-3">
           <button (click)="closeWithdrawModal()" class="font-black flex-1 rounded-2xl bg-slate-100 py-3.5 uppercase tracking-widest text-[11px] text-slate-600 transition-all hover:bg-slate-200">Cancel</button>
           <button (click)="executeWithdraw()" [disabled]="isSubmitting" class="font-black flex-1 rounded-2xl bg-rose-600 py-3.5 uppercase tracking-widest text-[11px] text-white shadow-lg transition-all hover:bg-rose-700 disabled:opacity-50">Withdraw</button>
-        </div>
-      </div>
-    </div>
-
-    <div *ngIf="isMyInfoModalOpen" (click)="closeMyInfoModal()" class="z-[3000] animate-backdrop fixed inset-0 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-      <div (click)="$event.stopPropagation()" class="animate-modal-pop flex h-[600px] w-full max-w-2xl flex-col overflow-hidden rounded-[32px] bg-white shadow-2xl">
-
-        <div class="shrink-0 border-b border-slate-100 bg-white px-8 pt-8">
-          <div class="mb-6 flex items-center justify-between">
-            <div>
-              <h2 class="font-black text-2xl uppercase tracking-tighter text-slate-800">Account Center</h2>
-              <p class="font-bold uppercase tracking-widest text-[10px] text-blue-500">Secure Identity Management</p>
-            </div>
-            <button (click)="closeMyInfoModal()" class="text-3xl text-slate-300 hover:text-slate-600">×</button>
-          </div>
-
-          <div class="flex gap-8">
-            <button (click)="infoActiveTab = 'profile'"
-                    [class.border-blue-600]="infoActiveTab === 'profile'"
-                    [class.text-blue-600]="infoActiveTab === 'profile'"
-                    class="font-black border-b-4 border-transparent pb-4 uppercase tracking-widest text-[11px] transition-all">
-              Profile & Security
-            </button>
-            <button (click)="infoActiveTab = 'workspaces'"
-                    [class.border-blue-600]="infoActiveTab === 'workspaces'"
-                    [class.text-blue-600]="infoActiveTab === 'workspaces'"
-                    class="font-black border-b-4 border-transparent pb-4 uppercase tracking-widest text-[11px] transition-all">
-              My Workspaces
-            </button>
-          </div>
-        </div>
-
-        <div class="custom-scrollbar flex-1 overflow-y-auto bg-slate-50/30 p-8">
-
-          <div *ngIf="infoActiveTab === 'profile'" class="animate-modal-pop space-y-8">
-            <div class="flex items-center gap-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-              <div class="font-black flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-3xl text-white shadow-lg">
-                {{ userInitials }}
-              </div>
-              <div class="space-y-1">
-                <h3 class="font-black text-xl uppercase tracking-tight text-slate-800">{{ displayUsername }}</h3>
-                <p class="text-sm font-bold text-slate-400">{{ currentUser?.email }}</p>
-                <div class="mt-2 flex gap-2">
-                  <span class="font-black rounded-lg border border-emerald-100 bg-emerald-50 px-2.5 py-1 uppercase text-[9px] text-emerald-600">Verified Identity</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-6 px-2">
-              <div class="space-y-1">
-                <label class="font-black uppercase tracking-widest text-[10px] text-slate-400">First Name</label>
-                <p class="text-sm font-bold text-slate-700">{{ currentUser?.firstName || '---' }}</p>
-              </div>
-              <div class="space-y-1">
-                <label class="font-black uppercase tracking-widest text-[10px] text-slate-400">Last Name</label>
-                <p class="text-sm font-bold text-slate-700">{{ currentUser?.lastName || '---' }}</p>
-              </div>
-            </div>
-
-            <div class="space-y-3">
-              <label class="font-black block uppercase tracking-widest text-[10px] text-slate-400">Security Management</label>
-              <div class="group relative overflow-hidden rounded-3xl bg-slate-900 p-8 text-white shadow-xl">
-                <svg class="absolute -bottom-4 -right-4 h-32 w-32 rotate-12 text-white/5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.5h7c-.47 4.34-2.85 8.16-7 9.39V11.5H5V6.3l7-3.11v8.31z" /></svg>
-
-                <div class="relative z-10">
-                  <p class="font-black mb-2 text-lg uppercase tracking-tight">Password & Encryption</p>
-                  <p class="max-w-[80%] font-medium leading-relaxed text-[12px] text-slate-400">
-                    For your ultimate protection, password changes and 2FA settings are handled directly by our identity provider.
-                  </p>
-                  <button (click)="goToSecuritySettings()"
-                          class="font-black mt-6 flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 uppercase tracking-widest text-[11px] text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-blue-500">
-                    Manage Security Settings
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div *ngIf="infoActiveTab === 'workspaces'" class="animate-modal-pop space-y-4">
-            <label class="font-black block uppercase tracking-widest text-[10px] text-slate-400">Your Active Access</label>
-            <div class="grid grid-cols-1 gap-3">
-              <div *ngFor="let acc of accounts" class="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:border-blue-200">
-                <div class="flex items-center gap-4">
-                  <div class="font-black flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 text-[10px]">WS</div>
-                  <div>
-                    <p class="font-black text-sm uppercase tracking-tight text-slate-800">{{ acc.accountName }}</p>
-                    <p class="font-bold uppercase tracking-widest text-[9px] text-slate-400">Workspace ID: {{ acc.accountId.substring(0,8) }}...</p>
-                  </div>
-                </div>
-                <div [ngClass]="{'text-amber-500 bg-amber-50 border-amber-100': acc.role === 'Owner', 'text-blue-500 bg-blue-50 border-blue-100': acc.role === 'Member', 'text-slate-400 bg-slate-50 border-slate-100': acc.role === 'Viewer'}"
-                     class="font-black rounded-lg border px-3 py-1.5 uppercase tracking-widest text-[9px]">
-                  {{ acc.role }}
-                </div>
-              </div>
-            </div>
-
-            <div *ngIf="accounts.length === 0" class="flex flex-col items-center p-12 text-center">
-              <span class="mb-2 text-3xl opacity-20">🏢</span>
-              <p class="text-xs font-bold text-slate-400">You are not a member of any workspace yet.</p>
-            </div>
-          </div>
-
         </div>
       </div>
     </div>

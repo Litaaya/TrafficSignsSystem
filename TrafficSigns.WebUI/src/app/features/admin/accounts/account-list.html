@@ -1,6 +1,5 @@
-<div class="flex h-full flex-col px-8 pb-8 pt-0">
+<div class="flex h-full flex-col px-8 pb-8 pt-4">
   <div class="sticky top-0 z-20 flex flex-shrink-0 flex-col bg-[#f8fafc] pb-6 pt-4">
-    <h1 class="font-black mb-4 text-3xl uppercase tracking-tighter text-slate-800">Workspace Management</h1>
 
     <div class="flex items-center gap-3">
       <div class="relative w-80">
@@ -14,7 +13,7 @@
                (input)="onAccountSearch($any($event.target).value)"
                (keyup.enter)="fetchData()"
                placeholder="Find workspace name..."
-               class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 font-bold text-[15px] shadow-sm outline-none transition-all placeholder:text-slate-300 focus:border-blue-500">
+               class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 font-bold text-[15px] shadow-sm outline-none transition-all placeholder:font-medium placeholder:text-slate-300 focus:border-blue-500">
       </div>
 
       <div class="relative min-w-[150px]">
