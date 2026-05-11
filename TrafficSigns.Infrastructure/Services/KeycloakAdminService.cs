@@ -126,7 +126,7 @@ public class KeycloakAdminService(
         var realm = config["Keycloak:Realm"];
         var accessToken = await GetAdminTokenAsync();
 
-        var payload = new { type = "password", value = newPassword, temporary = false };
+        var payload = new { type = "password", value = newPassword, temporary = isTemporary };
 
         using var request = new HttpRequestMessage(HttpMethod.Put, $"{baseUrl}/admin/realms/{realm}/users/{userId}/reset-password");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
